@@ -1915,7 +1915,12 @@ function loadExistingAssignmentsFromProgress() {
                         a.module_id === (module.id || module.title)
                     );
                     
-                    if (!existingAssignment) {
+                    // Check if this role-based assignment was previously unassigned
+                    const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
+                    const unassignedKey = `${user.id || user.username}-${module.id || module.title}`;
+                    const wasUnassigned = unassignedRoleBased.includes(unassignedKey);
+                    
+                    if (!existingAssignment && !wasUnassigned) {
                         const assignment = {
                             id: `role-based-${user.username}-${module.title}`.replace(/\s+/g, '-'),
                             user_id: user.id || user.username,
@@ -2306,6 +2311,8 @@ async function unassignModule(assignmentId) {
         if (!assignment.is_existing) {
             await window.dbService.removeModuleAssignment(assignmentId);
             console.log('Assignment removed from database successfully');
+        } else {
+            console.log('Skipping database deletion for existing/role-based assignment');
         }
     } catch (error) {
         console.error('Failed to remove assignment from database:', error);
@@ -2325,6 +2332,17 @@ async function unassignModule(assignmentId) {
             const userProgressKey = `userProgress_${assignment.user_name}`;
             localStorage.setItem(userProgressKey, JSON.stringify(userProgress));
             console.log(`Cleared progress for ${assignment.user_name} on ${assignment.module_title}`);
+        }
+        
+        // Track unassigned role-based assignments to prevent them from reappearing
+        if (assignment.notes === 'Role-based assignment') {
+            const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
+            const unassignedKey = `${assignment.user_id}-${assignment.module_id}`;
+            if (!unassignedRoleBased.includes(unassignedKey)) {
+                unassignedRoleBased.push(unassignedKey);
+                localStorage.setItem('unassignedRoleBased', JSON.stringify(unassignedRoleBased));
+                console.log(`Tracked unassigned role-based assignment: ${unassignedKey}`);
+            }
         }
     }
 
@@ -2517,6 +2535,17 @@ async function bulkUnassignModules() {
                 const userProgressKey = `userProgress_${assignment.user_name}`;
                 localStorage.setItem(userProgressKey, JSON.stringify(userProgress));
                 console.log(`Cleared progress for ${assignment.user_name} on ${assignment.module_title}`);
+            }
+            
+            // Track unassigned role-based assignments to prevent them from reappearing
+            if (assignment.notes === 'Role-based assignment') {
+                const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
+                const unassignedKey = `${assignment.user_id}-${assignment.module_id}`;
+                if (!unassignedRoleBased.includes(unassignedKey)) {
+                    unassignedRoleBased.push(unassignedKey);
+                    localStorage.setItem('unassignedRoleBased', JSON.stringify(unassignedRoleBased));
+                    console.log(`Tracked unassigned role-based assignment: ${unassignedKey}`);
+                }
             }
         }
     }
