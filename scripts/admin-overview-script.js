@@ -573,6 +573,11 @@ function getUsers() {
     return JSON.parse(localStorage.getItem('users') || '[]');
 }
 
+// Utility function to save users to localStorage
+function saveUsers(users) {
+    localStorage.setItem('users', JSON.stringify(users));
+}
+
 // Initialize default users if none exist
 function initializeDefaultUsers() {
     const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
