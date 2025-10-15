@@ -559,6 +559,136 @@ body {
     font-size: 0.9rem;
 }
 
+/* Module Assignments Styles */
+.assignments-container {
+    margin-top: 1rem;
+}
+
+.assignments-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.filter-select {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--white);
+    color: var(--text-color);
+    min-width: 150px;
+}
+
+.assignments-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.assignments-table th,
+.assignments-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.assignments-table th {
+    background: var(--primary-color);
+    color: var(--white);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.assignments-table tr:hover {
+    background: var(--hover-color);
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-assigned {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.status-in-progress {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.status-completed {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.status-overdue {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.assignment-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.assignment-actions button {
+    padding: 0.25rem 0.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.btn-edit {
+    background: #2196f3;
+    color: white;
+}
+
+.btn-edit:hover {
+    background: #1976d2;
+}
+
+.btn-delete {
+    background: #f44336;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #d32f2f;
+}
+
+/* Dark mode adjustments for assignments */
+[data-theme="dark"] .filter-select {
+    background: var(--dark-bg);
+    border-color: var(--dark-border);
+    color: var(--dark-text);
+}
+
+[data-theme="dark"] .assignments-table {
+    background: var(--dark-bg);
+}
+
+[data-theme="dark"] .assignments-table th {
+    background: var(--dark-primary);
+}
+
+[data-theme="dark"] .assignments-table tr:hover {
+    background: var(--dark-hover);
+}
+
 .sidebar-nav {
     padding: 1rem 0;
 }

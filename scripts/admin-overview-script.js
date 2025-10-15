@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up event listeners
     setupEventListeners();
     
+    // Set up assignment event listeners
+    setupAssignmentEventListeners();
+    
     // Load user data
     loadUserData();
     
@@ -313,6 +316,9 @@ function loadUserData() {
     // Update user progress table
     console.log('Updating user progress table');
     updateUserProgressTable(users);
+    
+    // Load module assignments
+    loadModuleAssignments();
 }
 
 function updateSummaryCards(users) {
@@ -1812,3 +1818,292 @@ async function refreshDataFromDatabase() {
 
 // Make refresh function available globally
 window.refreshDataFromDatabase = refreshDataFromDatabase;
+
+// Module Assignment Functions
+let moduleAssignments = [];
+let currentAssignment = null;
+
+// Load module assignments
+async function loadModuleAssignments() {
+    try {
+        if (window.dbService && window.dbService.isConfigured) {
+            moduleAssignments = await window.dbService.getModuleAssignments();
+            console.log('Loaded module assignments:', moduleAssignments.length);
+        } else {
+            // Fallback to localStorage
+            moduleAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
+        }
+        updateAssignmentsTable();
+        updateAssignmentFilters();
+    } catch (error) {
+        console.error('Failed to load module assignments:', error);
+        showToast('error', 'Load Failed', 'Could not load module assignments');
+    }
+}
+
+// Update assignments table
+function updateAssignmentsTable() {
+    const tbody = document.getElementById('assignmentsTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (moduleAssignments.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #666;">No module assignments found</td></tr>';
+        return;
+    }
+
+    moduleAssignments.forEach(assignment => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${assignment.user_name || 'Unknown User'}</td>
+            <td>${assignment.module_title || 'Unknown Module'}</td>
+            <td>${formatDate(assignment.assigned_at)}</td>
+            <td>${assignment.due_date ? formatDate(assignment.due_date) : 'No due date'}</td>
+            <td><span class="status-badge status-${assignment.status}">${assignment.status}</span></td>
+            <td>${assignment.notes || '-'}</td>
+            <td>
+                <div class="assignment-actions">
+                    <button class="btn-edit" onclick="editAssignment('${assignment.id}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-delete" onclick="deleteAssignment('${assignment.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Update assignment filters
+function updateAssignmentFilters() {
+    const userFilter = document.getElementById('assignmentUserFilter');
+    const moduleFilter = document.getElementById('assignmentModuleFilter');
+
+    if (userFilter) {
+        // Populate user filter
+        const users = getAllUsers();
+        userFilter.innerHTML = '<option value="">All Users</option>';
+        users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.id || user.username;
+            option.textContent = user.full_name || user.fullName || user.username;
+            userFilter.appendChild(option);
+        });
+    }
+
+    if (moduleFilter) {
+        // Populate module filter
+        const modules = getAllModules();
+        moduleFilter.innerHTML = '<option value="">All Modules</option>';
+        modules.forEach(module => {
+            const option = document.createElement('option');
+            option.value = module.id || module.title;
+            option.textContent = module.title;
+            moduleFilter.appendChild(option);
+        });
+    }
+}
+
+// Open assignment modal
+function openAssignmentModal(assignmentId = null) {
+    const modal = document.getElementById('assignmentModal');
+    const title = document.getElementById('assignmentModalTitle');
+    
+    if (assignmentId) {
+        currentAssignment = moduleAssignments.find(a => a.id === assignmentId);
+        title.textContent = 'Edit Assignment';
+    } else {
+        currentAssignment = null;
+        title.textContent = 'Assign Module';
+    }
+
+    populateAssignmentForm();
+    modal.classList.add('show');
+}
+
+// Populate assignment form
+function populateAssignmentForm() {
+    const userSelect = document.getElementById('assignmentUser');
+    const moduleSelect = document.getElementById('assignmentModule');
+    const dueDateInput = document.getElementById('assignmentDueDate');
+    const statusSelect = document.getElementById('assignmentStatus');
+    const notesTextarea = document.getElementById('assignmentNotes');
+
+    // Populate user dropdown
+    const users = getAllUsers();
+    userSelect.innerHTML = '<option value="">Select a user...</option>';
+    users.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user.id || user.username;
+        option.textContent = user.full_name || user.fullName || user.username;
+        if (currentAssignment && (user.id === currentAssignment.user_id || user.username === currentAssignment.user_id)) {
+            option.selected = true;
+        }
+        userSelect.appendChild(option);
+    });
+
+    // Populate module dropdown
+    const modules = getAllModules();
+    moduleSelect.innerHTML = '<option value="">Select a module...</option>';
+    modules.forEach(module => {
+        const option = document.createElement('option');
+        option.value = module.id || module.title;
+        option.textContent = module.title;
+        if (currentAssignment && (module.id === currentAssignment.module_id || module.title === currentAssignment.module_id)) {
+            option.selected = true;
+        }
+        moduleSelect.appendChild(option);
+    });
+
+    // Populate other fields
+    if (currentAssignment) {
+        dueDateInput.value = currentAssignment.due_date || '';
+        statusSelect.value = currentAssignment.status || 'assigned';
+        notesTextarea.value = currentAssignment.notes || '';
+    } else {
+        dueDateInput.value = '';
+        statusSelect.value = 'assigned';
+        notesTextarea.value = '';
+    }
+}
+
+// Save assignment
+async function saveAssignment() {
+    const form = document.getElementById('assignmentForm');
+    const formData = new FormData(form);
+    
+    const assignmentData = {
+        user_id: formData.get('userId'),
+        module_id: formData.get('moduleId'),
+        due_date: formData.get('dueDate') || null,
+        status: formData.get('status'),
+        notes: formData.get('notes') || null
+    };
+
+    if (!assignmentData.user_id || !assignmentData.module_id) {
+        showToast('error', 'Validation Error', 'Please select both a user and a module');
+        return;
+    }
+
+    try {
+        if (currentAssignment) {
+            // Update existing assignment
+            await window.dbService.updateModuleAssignment(currentAssignment.id, assignmentData);
+            showToast('success', 'Assignment Updated', 'Module assignment updated successfully');
+        } else {
+            // Create new assignment
+            await window.dbService.assignModuleToUser(
+                assignmentData.user_id,
+                assignmentData.module_id,
+                null, // assigned_by
+                assignmentData.due_date,
+                assignmentData.notes
+            );
+            showToast('success', 'Module Assigned', 'Module assigned to user successfully');
+        }
+
+        closeAssignmentModal();
+        await loadModuleAssignments();
+    } catch (error) {
+        console.error('Failed to save assignment:', error);
+        showToast('error', 'Save Failed', 'Could not save module assignment');
+    }
+}
+
+// Edit assignment
+function editAssignment(assignmentId) {
+    openAssignmentModal(assignmentId);
+}
+
+// Delete assignment
+async function deleteAssignment(assignmentId) {
+    if (!confirm('Are you sure you want to delete this module assignment?')) {
+        return;
+    }
+
+    try {
+        await window.dbService.removeModuleAssignment(assignmentId);
+        showToast('success', 'Assignment Deleted', 'Module assignment deleted successfully');
+        await loadModuleAssignments();
+    } catch (error) {
+        console.error('Failed to delete assignment:', error);
+        showToast('error', 'Delete Failed', 'Could not delete module assignment');
+    }
+}
+
+// Close assignment modal
+function closeAssignmentModal() {
+    const modal = document.getElementById('assignmentModal');
+    modal.classList.remove('show');
+    currentAssignment = null;
+}
+
+// Format date helper
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+}
+
+// Setup assignment event listeners
+function setupAssignmentEventListeners() {
+    // Assign module button
+    const assignBtn = document.getElementById('assignModuleBtn');
+    if (assignBtn) {
+        assignBtn.addEventListener('click', () => openAssignmentModal());
+    }
+
+    // Assignment modal close buttons
+    const modalClose = document.getElementById('assignmentModalClose');
+    const modalCancel = document.getElementById('assignmentModalCancel');
+    const modalSave = document.getElementById('assignmentModalSave');
+
+    if (modalClose) {
+        modalClose.addEventListener('click', closeAssignmentModal);
+    }
+    if (modalCancel) {
+        modalCancel.addEventListener('click', closeAssignmentModal);
+    }
+    if (modalSave) {
+        modalSave.addEventListener('click', saveAssignment);
+    }
+
+    // Assignment modal backdrop click
+    const modal = document.getElementById('assignmentModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeAssignmentModal();
+            }
+        });
+    }
+
+    // Filter change events
+    const userFilter = document.getElementById('assignmentUserFilter');
+    const moduleFilter = document.getElementById('assignmentModuleFilter');
+    const statusFilter = document.getElementById('assignmentStatusFilter');
+
+    if (userFilter) {
+        userFilter.addEventListener('change', filterAssignments);
+    }
+    if (moduleFilter) {
+        moduleFilter.addEventListener('change', filterAssignments);
+    }
+    if (statusFilter) {
+        statusFilter.addEventListener('change', filterAssignments);
+    }
+}
+
+// Filter assignments
+function filterAssignments() {
+    const userFilter = document.getElementById('assignmentUserFilter')?.value;
+    const moduleFilter = document.getElementById('assignmentModuleFilter')?.value;
+    const statusFilter = document.getElementById('assignmentStatusFilter')?.value;
+
+    // This would filter the assignments based on the selected filters
+    // For now, we'll just reload all assignments
+    updateAssignmentsTable();
+}

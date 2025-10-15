@@ -110,6 +110,59 @@
                 </div>
             </div>
 
+            <!-- Module Assignments Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title-group">
+                        <div class="section-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <h2 class="section-title">Module Assignments</h2>
+                    </div>
+                    <button class="action-btn" id="assignModuleBtn">
+                        <i class="fas fa-plus"></i>
+                        Assign Module
+                    </button>
+                </div>
+                <div class="section-content">
+                    <div class="assignments-container">
+                        <div class="assignments-filters">
+                            <select id="assignmentUserFilter" class="filter-select">
+                                <option value="">All Users</option>
+                            </select>
+                            <select id="assignmentModuleFilter" class="filter-select">
+                                <option value="">All Modules</option>
+                            </select>
+                            <select id="assignmentStatusFilter" class="filter-select">
+                                <option value="">All Statuses</option>
+                                <option value="assigned">Assigned</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="overdue">Overdue</option>
+                            </select>
+                        </div>
+                        <div class="table-container">
+                            <table class="assignments-table">
+                                <thead>
+                                    <tr>
+                                        <th>USER</th>
+                                        <th>MODULE</th>
+                                        <th>ASSIGNED DATE</th>
+                                        <th>DUE DATE</th>
+                                        <th>STATUS</th>
+                                        <th>NOTES</th>
+                                        <th>ACTIONS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="assignmentsTableBody">
+                                    <!-- Assignments will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Path Management Content (Hidden by default) -->
             <div id="pathManagementContent" class="content-section" style="display: none;">
                 <div class="content-header">
@@ -317,6 +370,59 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="moduleModalCancel">Cancel</button>
                 <button type="button" class="btn btn-primary" id="moduleModalSave">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Module Assignment Modal -->
+    <div class="modal-overlay" id="assignmentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="assignmentModalTitle">Assign Module</h2>
+                <button class="modal-close" id="assignmentModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="assignmentForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="assignmentUser">User</label>
+                            <select id="assignmentUser" name="userId" required>
+                                <option value="">Select a user...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="assignmentModule">Module</label>
+                            <select id="assignmentModule" name="moduleId" required>
+                                <option value="">Select a module...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="assignmentDueDate">Due Date</label>
+                            <input type="date" id="assignmentDueDate" name="dueDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="assignmentStatus">Status</label>
+                            <select id="assignmentStatus" name="status">
+                                <option value="assigned">Assigned</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="overdue">Overdue</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="assignmentNotes">Notes</label>
+                        <textarea id="assignmentNotes" name="notes" rows="3" placeholder="Optional notes about this assignment..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="assignmentModalCancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="assignmentModalSave">Assign Module</button>
             </div>
         </div>
     </div>

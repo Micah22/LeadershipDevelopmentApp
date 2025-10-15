@@ -305,6 +305,42 @@ class DatabaseService {
     async updatePerformanceReview(reviewId, reviewData) {
         return this.apiCall(`performance_reviews?id=eq.${reviewId}`, 'PATCH', reviewData);
     }
+
+    // Module Assignment Methods
+    async getModuleAssignments(userId = null) {
+        const endpoint = userId ? `module_assignments?user_id=eq.${userId}` : 'module_assignments';
+        return await this.apiCall(endpoint);
+    }
+
+    async assignModuleToUser(userId, moduleId, assignedBy = null, dueDate = null, notes = null) {
+        const assignment = {
+            user_id: userId,
+            module_id: moduleId,
+            assigned_by: assignedBy,
+            due_date: dueDate,
+            notes: notes,
+            status: 'assigned'
+        };
+        return await this.apiCall('module_assignments', 'POST', assignment);
+    }
+
+    async updateModuleAssignment(assignmentId, updates) {
+        return await this.apiCall(`module_assignments?id=eq.${assignmentId}`, 'PATCH', updates);
+    }
+
+    async removeModuleAssignment(assignmentId) {
+        return await this.apiCall(`module_assignments?id=eq.${assignmentId}`, 'DELETE');
+    }
+
+    async getUserAssignedModules(userId) {
+        const assignments = await this.getModuleAssignments(userId);
+        if (!assignments || assignments.length === 0) return [];
+        
+        // Get module details for each assignment
+        const moduleIds = assignments.map(a => a.module_id);
+        const modules = await this.getModules();
+        return modules.filter(module => moduleIds.includes(module.id));
+    }
 }
 
 // Create global database service instance
