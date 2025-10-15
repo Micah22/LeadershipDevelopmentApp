@@ -689,6 +689,47 @@ body {
     background: var(--dark-hover);
 }
 
+/* Multiselect styling */
+#assignmentModule[multiple] {
+    min-height: 120px;
+    padding: 0.5rem;
+}
+
+#assignmentModule[multiple] option {
+    padding: 0.5rem;
+    margin: 0.25rem 0;
+    border-radius: 4px;
+    background: var(--white);
+    color: var(--text-color);
+}
+
+#assignmentModule[multiple] option:checked {
+    background: var(--primary-color);
+    color: var(--white);
+}
+
+.form-help {
+    font-size: 0.8rem;
+    color: var(--medium-gray);
+    margin-top: 0.25rem;
+    display: block;
+}
+
+/* Dark mode for multiselect */
+[data-theme="dark"] #assignmentModule[multiple] option {
+    background: var(--dark-bg);
+    color: var(--dark-text);
+}
+
+[data-theme="dark"] #assignmentModule[multiple] option:checked {
+    background: var(--dark-primary);
+    color: var(--white);
+}
+
+[data-theme="dark"] .form-help {
+    color: var(--dark-medium-gray);
+}
+
 .sidebar-nav {
     padding: 1rem 0;
 }

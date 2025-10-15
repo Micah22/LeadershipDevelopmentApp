@@ -1997,7 +1997,7 @@ function populateAssignmentForm() {
 
     // Populate module dropdown
     const modules = getAllModules();
-    moduleSelect.innerHTML = '<option value="">Select a module...</option>';
+    moduleSelect.innerHTML = '<option value="">Select modules...</option>';
     modules.forEach(module => {
         const option = document.createElement('option');
         option.value = module.id || module.title;
@@ -2025,91 +2025,127 @@ async function saveAssignment() {
     const form = document.getElementById('assignmentForm');
     const formData = new FormData(form);
     
-    const assignmentData = {
-        user_id: formData.get('userId'),
-        module_id: formData.get('moduleId'),
-        due_date: formData.get('dueDate') || null,
-        status: formData.get('status'),
-        notes: formData.get('notes') || null
-    };
+    const userId = formData.get('userId');
+    const moduleIds = formData.getAll('moduleId'); // Get all selected modules
+    const dueDate = formData.get('dueDate') || null;
+    const status = formData.get('status');
+    const notes = formData.get('notes') || null;
 
-    if (!assignmentData.user_id || !assignmentData.module_id) {
-        showToast('error', 'Validation Error', 'Please select both a user and a module');
+    if (!userId || moduleIds.length === 0) {
+        showToast('error', 'Validation Error', 'Please select a user and at least one module');
+        return;
+    }
+
+    // Filter out empty values
+    const validModuleIds = moduleIds.filter(id => id && id !== '');
+    
+    if (validModuleIds.length === 0) {
+        showToast('error', 'Validation Error', 'Please select at least one module');
         return;
     }
 
     try {
         if (currentAssignment) {
-            // Update existing assignment
+            // Update existing assignment (single assignment editing)
+            const assignmentData = {
+                user_id: userId,
+                module_id: validModuleIds[0], // For editing, use first selected module
+                due_date: dueDate,
+                status: status,
+                notes: notes
+            };
             await window.dbService.updateModuleAssignment(currentAssignment.id, assignmentData);
             showToast('success', 'Assignment Updated', 'Module assignment updated successfully');
         } else {
-            // Create new assignment
-            const newAssignment = await window.dbService.assignModuleToUser(
-                assignmentData.user_id,
-                assignmentData.module_id,
-                null, // assigned_by
-                assignmentData.due_date,
-                assignmentData.notes
-            );
-            
-            // Also save to localStorage as fallback
-            const localAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
+            // Create multiple new assignments
             const users = getAllUsers();
             const modules = getAllModules();
+            const user = users.find(u => (u.id || u.username) === userId);
             
-            const user = users.find(u => (u.id || u.username) === assignmentData.user_id);
-            const module = modules.find(m => (m.id || m.title) === assignmentData.module_id);
+            let successCount = 0;
+            let errorCount = 0;
             
-            const localAssignment = {
-                id: newAssignment?.id || Date.now().toString(),
-                user_id: assignmentData.user_id,
-                module_id: assignmentData.module_id,
-                user_name: user?.full_name || user?.fullName || user?.username || 'Unknown User',
-                module_title: module?.title || 'Unknown Module',
-                due_date: assignmentData.due_date,
-                status: assignmentData.status,
-                notes: assignmentData.notes,
-                assigned_at: new Date().toISOString()
-            };
+            // Create assignments for each selected module
+            for (const moduleId of validModuleIds) {
+                try {
+                    const newAssignment = await window.dbService.assignModuleToUser(
+                        userId,
+                        moduleId,
+                        null, // assigned_by
+                        dueDate,
+                        notes
+                    );
+                    
+                    // Also save to localStorage as fallback
+                    const localAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
+                    const module = modules.find(m => (m.id || m.title) === moduleId);
+                    
+                    const localAssignment = {
+                        id: newAssignment?.id || Date.now().toString() + Math.random(),
+                        user_id: userId,
+                        module_id: moduleId,
+                        user_name: user?.full_name || user?.fullName || user?.username || 'Unknown User',
+                        module_title: module?.title || 'Unknown Module',
+                        due_date: dueDate,
+                        status: status,
+                        notes: notes,
+                        assigned_at: new Date().toISOString()
+                    };
+                    
+                    localAssignments.push(localAssignment);
+                    localStorage.setItem('moduleAssignments', JSON.stringify(localAssignments));
+                    
+                    successCount++;
+                } catch (error) {
+                    console.error(`Failed to assign module ${moduleId}:`, error);
+                    errorCount++;
+                }
+            }
             
-            localAssignments.push(localAssignment);
-            localStorage.setItem('moduleAssignments', JSON.stringify(localAssignments));
-            
-            showToast('success', 'Module Assigned', 'Module assigned to user successfully');
+            if (successCount > 0) {
+                const message = errorCount > 0 
+                    ? `${successCount} modules assigned successfully, ${errorCount} failed`
+                    : `${successCount} modules assigned successfully`;
+                showToast('success', 'Modules Assigned', message);
+            } else {
+                showToast('error', 'Assignment Failed', 'No modules could be assigned');
+            }
         }
 
         closeAssignmentModal();
         await loadModuleAssignments();
     } catch (error) {
-        console.error('Failed to save assignment:', error);
+        console.error('Failed to save assignments:', error);
         
-        // Fallback to localStorage
+        // Fallback to localStorage for all modules
         const localAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
         const users = getAllUsers();
         const modules = getAllModules();
+        const user = users.find(u => (u.id || u.username) === userId);
         
-        const user = users.find(u => (u.id || u.username) === assignmentData.user_id);
-        const module = modules.find(m => (m.id || m.title) === assignmentData.module_id);
+        for (const moduleId of validModuleIds) {
+            const module = modules.find(m => (m.id || m.title) === moduleId);
+            
+            const localAssignment = {
+                id: Date.now().toString() + Math.random(),
+                user_id: userId,
+                module_id: moduleId,
+                user_name: user?.full_name || user?.fullName || user?.username || 'Unknown User',
+                module_title: module?.title || 'Unknown Module',
+                due_date: dueDate,
+                status: status,
+                notes: notes,
+                assigned_at: new Date().toISOString()
+            };
+            
+            localAssignments.push(localAssignment);
+        }
         
-        const localAssignment = {
-            id: Date.now().toString(),
-            user_id: assignmentData.user_id,
-            module_id: assignmentData.module_id,
-            user_name: user?.full_name || user?.fullName || user?.username || 'Unknown User',
-            module_title: module?.title || 'Unknown Module',
-            due_date: assignmentData.due_date,
-            status: assignmentData.status,
-            notes: assignmentData.notes,
-            assigned_at: new Date().toISOString()
-        };
-        
-        localAssignments.push(localAssignment);
         localStorage.setItem('moduleAssignments', JSON.stringify(localAssignments));
         
         closeAssignmentModal();
         await loadModuleAssignments();
-        showToast('warning', 'Database Warning', 'Assignment saved locally but may not sync to database');
+        showToast('warning', 'Database Warning', `${validModuleIds.length} assignments saved locally but may not sync to database`);
     }
 }
 
