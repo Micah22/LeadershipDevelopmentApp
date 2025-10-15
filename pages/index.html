@@ -85,20 +85,29 @@
             
             // Initialize users - prioritize localStorage for now due to RLS issues
             const existingUsers = localStorage.getItem('users');
+            console.log('Initial localStorage users check:', existingUsers);
             if (!existingUsers) {
                 localStorage.setItem('users', JSON.stringify(defaultUsers));
                 console.log('Default users initialized in localStorage:', defaultUsers.length);
+                console.log('Default users data:', defaultUsers);
             } else {
                 console.log('Existing users found in localStorage, preserving data');
+                const parsedUsers = JSON.parse(existingUsers);
+                console.log('Existing users count:', parsedUsers.length);
+                console.log('Existing users data:', parsedUsers);
             }
             
             // Try to sync with database in background (non-blocking)
             try {
                 const dbUsers = await window.dbService.getUsers();
+                console.log('Database users response:', dbUsers);
                 if (dbUsers && dbUsers.length > 0) {
                     console.log('Users loaded from database:', dbUsers.length);
                     // Store in localStorage for compatibility
                     localStorage.setItem('users', JSON.stringify(dbUsers));
+                    console.log('Database users stored in localStorage');
+                } else {
+                    console.log('No users found in database, keeping localStorage users');
                 }
             } catch (error) {
                 console.log('Database sync failed, using localStorage only:', error.message);
@@ -123,8 +132,11 @@
                     console.log('Login attempt:', { username: username, password: password });
                     
                     // Get users from localStorage
-                    const users = JSON.parse(localStorage.getItem('users') || '[]');
-                    console.log('Available users:', users);
+                    const usersData = localStorage.getItem('users');
+                    console.log('Raw users data from localStorage:', usersData);
+                    const users = JSON.parse(usersData || '[]');
+                    console.log('Parsed users:', users);
+                    console.log('Available users count:', users.length);
                     
                     users.forEach(function(user, index) {
                         console.log('User ' + index + ':', user);
