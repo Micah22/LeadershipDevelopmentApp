@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Progress - CFA Leadership Development</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-    <link rel="stylesheet" href="../styles/user-progress-styles.css?v=18">
+    <link rel="stylesheet" href="../styles/user-progress-styles.css?v=24">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="../scripts/navbar.js?v=17"></script>
 </head>
@@ -107,6 +107,15 @@
                         <div class="modal-metadata" id="modalMetadata">
                             <!-- Module metadata will be populated here -->
                         </div>
+                        <div class="modal-progress-summary">
+                            <div class="modal-progress-info">
+                                <span class="modal-progress-label">Progress:</span>
+                                <span class="modal-progress-percentage" id="modalProgressPercentage">0%</span>
+                            </div>
+                            <div class="modal-progress-bar">
+                                <div class="modal-progress-fill" id="modalProgressFill"></div>
+                            </div>
+                        </div>
                     </div>
                     <button class="modal-close" id="modalClose">
                         <i class="fas fa-times"></i>
@@ -126,13 +135,157 @@
                         <!-- Checklist items will be populated here -->
                     </div>
                 </div>
-                <div class="progress-summary">
-                    <div class="progress-info">
-                        <span class="progress-label">Progress:</span>
-                        <span class="progress-percentage" id="modalProgressPercentage">0%</span>
+                
+                <!-- Performance Review Checklist -->
+                <div class="performance-review-section">
+                    <h3>Performance Review Checklist</h3>
+                    <div class="overall-performance-rating">
+                        <h4>Overall Performance Rating</h4>
+                        <div class="review-entries">
+                            <div class="review-entry">
+                                <div class="rating-circles">
+                                    <div class="circle green"></div>
+                                    <div class="circle orange"></div>
+                                    <div class="circle red"></div>
+                                </div>
+                                <div class="review-fields">
+                                    <div class="field-row">
+                                        <div class="field-group">
+                                            <label>Date:</label>
+                                            <input type="date" class="review-input" placeholder="mm/dd/yyyy">
+                                        </div>
+                                        <div class="field-group">
+                                            <label>Trainee Initials:</label>
+                                            <input type="text" class="review-input" maxlength="3" placeholder="Trainee Initials">
+                                        </div>
+                                        <div class="field-group">
+                                            <label>Trainer Signature:</label>
+                                            <input type="text" class="review-input signature" placeholder="Trainer Signature">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="review-entry">
+                                <div class="rating-circles">
+                                    <div class="circle green"></div>
+                                    <div class="circle orange"></div>
+                                    <div class="circle red"></div>
+                                </div>
+                                <div class="review-fields">
+                                    <div class="field-row">
+                                        <div class="field-group">
+                                            <label>Date:</label>
+                                            <input type="date" class="review-input" placeholder="mm/dd/yyyy">
+                                        </div>
+                                        <div class="field-group">
+                                            <label>Trainee Initials:</label>
+                                            <input type="text" class="review-input" maxlength="3" placeholder="Trainee Initials">
+                                        </div>
+                                        <div class="field-group">
+                                            <label>Trainer Signature:</label>
+                                            <input type="text" class="review-input signature" placeholder="Trainer Signature">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="review-entry">
+                                <div class="rating-circles">
+                                    <div class="circle green"></div>
+                                    <div class="circle orange"></div>
+                                    <div class="circle red"></div>
+                                </div>
+                                <div class="review-fields">
+                                    <div class="field-row">
+                                        <div class="field-group">
+                                            <label>Date:</label>
+                                            <input type="date" class="review-input" placeholder="mm/dd/yyyy">
+                                        </div>
+                                        <div class="field-group">
+                                            <label>Trainee Initials:</label>
+                                            <input type="text" class="review-input" maxlength="3" placeholder="Trainee Initials">
+                                        </div>
+                                        <div class="field-group">
+                                            <label>Trainer Signature:</label>
+                                            <input type="text" class="review-input signature" placeholder="Trainer Signature">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="modalProgressFill"></div>
+                </div>
+                
+                <!-- Trainer Comments and Feedback -->
+                <div class="trainer-comments-section">
+                    <h4>Trainer Comments and Feedback</h4>
+                    <div class="comments-container">
+                        <div class="comment-entry">
+                            <input type="text" class="trainer-initials-input" maxlength="3" placeholder="initls">
+                            <textarea class="comment-line" placeholder="Comment 1"></textarea>
+                        </div>
+                        <div class="comment-entry">
+                            <input type="text" class="trainer-initials-input" maxlength="3" placeholder="initls">
+                            <textarea class="comment-line" placeholder="Comment 2"></textarea>
+                        </div>
+                        <div class="comment-entry">
+                            <input type="text" class="trainer-initials-input" maxlength="3" placeholder="initls">
+                            <textarea class="comment-line" placeholder="Comment 3"></textarea>
+                        </div>
+                        <div class="comment-entry">
+                            <input type="text" class="trainer-initials-input" maxlength="3" placeholder="initls">
+                            <textarea class="comment-line" placeholder="Comment 4"></textarea>
+                        </div>
+                        <div class="comment-entry">
+                            <input type="text" class="trainer-initials-input" maxlength="3" placeholder="initls">
+                            <textarea class="comment-line" placeholder="Comment 5"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Team Member Goals -->
+                <div class="team-goals-section">
+                    <h4>Team Member Goals</h4>
+                    <div class="goals-container">
+                        <div class="goal-entry">
+                            <div class="goal-row">
+                                <div class="goal-field">
+                                    <label>Goal</label>
+                                    <input type="text" class="goal-input" placeholder="Enter goal">
+                                </div>
+                                <div class="due-date-field">
+                                    <label>Due Date</label>
+                                    <input type="date" class="due-date-input">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="goal-entry">
+                            <div class="goal-row">
+                                <div class="goal-field">
+                                    <label>Goal</label>
+                                    <input type="text" class="goal-input" placeholder="Enter goal">
+                                </div>
+                                <div class="due-date-field">
+                                    <label>Due Date</label>
+                                    <input type="date" class="due-date-input">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="goal-entry">
+                            <div class="goal-row">
+                                <div class="goal-field">
+                                    <label>Goal</label>
+                                    <input type="text" class="goal-input" placeholder="Enter goal">
+                                </div>
+                                <div class="due-date-field">
+                                    <label>Due Date</label>
+                                    <input type="date" class="due-date-input">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

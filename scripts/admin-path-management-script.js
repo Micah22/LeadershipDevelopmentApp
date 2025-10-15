@@ -649,7 +649,7 @@ function saveModuleChanges() {
     loadModulesData();
     
     // Show success message
-    alert('Module saved successfully! Changes will be reflected across all user accounts.');
+    showToast('success', 'Module Saved', 'Module saved successfully! Changes will be reflected across all user accounts.');
 }
 
 function editModule(moduleTitle) {
@@ -684,7 +684,7 @@ function deleteModule(moduleTitle) {
     loadModulesData();
     
     // Show success message
-    alert(`Module "${moduleTitle}" has been deleted successfully!`);
+    showToast('success', 'Module Deleted', `Module "${moduleTitle}" has been deleted successfully!`);
 }
 
 // File upload functionality
@@ -785,4 +785,62 @@ function getTaskIndex(checklistItem) {
 // Utility function to get users from localStorage
 function getUsers() {
     return JSON.parse(localStorage.getItem('users') || '[]');
+}
+
+// Toast Notification Functions
+function showToast(type, title, message, duration = 5000) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icon = getToastIcon(type);
+    
+    toast.innerHTML = `
+        <div class="toast-icon">${icon}</div>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="removeToast(this.parentElement)">×</button>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100);
+    
+    // Auto remove after duration
+    setTimeout(() => {
+        removeToast(toast);
+    }, duration);
+}
+
+function getToastIcon(type) {
+    switch (type) {
+        case 'success':
+            return '✓';
+        case 'error':
+            return '✕';
+        case 'warning':
+            return '⚠';
+        case 'info':
+            return 'ℹ';
+        default:
+            return 'ℹ';
+    }
+}
+
+function removeToast(toast) {
+    if (!toast) return;
+    
+    toast.classList.remove('show');
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.parentElement.removeChild(toast);
+        }
+    }, 300);
 }
