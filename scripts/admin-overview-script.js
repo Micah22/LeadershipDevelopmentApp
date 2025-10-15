@@ -829,7 +829,7 @@ function showUserManagementContent() {
         console.log('Showed user management sections');
 }
 
-function showPathManagementContent() {
+async function showPathManagementContent() {
     try {
         console.log('showPathManagementContent called');
         
@@ -878,7 +878,7 @@ function showPathManagementContent() {
             console.log('About to call loadModulesData');
         // Load modules data when showing path management
         try {
-            loadModulesData();
+            await loadModulesData();
             console.log('loadModulesData call completed');
         } catch (error) {
             console.error('Error in loadModulesData:', error);
@@ -892,14 +892,34 @@ function showPathManagementContent() {
 }
 
 // Path Management Functions (copied from admin-path-management-script.js)
-function loadModulesData() {
+async function loadModulesData() {
     try {
         console.log('loadModulesData called');
         
-        // Initialize global modules if they don't exist
-        initializeGlobalModules();
+        // Try to load from database first
+        let modules = [];
+        try {
+            if (window.dbService && window.dbService.isConfigured) {
+                const dbModules = await window.dbService.getModules();
+                if (dbModules && dbModules.length > 0) {
+                    console.log('Loading modules from database for admin:', dbModules.length);
+                    modules = dbModules;
+                    
+                    // Store in localStorage for compatibility
+                    localStorage.setItem('globalModules', JSON.stringify(dbModules));
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to load modules from database, using localStorage:', error);
+        }
         
-        const modules = getAllModules();
+        // Fallback to localStorage if database failed
+        if (modules.length === 0) {
+            // Initialize global modules if they don't exist
+            initializeGlobalModules();
+            modules = getAllModules();
+        }
+        
         console.log('Modules data:', modules);
         
         const modulesGrid = document.getElementById('modulesManagementGrid');
@@ -1055,7 +1075,7 @@ function editModule(moduleTitle) {
     openModuleModal(moduleTitle);
 }
 
-function deleteModule(moduleTitle) {
+async function deleteModule(moduleTitle) {
     // Confirm deletion
     if (!confirm(`Are you sure you want to delete the module "${moduleTitle}"?\n\nThis action cannot be undone and will remove the module from all user accounts.`)) {
         return;
@@ -1079,7 +1099,7 @@ function deleteModule(moduleTitle) {
     console.log(`Module "${moduleTitle}" deleted successfully`);
     
     // Reload modules data
-    loadModulesData();
+    await loadModulesData();
     
     // Show success message
     showToast('success', 'Module Deleted', `Module "${moduleTitle}" has been deleted successfully!`);
@@ -1412,7 +1432,7 @@ async function saveModuleChanges() {
     closeModuleModal();
 
     // Reload modules data
-    loadModulesData();
+    await loadModulesData();
 
     // Show success message
     showToast('success', 'Module Saved', 'Module saved successfully! Changes will be reflected across all user accounts.');

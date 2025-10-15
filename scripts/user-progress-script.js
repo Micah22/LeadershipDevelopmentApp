@@ -1,6 +1,6 @@
 // User Progress Script
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('User Progress page loaded');
     
     // Check if user is logged in
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeTheme();
     
     // Load progress data
-    loadProgressData();
+    await loadProgressData();
 });
 
 function initializePage() {
@@ -157,7 +157,7 @@ function setupEventListeners() {
 }
 
 
-function loadProgressData() {
+async function loadProgressData() {
     const username = localStorage.getItem('username');
     if (!username) return;
 
@@ -166,18 +166,30 @@ function loadProgressData() {
     const user = users.find(u => u.username === username);
     const userRole = user ? user.role : 'Team Member';
 
-    // Calculate real progress data from user's saved progress
-    const overallProgress = calculateUserOverallProgress(username);
-    const userProgress = getUserProgress(username);
-
-    // Get all module titles from global storage (show all modules, but some will be locked)
-    const globalModules = localStorage.getItem('globalModules');
+    // Try to load modules from database first
     let moduleTitles = [];
+    try {
+        if (window.dbService && window.dbService.isConfigured) {
+            const dbModules = await window.dbService.getModules();
+            if (dbModules && dbModules.length > 0) {
+                console.log('Loading modules from database for progress page:', dbModules.length);
+                moduleTitles = dbModules.map(m => m.title);
+                
+                // Store in localStorage for compatibility
+                localStorage.setItem('globalModules', JSON.stringify(dbModules));
+            }
+        }
+    } catch (error) {
+        console.warn('Failed to load modules from database, using localStorage:', error);
+    }
     
-    if (globalModules) {
-        const modules = JSON.parse(globalModules);
-        moduleTitles = modules.map(m => m.title);
-    } else {
+    // Fallback to localStorage if database failed
+    if (moduleTitles.length === 0) {
+        const globalModules = localStorage.getItem('globalModules');
+        if (globalModules) {
+            const modules = JSON.parse(globalModules);
+            moduleTitles = modules.map(m => m.title);
+        } else {
         // Fallback to default module titles
         moduleTitles = [
             'Communication Skills', 'Team Leadership', 'Decision Making',
