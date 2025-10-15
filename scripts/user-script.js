@@ -102,8 +102,32 @@ async function ensureUsersData() {
     console.log('User Script - ensureUsersData() called');
     
     const existingUsers = localStorage.getItem('users');
+    console.log('User Script - Raw users data from localStorage:', existingUsers);
+    
+    let users = [];
+    let needsInitialization = false;
+    
     if (!existingUsers) {
-        console.log('User Script - No users found, initializing default users...');
+        console.log('User Script - No users data found in localStorage');
+        needsInitialization = true;
+    } else {
+        try {
+            users = JSON.parse(existingUsers);
+            console.log('User Script - Parsed users:', users);
+            if (!Array.isArray(users) || users.length === 0) {
+                console.log('User Script - Users data is invalid or empty array');
+                needsInitialization = true;
+            } else {
+                console.log('User Script - Valid users data found:', users.length, 'users');
+            }
+        } catch (error) {
+            console.log('User Script - Error parsing users data:', error.message);
+            needsInitialization = true;
+        }
+    }
+    
+    if (needsInitialization) {
+        console.log('User Script - Initializing default users...');
         
         // Create default users (same as in index.html)
         const defaultUsers = [
@@ -146,8 +170,6 @@ async function ensureUsersData() {
         
         localStorage.setItem('users', JSON.stringify(defaultUsers));
         console.log('User Script - Default users initialized:', defaultUsers.length);
-    } else {
-        console.log('User Script - Users data already exists');
     }
 }
 
