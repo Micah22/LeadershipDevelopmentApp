@@ -107,6 +107,9 @@ function setupEventListeners() {
         });
     }
     
+    // Update dropdown user info
+    updateDropdownUserInfo();
+    
     // Theme toggle button in dropdown
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) {
@@ -929,6 +932,24 @@ function initializeTheme() {
     const themeText = document.getElementById('themeText');
     if (themeText) {
         themeText.textContent = savedTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
+    }
+}
+
+// Update dropdown user info
+function updateDropdownUserInfo() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const username = currentUser.username || localStorage.getItem('username') || 'User';
+    const role = currentUser.role || 'Team Member';
+    
+    const dropdownUserName = document.getElementById('dropdownUserName');
+    const dropdownUserRole = document.getElementById('dropdownUserRole');
+    
+    if (dropdownUserName) {
+        dropdownUserName.textContent = username;
+    }
+    
+    if (dropdownUserRole) {
+        dropdownUserRole.textContent = role;
     }
 }
 

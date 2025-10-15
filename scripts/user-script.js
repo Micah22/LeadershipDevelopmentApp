@@ -100,15 +100,6 @@ function updateNavigation() {
 
 // Set up sign out functionality
 function setupSignOut() {
-    const signOutBtn = document.getElementById('signOutBtn');
-    if (signOutBtn) {
-        signOutBtn.addEventListener('click', function() {
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('username');
-            window.location.href = 'index.html';
-        });
-    }
-    
     // Avatar dropdown functionality
     const userAvatar = document.getElementById('userAvatar');
     const userDropdown = document.getElementById('userDropdown');
@@ -126,6 +117,9 @@ function setupSignOut() {
             }
         });
     }
+    
+    // Update dropdown user info
+    updateDropdownUserInfo();
     
     // Theme toggle button in dropdown
     const themeToggle = document.getElementById('themeToggle');
@@ -169,10 +163,10 @@ function getUserProgress(username) {
     return progress ? JSON.parse(progress) : {};
 }
 
-// Get leadership paths
+// Get global modules (leadership paths)
 function getLeadershipPaths() {
-    const paths = localStorage.getItem('leadershipPaths');
-    return paths ? JSON.parse(paths) : [];
+    const modules = localStorage.getItem('globalModules');
+    return modules ? JSON.parse(modules) : [];
 }
 
 // Check if path is unlocked for user role
@@ -187,9 +181,57 @@ function isPathUnlocked(path, userRole) {
     };
     
     const userLevel = roleHierarchy[userRole] || 1;
-    const pathLevel = roleHierarchy[path.role] || 1;
+    const pathLevel = roleHierarchy[path.requiredRole] || 1;
     
     return userLevel >= pathLevel;
+}
+
+// Initialize default global modules if none exist
+function initializeDefaultLeadershipPaths() {
+    const existingModules = localStorage.getItem('globalModules');
+    if (!existingModules) {
+        const defaultModules = [
+            {
+                title: 'Communication Skills',
+                description: 'Develop effective communication techniques',
+                requiredRole: 'Team Member',
+                checklist: [
+                    'Complete communication fundamentals video',
+                    'Read "The Art of Active Listening" article',
+                    'Practice delivering a team update presentation',
+                    'Complete communication style assessment',
+                    'Submit reflection on communication challenges'
+                ]
+            },
+            {
+                title: 'Team Leadership',
+                description: 'Learn to lead and motivate teams effectively',
+                requiredRole: 'Trainer',
+                checklist: [
+                    'Study team dynamics principles',
+                    'Complete conflict resolution training',
+                    'Lead a team meeting',
+                    'Create team development plan',
+                    'Evaluate team performance'
+                ]
+            },
+            {
+                title: 'Strategic Thinking',
+                description: 'Develop strategic planning and decision-making skills',
+                requiredRole: 'Assistant Supervisor',
+                checklist: [
+                    'Complete strategic planning course',
+                    'Analyze case studies',
+                    'Develop department strategy',
+                    'Present strategic recommendations',
+                    'Implement strategic initiatives'
+                ]
+            }
+        ];
+        
+        localStorage.setItem('globalModules', JSON.stringify(defaultModules));
+        console.log('Initialized default global modules');
+    }
 }
 
 // Load dashboard data - FIXED TO UPDATE ALL STATS
@@ -203,8 +245,12 @@ function loadDashboardData() {
         return;
     }
     
+    // Initialize default paths if none exist
+    initializeDefaultLeadershipPaths();
+    
     const leadershipPaths = getLeadershipPaths();
     const userProgress = getUserProgress(username);
+    
     
     // Calculate progress
     let totalCompleted = 0;
@@ -212,9 +258,14 @@ function loadDashboardData() {
     
     leadershipPaths.forEach(path => {
         if (isPathUnlocked(path, user.role)) {
-            totalTasks += path.tasks.length;
-            const pathProgress = userProgress[path.name] || { completed: 0, total: path.tasks.length };
-            totalCompleted += pathProgress.completed || 0;
+            totalTasks += path.checklist.length;
+            const pathProgress = userProgress[path.title];
+            
+            if (pathProgress && pathProgress.checklist) {
+                // Count completed tasks from checklist array
+                const completed = pathProgress.checklist.filter(task => task === true).length;
+                totalCompleted += completed;
+            }
         }
     });
     
@@ -237,8 +288,6 @@ function loadDashboardData() {
         progressFillElement.style.width = `${progressPercentage}%`;
     }
     
-    console.log('Updated dashboard stats:', { totalCompleted, totalTasks, progressPercentage });
-    
     // Update progress items
     updateProgressItems(leadershipPaths, userProgress, user.role);
 }
@@ -250,8 +299,8 @@ function updateProgressItems(leadershipPaths, userProgress, userRole) {
     leadershipPaths.forEach((path, index) => {
         if (index < progressItems.length) {
             const item = progressItems[index];
-            const pathProgress = userProgress[path.name] || { completed: 0, total: path.tasks.length };
-            const percentage = path.tasks.length > 0 ? Math.round((pathProgress.completed / path.tasks.length) * 100) : 0;
+            const pathProgress = userProgress[path.title] || { completed: 0, total: path.checklist.length };
+            const percentage = path.checklist.length > 0 ? Math.round((pathProgress.completed / path.checklist.length) * 100) : 0;
             
             const progressBar = item.querySelector('.progress-fill');
             const progressText = item.querySelector('.progress-text');
@@ -316,5 +365,23 @@ function initializeTheme() {
     const themeText = document.getElementById('themeText');
     if (themeText) {
         themeText.textContent = savedTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
+    }
+}
+
+// Update dropdown user info
+function updateDropdownUserInfo() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const username = currentUser.username || localStorage.getItem('username') || 'User';
+    const role = currentUser.role || 'Team Member';
+    
+    const dropdownUserName = document.getElementById('dropdownUserName');
+    const dropdownUserRole = document.getElementById('dropdownUserRole');
+    
+    if (dropdownUserName) {
+        dropdownUserName.textContent = username;
+    }
+    
+    if (dropdownUserRole) {
+        dropdownUserRole.textContent = role;
     }
 }

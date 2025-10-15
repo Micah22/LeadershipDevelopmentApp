@@ -246,7 +246,7 @@ function saveNewPath() {
     }
     
     // Get existing progress data
-    const progressData = localStorage.getItem('userProgress');
+    const progressData = localStorage.getItem(`userProgress_${localStorage.getItem('username')}`);
     const progress = progressData ? JSON.parse(progressData) : {};
     
     // Add new path
@@ -259,7 +259,9 @@ function saveNewPath() {
     };
     
     // Save progress data
-    localStorage.setItem('userProgress', JSON.stringify(progress));
+    const username = localStorage.getItem('username');
+    const userProgressKey = `userProgress_${username}`;
+    localStorage.setItem(userProgressKey, JSON.stringify(progress));
     
     // Close modal and reset form
     document.getElementById('addPathModal').style.display = 'none';
@@ -280,7 +282,7 @@ function saveNewPath() {
 
 // Open edit path modal
 function openEditPathModal(pathName) {
-    const progressData = localStorage.getItem('userProgress');
+    const progressData = localStorage.getItem(`userProgress_${localStorage.getItem('username')}`);
     const progress = progressData ? JSON.parse(progressData) : {};
     const pathData = progress[pathName];
     
@@ -337,7 +339,7 @@ function saveEditedPath() {
     }
     
     // Get existing progress data
-    const progressData = localStorage.getItem('userProgress');
+    const progressData = localStorage.getItem(`userProgress_${localStorage.getItem('username')}`);
     const progress = progressData ? JSON.parse(progressData) : {};
     
     // Update path
@@ -350,7 +352,9 @@ function saveEditedPath() {
     };
     
     // Save progress data
-    localStorage.setItem('userProgress', JSON.stringify(progress));
+    const username = localStorage.getItem('username');
+    const userProgressKey = `userProgress_${username}`;
+    localStorage.setItem(userProgressKey, JSON.stringify(progress));
     
     // Close modal
     document.getElementById('editPathModal').style.display = 'none';
@@ -367,14 +371,18 @@ function deletePath() {
     
     if (confirm('Delete this path?')) {
         // Get existing progress data
-        const progressData = localStorage.getItem('userProgress');
+        const username = localStorage.getItem('username');
+        const userProgressKey = `userProgress_${username}`;
+        const progressData = localStorage.getItem(userProgressKey);
         const progress = progressData ? JSON.parse(progressData) : {};
         
         // Remove path
         delete progress[pathName];
         
         // Save progress data
-        localStorage.setItem('userProgress', JSON.stringify(progress));
+        const username = localStorage.getItem('username');
+        const userProgressKey = `userProgress_${username}`;
+        localStorage.setItem(userProgressKey, JSON.stringify(progress));
         
         // Close modal
         document.getElementById('editPathModal').style.display = 'none';
@@ -389,7 +397,7 @@ function deletePath() {
 // Load and display paths
 function loadPaths() {
     // Get progress data
-    const progressData = localStorage.getItem('userProgress');
+    const progressData = localStorage.getItem(`userProgress_${localStorage.getItem('username')}`);
     const progress = progressData ? JSON.parse(progressData) : {};
     
     // Display paths

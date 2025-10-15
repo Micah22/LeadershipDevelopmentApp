@@ -157,6 +157,9 @@ function setupEventListeners() {
         });
     }
     
+    // Update dropdown user info
+    updateDropdownUserInfo();
+    
     // Theme toggle button in dropdown
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) {
@@ -690,7 +693,6 @@ function canUserAccessModule(userRole, requiredRole) {
 // Utility function to calculate overall progress for a user
 function calculateUserOverallProgress(username) {
     const userProgress = getUserProgress(username);
-    console.log(`Calculating progress for ${username}:`, userProgress);
     
     // Get user's role
     const users = getUsers();
@@ -717,21 +719,15 @@ function calculateUserOverallProgress(username) {
     
     moduleTitles.forEach(moduleTitle => {
         const moduleData = getModuleData(moduleTitle);
+        
         if (moduleData && moduleData.checklist && canUserAccessModule(userRole, moduleData.requiredRole)) {
             totalTasks += moduleData.checklist.length;
             const moduleProgress = userProgress[moduleTitle];
-            
-            console.log(`Module ${moduleTitle}:`, {
-                moduleData: moduleData,
-                moduleProgress: moduleProgress,
-                totalTasks: moduleData.checklist.length
-            });
             
             if (moduleProgress && moduleProgress.checklist) {
                 // Count completed tasks (true values in the checklist array)
                 const completedInModule = moduleProgress.checklist.filter(item => item === true).length;
                 completedTasks += completedInModule;
-                console.log(`Completed in ${moduleTitle}: ${completedInModule}`);
             }
         }
     });
@@ -753,6 +749,7 @@ function getUserProgress(username) {
 function getModuleData(moduleTitle) {
     // Get modules from global storage
     const globalModules = localStorage.getItem('globalModules');
+    
     if (!globalModules) {
         // Return null if no global modules exist
         return null;
@@ -883,7 +880,7 @@ function loadModulesData() {
         // Initialize global modules if they don't exist
         initializeGlobalModules();
         
-        const modules = getModuleData();
+        const modules = getAllModules();
         console.log('Modules data:', modules);
         
         const modulesGrid = document.getElementById('modulesManagementGrid');
@@ -1024,7 +1021,7 @@ function initializeGlobalModules() {
     }
 }
 
-function getModuleData() {
+function getAllModules() {
     const globalModules = localStorage.getItem('globalModules');
     if (!globalModules) {
         return [];
@@ -1043,7 +1040,7 @@ function deleteModule(moduleTitle) {
     }
     
     // Get modules from global storage
-    const modules = getModuleData();
+    const modules = getAllModules();
     const moduleIndex = modules.findIndex(m => m.title === moduleTitle);
     
     if (moduleIndex === -1) {
@@ -1091,7 +1088,7 @@ function openModuleModal(moduleTitle) {
         if (checklistContainer) checklistContainer.innerHTML = '';
     } else {
         // Populate form with existing module data
-        const modules = getModuleData();
+        const modules = getAllModules();
         const module = modules.find(m => m.title === moduleTitle);
         
         if (module) {
@@ -1219,7 +1216,7 @@ function saveModuleChanges() {
     }
 
     // Save to global storage
-    const modules = getModuleData();
+    const modules = getAllModules();
 
     if (currentModule === 'new') {
         // Add new module
@@ -1508,6 +1505,24 @@ function initializeTheme() {
     const themeText = document.getElementById('themeText');
     if (themeText) {
         themeText.textContent = savedTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
+    }
+}
+
+// Update dropdown user info
+function updateDropdownUserInfo() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const username = currentUser.username || 'Admin';
+    const role = currentUser.role || 'Admin';
+    
+    const dropdownUserName = document.getElementById('dropdownUserName');
+    const dropdownUserRole = document.getElementById('dropdownUserRole');
+    
+    if (dropdownUserName) {
+        dropdownUserName.textContent = username;
+    }
+    
+    if (dropdownUserRole) {
+        dropdownUserRole.textContent = role;
     }
 }
 
