@@ -1867,24 +1867,99 @@ window.refreshDataFromDatabase = refreshDataFromDatabase;
 let moduleAssignments = [];
 let currentAssignment = null;
 
+// Load existing assignments from user progress data
+function loadExistingAssignmentsFromProgress() {
+    const users = getAllUsers();
+    const modules = getAllModules();
+    const existingAssignments = [];
+    
+    users.forEach(user => {
+        const userProgress = getUserProgress(user.username);
+        
+        // Check if user has progress on any modules
+        if (userProgress && typeof userProgress === 'object') {
+            Object.keys(userProgress).forEach(moduleTitle => {
+                const progress = userProgress[moduleTitle];
+                
+                // If user has any progress on this module, consider it assigned
+                if (progress && (progress.completedTasks > 0 || progress.totalTasks > 0)) {
+                    const module = modules.find(m => m.title === moduleTitle);
+                    if (module) {
+                        const assignment = {
+                            id: `existing-${user.username}-${moduleTitle}`.replace(/\s+/g, '-'),
+                            user_id: user.id || user.username,
+                            module_id: module.id || module.title,
+                            user_name: user.full_name || user.fullName || user.username,
+                            module_title: module.title,
+                            assigned_at: new Date().toISOString(), // Use current date as fallback
+                            due_date: null,
+                            status: progress.completedTasks >= progress.totalTasks ? 'completed' : 'in_progress',
+                            notes: 'Existing assignment from user progress',
+                            is_existing: true // Flag to identify existing assignments
+                        };
+                        existingAssignments.push(assignment);
+                    }
+                }
+            });
+        }
+    });
+    
+    return existingAssignments;
+}
+
 // Load module assignments
 async function loadModuleAssignments() {
     try {
+        let dbAssignments = [];
         if (window.dbService && window.dbService.isConfigured) {
-            moduleAssignments = await window.dbService.getModuleAssignments();
-            console.log('Loaded module assignments from database:', moduleAssignments.length);
-        } else {
-            // Fallback to localStorage
-            moduleAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
-            console.log('Loaded module assignments from localStorage:', moduleAssignments.length);
+            dbAssignments = await window.dbService.getModuleAssignments();
+            console.log('Loaded module assignments from database:', dbAssignments.length);
         }
+        
+        // Also load existing assignments from user progress data
+        const existingAssignments = loadExistingAssignmentsFromProgress();
+        console.log('Loaded existing assignments from user progress:', existingAssignments.length);
+        
+        // Combine database assignments with existing assignments
+        moduleAssignments = [...dbAssignments, ...existingAssignments];
+        
+        // Remove duplicates based on user_id and module_id combination
+        const uniqueAssignments = [];
+        const seen = new Set();
+        
+        moduleAssignments.forEach(assignment => {
+            const key = `${assignment.user_id}-${assignment.module_id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                uniqueAssignments.push(assignment);
+            }
+        });
+        
+        moduleAssignments = uniqueAssignments;
+        console.log('Total unique module assignments:', moduleAssignments.length);
+        
         updateAssignmentsTable();
         updateAssignmentFilters();
     } catch (error) {
         console.error('Failed to load module assignments:', error);
-        // Fallback to localStorage on error
-        moduleAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
-        console.log('Using localStorage fallback for module assignments:', moduleAssignments.length);
+        // Fallback to localStorage and existing assignments
+        const localAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
+        const existingAssignments = loadExistingAssignmentsFromProgress();
+        moduleAssignments = [...localAssignments, ...existingAssignments];
+        
+        // Remove duplicates
+        const uniqueAssignments = [];
+        const seen = new Set();
+        moduleAssignments.forEach(assignment => {
+            const key = `${assignment.user_id}-${assignment.module_id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                uniqueAssignments.push(assignment);
+            }
+        });
+        moduleAssignments = uniqueAssignments;
+        
+        console.log('Using fallback for module assignments:', moduleAssignments.length);
         updateAssignmentsTable();
         updateAssignmentFilters();
         showToast('warning', 'Database Warning', 'Using local data for module assignments');
@@ -2178,9 +2253,11 @@ async function unassignModule(assignmentId) {
     }
 
     try {
-        // Try to delete from database first
-        await window.dbService.removeModuleAssignment(assignmentId);
-        console.log('Assignment removed from database successfully');
+        // Try to delete from database first (only if it's not an existing assignment)
+        if (!assignment.is_existing) {
+            await window.dbService.removeModuleAssignment(assignmentId);
+            console.log('Assignment removed from database successfully');
+        }
     } catch (error) {
         console.error('Failed to remove assignment from database:', error);
         // Continue with localStorage removal even if database fails
@@ -2190,6 +2267,17 @@ async function unassignModule(assignmentId) {
     const localAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
     const updatedAssignments = localAssignments.filter(a => a.id !== assignmentId);
     localStorage.setItem('moduleAssignments', JSON.stringify(updatedAssignments));
+
+    // If this is an existing assignment, also clear the user's progress
+    if (assignment.is_existing) {
+        const userProgress = getUserProgress(assignment.user_name);
+        if (userProgress && userProgress[assignment.module_title]) {
+            delete userProgress[assignment.module_title];
+            const userProgressKey = `userProgress_${assignment.user_name}`;
+            localStorage.setItem(userProgressKey, JSON.stringify(userProgress));
+            console.log(`Cleared progress for ${assignment.user_name} on ${assignment.module_title}`);
+        }
+    }
 
     showToast('success', 'Module Unassigned', `"${assignment.module_title}" has been unassigned from "${assignment.user_name}"`);
     await loadModuleAssignments();
@@ -2359,13 +2447,28 @@ async function bulkUnassignModules() {
     let errorCount = 0;
     
     for (const assignmentId of selectedIds) {
+        const assignment = moduleAssignments.find(a => a.id === assignmentId);
+        
         try {
-            // Try to remove from database
-            await window.dbService.removeModuleAssignment(assignmentId);
+            // Try to remove from database (only if it's not an existing assignment)
+            if (!assignment.is_existing) {
+                await window.dbService.removeModuleAssignment(assignmentId);
+            }
             successCount++;
         } catch (error) {
             console.error(`Failed to remove assignment ${assignmentId} from database:`, error);
             errorCount++;
+        }
+        
+        // If this is an existing assignment, also clear the user's progress
+        if (assignment && assignment.is_existing) {
+            const userProgress = getUserProgress(assignment.user_name);
+            if (userProgress && userProgress[assignment.module_title]) {
+                delete userProgress[assignment.module_title];
+                const userProgressKey = `userProgress_${assignment.user_name}`;
+                localStorage.setItem(userProgressKey, JSON.stringify(userProgress));
+                console.log(`Cleared progress for ${assignment.user_name} on ${assignment.module_title}`);
+            }
         }
     }
     
