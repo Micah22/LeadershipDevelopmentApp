@@ -1217,6 +1217,18 @@ function initializeTheme() {
 // updateDropdownUserInfo() function removed - handled by navbar.js
 
 // Export functions for potential use in other scripts
+// Force refresh user progress data from database
+async function refreshUserProgressData() {
+    console.log('User Progress - Force refreshing data from database...');
+    
+    try {
+        await loadProgressData();
+        console.log('User Progress - Data refreshed successfully');
+    } catch (error) {
+        console.error('User Progress - Failed to refresh data:', error);
+    }
+}
+
 window.userProgress = {
     loadProgressData,
     updateProgressCards,
@@ -1229,5 +1241,9 @@ window.userProgress = {
     calculateUserOverallProgress,
     toggleChecklistItem,
     openModuleModal,
-    closeModuleModal
+    closeModuleModal,
+    refreshUserProgressData
 };
+
+// Make refresh function available globally
+window.refreshUserProgressData = refreshUserProgressData;

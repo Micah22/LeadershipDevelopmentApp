@@ -520,6 +520,9 @@ body {
 .sidebar-header {
     padding: 0 2rem 2rem;
     border-bottom: 1px solid #666666;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .sidebar-header h2 {
@@ -527,6 +530,33 @@ body {
     font-weight: 600;
     color: #cccccc;
     letter-spacing: 1px;
+    margin: 0;
+    flex: 1;
+}
+
+.refresh-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #cccccc;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+}
+
+.refresh-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: var(--white);
+}
+
+.refresh-btn i {
+    font-size: 0.9rem;
 }
 
 .sidebar-nav {

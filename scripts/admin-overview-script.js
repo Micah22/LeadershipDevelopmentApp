@@ -1393,16 +1393,24 @@ async function saveModuleChanges() {
     try {
         if (moduleIndex >= 0) {
             // Update existing module
-            await window.dbService.updateModule(modules[moduleIndex].id, modules[moduleIndex]);
+            const updatedModule = modules[moduleIndex];
+            await window.dbService.updateModule(updatedModule.id || updatedModule.title, updatedModule);
+            console.log('Module updated in database successfully');
         } else {
             // Create new module
-            await window.dbService.createModule(modules[modules.length - 1]);
+            const newModule = modules[modules.length - 1];
+            await window.dbService.createModule(newModule);
+            console.log('Module created in database successfully');
         }
-        console.log('Module saved to database successfully');
+        
+        // Sync to localStorage after successful database save
+        localStorage.setItem('globalModules', JSON.stringify(modules));
+        console.log('Module synced to localStorage');
     } catch (error) {
         console.error('Failed to save module to database:', error);
-        // Fallback to localStorage
+        // Fallback to localStorage only
         localStorage.setItem('globalModules', JSON.stringify(modules));
+        console.log('Module saved to localStorage only (database unavailable)');
     }
 
     console.log('Module saved:', {
@@ -1782,3 +1790,25 @@ function removeToast(toast) {
         }
     }, 300);
 }
+
+// Force refresh data from database
+async function refreshDataFromDatabase() {
+    console.log('Force refreshing data from database...');
+    showToast('info', 'Refreshing Data', 'Loading latest data from database...');
+    
+    try {
+        // Refresh users data
+        await loadUserData();
+        
+        // Refresh modules data
+        await loadModulesData();
+        
+        showToast('success', 'Data Refreshed', 'Latest data loaded from database');
+    } catch (error) {
+        console.error('Failed to refresh data from database:', error);
+        showToast('error', 'Refresh Failed', 'Could not load latest data from database');
+    }
+}
+
+// Make refresh function available globally
+window.refreshDataFromDatabase = refreshDataFromDatabase;
