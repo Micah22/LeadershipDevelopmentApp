@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Default Admin User</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Add Default Admin User</h1>
+        <p>This will add a default admin user to your Supabase database so you can log in.</p>
+        
+        <div id="status" class="status info">Ready to add default admin user...</div>
+        
+        <div>
+            <button onclick="addDefaultAdmin()">Add Default Admin User</button>
+            <button onclick="addAllDefaultUsers()">Add All Default Users</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <h3>Results:</h3>
+        <div id="log" class="log">Click "Add Default Admin User" to begin...</div>
+    </div>
+
+    <!-- Load database configuration -->
+    <script src="config.js"></script>
+    
+    <script>
+        let logElement = document.getElementById('log');
+        let statusElement = document.getElementById('status');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}\n`;
+            logElement.textContent += logMessage;
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            if (type === 'error') {
+                statusElement.className = 'status error';
+                statusElement.textContent = '❌ Error occurred - check log below';
+            } else if (type === 'success') {
+                statusElement.className = 'status success';
+                statusElement.textContent = '✅ Operation completed successfully';
+            }
+        }
+        
+        function clearLog() {
+            logElement.textContent = '';
+            statusElement.className = 'status info';
+            statusElement.textContent = 'Ready to add default admin user...';
+        }
+        
+        async function addDefaultAdmin() {
+            log('🔧 Adding default admin user...');
+            
+            try {
+                if (!window.dbService || !window.dbService.isConfigured) {
+                    throw new Error('Database service not configured');
+                }
+                
+                const adminUser = {
+                    username: 'admin',
+                    full_name: 'Admin User',
+                    email: 'admin@company.com',
+                    password_hash: btoa('admin123'), // Simple encoding - you should use proper hashing
+                    role: 'Admin',
+                    status: 'active',
+                    start_date: new Date().toISOString().split('T')[0]
+                };
+                
+                log('Creating admin user in database...');
+                const result = await window.dbService.createUser(adminUser);
+                log(`✅ Admin user created successfully!`, 'success');
+                log(`Username: admin`);
+                log(`Password: admin123`);
+                log(`Role: Admin`);
+                
+            } catch (error) {
+                log(`❌ Failed to create admin user: ${error.message}`, 'error');
+            }
+        }
+        
+        async function addAllDefaultUsers() {
+            log('🔧 Adding all default users...');
+            
+            try {
+                if (!window.dbService || !window.dbService.isConfigured) {
+                    throw new Error('Database service not configured');
+                }
+                
+                const defaultUsers = [
+                    {
+                        username: 'admin',
+                        full_name: 'Admin User',
+                        email: 'admin@company.com',
+                        password_hash: btoa('admin123'),
+                        role: 'Admin',
+                        status: 'active',
+                        start_date: '2024-01-01'
+                    },
+                    {
+                        username: 'john.doe',
+                        full_name: 'John Doe',
+                        email: 'john.doe@company.com',
+                        password_hash: btoa('password123'),
+                        role: 'Director',
+                        status: 'active',
+                        start_date: '2024-01-15'
+                    },
+                    {
+                        username: 'jane.smith',
+                        full_name: 'Jane Smith',
+                        email: 'jane.smith@company.com',
+                        password_hash: btoa('password123'),
+                        role: 'Supervisor',
+                        status: 'active',
+                        start_date: '2024-02-01'
+                    },
+                    {
+                        username: 'mike.wilson',
+                        full_name: 'Mike Wilson',
+                        email: 'mike.wilson@company.com',
+                        password_hash: btoa('password123'),
+                        role: 'Team Member',
+                        status: 'active',
+                        start_date: '2024-02-15'
+                    },
+                    {
+                        username: 'sarah.jones',
+                        full_name: 'Sarah Jones',
+                        email: 'sarah.jones@company.com',
+                        password_hash: btoa('password123'),
+                        role: 'Team Member',
+                        status: 'active',
+                        start_date: '2024-03-01'
+                    }
+                ];
+                
+                for (const user of defaultUsers) {
+                    try {
+                        log(`Creating user: ${user.username} (${user.role})...`);
+                        await window.dbService.createUser(user);
+                        log(`✅ Created: ${user.username}`);
+                    } catch (error) {
+                        if (error.message.includes('duplicate') || error.message.includes('already exists')) {
+                            log(`⏭️ User already exists: ${user.username}`);
+                        } else {
+                            log(`❌ Failed to create ${user.username}: ${error.message}`);
+                        }
+                    }
+                }
+                
+                log('✅ All default users processed!', 'success');
+                log('You can now log in with:');
+                log('• admin / admin123 (Admin)');
+                log('• john.doe / password123 (Director)');
+                log('• jane.smith / password123 (Supervisor)');
+                log('• mike.wilson / password123 (Team Member)');
+                log('• sarah.jones / password123 (Team Member)');
+                
+            } catch (error) {
+                log(`❌ Failed to create users: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-check database connection on page load
+        window.addEventListener('load', () => {
+            log('Page loaded, checking database connection...');
+            if (window.dbService && window.dbService.isConfigured) {
+                log('✅ Database service is configured and ready');
+            } else {
+                log('⚠️ Database service not configured - check config.js');
+            }
+        });
+    </script>
+</body>
+</html>
