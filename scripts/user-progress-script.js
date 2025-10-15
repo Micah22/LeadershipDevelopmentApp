@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     // Initialize the page
-    initializePage();
+    await initializePage();
     
     // Set up event listeners
     setupEventListeners();
@@ -25,16 +25,34 @@ document.addEventListener('DOMContentLoaded', async function() {
     await loadProgressData();
 });
 
-function initializePage() {
+async function initializePage() {
     // Set up user info
-    updateUserInfo();
+    await updateUserInfo();
     
     // Navigation is handled by navbar.js
 }
 
-function updateUserInfo() {
+async function updateUserInfo() {
     const username = localStorage.getItem('username');
-    const users = getUsers();
+    
+    // Try to load users from database first
+    let users = [];
+    try {
+        if (window.dbService && window.dbService.isConfigured) {
+            users = await window.dbService.getUsers();
+            // Store in localStorage for compatibility
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+    } catch (error) {
+        console.warn('Failed to load users from database, using localStorage:', error);
+        users = getUsers();
+    }
+    
+    // Fallback to localStorage if database failed
+    if (users.length === 0) {
+        users = getUsers();
+    }
+    
     const user = users.find(u => u.username === username);
     
     if (user) {
@@ -161,14 +179,30 @@ async function loadProgressData() {
     const username = localStorage.getItem('username');
     if (!username) return;
 
-    // Get user's role
-    const users = getUsers();
+    // Get user's role from database first
+    let users = [];
+    try {
+        if (window.dbService && window.dbService.isConfigured) {
+            users = await window.dbService.getUsers();
+            // Store in localStorage for compatibility
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+    } catch (error) {
+        console.warn('Failed to load users from database, using localStorage:', error);
+        users = getUsers();
+    }
+    
+    // Fallback to localStorage if database failed
+    if (users.length === 0) {
+        users = getUsers();
+    }
+    
     const user = users.find(u => u.username === username);
     const userRole = user ? user.role : 'Team Member';
 
     // Calculate real progress data from user's saved progress
-    const overallProgress = calculateUserOverallProgress(username);
-    const userProgress = getUserProgress(username);
+    const overallProgress = await calculateUserOverallProgress(username);
+    const userProgress = await getUserProgress(username);
 
     // Try to load modules from database first
     let moduleTitles = [];
@@ -1033,8 +1067,43 @@ function getFallbackModuleData(moduleTitle) {
 // Utility function to get users from localStorage
 // getUsers() function removed - handled by navbar.js
 
-// Utility function to get user's progress data
-function getUserProgress(username) {
+// Utility function to get user's progress data from database first
+async function getUserProgress(username) {
+    try {
+        if (window.dbService && window.dbService.isConfigured) {
+            // Get user ID
+            const users = await window.dbService.getUsers();
+            const user = users.find(u => u.username === username);
+            
+            if (user) {
+                // Get progress from database
+                const dbProgress = await window.dbService.getUserProgress(user.id);
+                
+                // Convert database format to localStorage format
+                const userProgress = {};
+                dbProgress.forEach(p => {
+                    // Find module title by ID
+                    const modules = JSON.parse(localStorage.getItem('globalModules') || '[]');
+                    const module = modules.find(m => m.id === p.module_id);
+                    if (module) {
+                        userProgress[module.title] = {
+                            checklist: Array(p.total_tasks).fill(false).map((_, i) => i < p.completed_tasks)
+                        };
+                    }
+                });
+                
+                // Store in localStorage for compatibility
+                const userProgressKey = `userProgress_${username}`;
+                localStorage.setItem(userProgressKey, JSON.stringify(userProgress));
+                
+                return userProgress;
+            }
+        }
+    } catch (error) {
+        console.warn('Failed to load user progress from database, using localStorage:', error);
+    }
+    
+    // Fallback to localStorage
     const userProgressKey = `userProgress_${username}`;
     return JSON.parse(localStorage.getItem(userProgressKey) || '{}');
 }
@@ -1052,8 +1121,8 @@ function getUserModuleProgress(username, moduleTitle) {
 }
 
 // Utility function to calculate overall progress for a user
-function calculateUserOverallProgress(username) {
-    const userProgress = getUserProgress(username);
+async function calculateUserOverallProgress(username) {
+    const userProgress = await getUserProgress(username);
     
     // Get user's role
     const users = getUsers();
