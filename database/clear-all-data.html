@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear All Data</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            max-width: 800px;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .result { 
+            margin: 10px 0; 
+            padding: 10px; 
+            border-radius: 4px; 
+        }
+        .success { 
+            background: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb; 
+        }
+        .error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+        .info { 
+            background: #d1ecf1; 
+            color: #0c5460; 
+            border: 1px solid #bee5eb; 
+        }
+        button { 
+            padding: 10px 20px; 
+            margin: 5px; 
+            cursor: pointer; 
+            border: none;
+            border-radius: 4px;
+        }
+        .danger-btn {
+            background: #dc3545;
+            color: white;
+        }
+        .danger-btn:hover {
+            background: #c82333;
+        }
+        .info-btn {
+            background: #17a2b8;
+            color: white;
+        }
+        .info-btn:hover {
+            background: #138496;
+        }
+    </style>
+</head>
+<body>
+    <h1>Clear All Data</h1>
+    
+    <div class="warning">
+        <strong>⚠️ WARNING:</strong> This will permanently delete all modules and user progress data from both localStorage and the database. This action cannot be undone!
+    </div>
+    
+    <div id="results"></div>
+    
+    <h3>Clear localStorage Only</h3>
+    <button class="info-btn" onclick="clearLocalStorage()">Clear localStorage Modules & Progress</button>
+    <button class="info-btn" onclick="clearLocalStorageUsers()">Clear localStorage Users</button>
+    
+    <h3>Clear Database Only</h3>
+    <button class="danger-btn" onclick="clearDatabaseModules()">Clear Database Modules</button>
+    <button class="danger-btn" onclick="clearDatabaseProgress()">Clear Database User Progress</button>
+    
+    <h3>Clear Everything</h3>
+    <button class="danger-btn" onclick="clearEverything()">🚨 CLEAR ALL DATA 🚨</button>
+    
+    <button onclick="clearResults()">Clear Results</button>
+
+    <script src="config.js"></script>
+    <script>
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = message;
+            resultsDiv.appendChild(div);
+        }
+        
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+        }
+        
+        function clearLocalStorage() {
+            addResult('Clearing localStorage modules and progress...', 'info');
+            
+            try {
+                // Clear modules
+                localStorage.removeItem('globalModules');
+                addResult('✅ Cleared globalModules from localStorage', 'success');
+                
+                // Clear user progress
+                const keys = Object.keys(localStorage);
+                const progressKeys = keys.filter(key => key.startsWith('userProgress_'));
+                progressKeys.forEach(key => {
+                    localStorage.removeItem(key);
+                    addResult(`✅ Cleared ${key} from localStorage`, 'success');
+                });
+                
+                // Clear any other module-related data
+                localStorage.removeItem('leadershipPaths');
+                localStorage.removeItem('modules');
+                
+                addResult('✅ localStorage modules and progress cleared successfully', 'success');
+            } catch (error) {
+                addResult(`❌ Error clearing localStorage: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearLocalStorageUsers() {
+            addResult('Clearing localStorage users...', 'info');
+            
+            try {
+                localStorage.removeItem('users');
+                addResult('✅ Cleared users from localStorage', 'success');
+            } catch (error) {
+                addResult(`❌ Error clearing localStorage users: ${error.message}`, 'error');
+            }
+        }
+        
+        async function clearDatabaseModules() {
+            addResult('Clearing database modules...', 'info');
+            
+            try {
+                if (!window.dbService || !window.dbService.isConfigured) {
+                    addResult('❌ Database service not available', 'error');
+                    return;
+                }
+                
+                // Get all modules first to see what we're deleting
+                const modules = await window.dbService.getModules();
+                addResult(`Found ${modules.length} modules in database`, 'info');
+                
+                // Delete each module
+                for (const module of modules) {
+                    try {
+                        await window.dbService.deleteModule(module.id || module.title);
+                        addResult(`✅ Deleted module: ${module.title}`, 'success');
+                    } catch (error) {
+                        addResult(`❌ Failed to delete module ${module.title}: ${error.message}`, 'error');
+                    }
+                }
+                
+                addResult('✅ Database modules cleared successfully', 'success');
+            } catch (error) {
+                addResult(`❌ Error clearing database modules: ${error.message}`, 'error');
+            }
+        }
+        
+        async function clearDatabaseProgress() {
+            addResult('Clearing database user progress...', 'info');
+            
+            try {
+                if (!window.dbService || !window.dbService.isConfigured) {
+                    addResult('❌ Database service not available', 'error');
+                    return;
+                }
+                
+                // Get all users to clear their progress
+                const users = await window.dbService.getUsers();
+                addResult(`Found ${users.length} users in database`, 'info');
+                
+                // Clear progress for each user
+                for (const user of users) {
+                    try {
+                        await window.dbService.updateUserProgress(user.username, {});
+                        addResult(`✅ Cleared progress for user: ${user.username}`, 'success');
+                    } catch (error) {
+                        addResult(`❌ Failed to clear progress for ${user.username}: ${error.message}`, 'error');
+                    }
+                }
+                
+                addResult('✅ Database user progress cleared successfully', 'success');
+            } catch (error) {
+                addResult(`❌ Error clearing database progress: ${error.message}`, 'error');
+            }
+        }
+        
+        async function clearEverything() {
+            if (!confirm('Are you absolutely sure you want to clear ALL data? This cannot be undone!')) {
+                addResult('Operation cancelled by user', 'info');
+                return;
+            }
+            
+            addResult('🚨 CLEARING ALL DATA - This cannot be undone! 🚨', 'error');
+            
+            // Clear localStorage
+            clearLocalStorage();
+            clearLocalStorageUsers();
+            
+            // Clear database
+            await clearDatabaseModules();
+            await clearDatabaseProgress();
+            
+            addResult('🎉 ALL DATA CLEARED SUCCESSFULLY! You can now start fresh.', 'success');
+        }
+        
+        // Show current data status on page load
+        window.addEventListener('load', function() {
+            addResult('=== CURRENT DATA STATUS ===', 'info');
+            
+            // Check localStorage
+            const globalModules = localStorage.getItem('globalModules');
+            const users = localStorage.getItem('users');
+            const progressKeys = Object.keys(localStorage).filter(key => key.startsWith('userProgress_'));
+            
+            addResult(`localStorage globalModules: ${globalModules ? 'EXISTS' : 'EMPTY'}`, globalModules ? 'info' : 'success');
+            addResult(`localStorage users: ${users ? 'EXISTS' : 'EMPTY'}`, users ? 'info' : 'success');
+            addResult(`localStorage user progress entries: ${progressKeys.length}`, progressKeys.length > 0 ? 'info' : 'success');
+            
+            // Check database
+            if (window.dbService && window.dbService.isConfigured) {
+                addResult('Database service: AVAILABLE', 'success');
+            } else {
+                addResult('Database service: NOT AVAILABLE', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
