@@ -308,8 +308,18 @@ class DatabaseService {
 
     // Module Assignment Methods
     async getModuleAssignments(userId = null) {
-        const endpoint = userId ? `module_assignments?user_id=eq.${userId}` : 'module_assignments';
-        return await this.apiCall(endpoint);
+        // Join with users and modules tables to get names and titles
+        const endpoint = userId 
+            ? `module_assignments?user_id=eq.${userId}&select=*,users!inner(full_name,username),modules!inner(title)`
+            : 'module_assignments?select=*,users!inner(full_name,username),modules!inner(title)';
+        const assignments = await this.apiCall(endpoint);
+        
+        // Transform the data to include user_name and module_title
+        return assignments.map(assignment => ({
+            ...assignment,
+            user_name: assignment.users?.full_name || 'Unknown User',
+            module_title: assignment.modules?.title || 'Unknown Module'
+        }));
     }
 
     async assignModuleToUser(userId, moduleId, assignedBy = null, dueDate = null, notes = null) {
