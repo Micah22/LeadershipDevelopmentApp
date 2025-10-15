@@ -1996,27 +1996,10 @@ async function loadModuleAssignments() {
         updateAssignmentFilters();
     } catch (error) {
         console.error('Failed to load module assignments:', error);
-        // Fallback to localStorage and existing assignments
-        const localAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
-        const existingAssignments = loadExistingAssignmentsFromProgress();
-        moduleAssignments = [...localAssignments, ...existingAssignments];
-        
-        // Remove duplicates
-        const uniqueAssignments = [];
-        const seen = new Set();
-        moduleAssignments.forEach(assignment => {
-            const key = `${assignment.user_id}-${assignment.module_id}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                uniqueAssignments.push(assignment);
-            }
-        });
-        moduleAssignments = uniqueAssignments;
-        
-        console.log('Using fallback for module assignments:', moduleAssignments.length);
+        showToast('error', 'Database Error', 'Failed to load module assignments from database');
+        moduleAssignments = [];
         updateAssignmentsTable();
         updateAssignmentFilters();
-        showToast('warning', 'Database Warning', 'Using local data for module assignments');
     }
 }
 
@@ -2215,24 +2198,6 @@ async function saveAssignment() {
                         notes
                     );
                     
-                    // Also save to localStorage as fallback
-                    const localAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
-                    const module = modules.find(m => (m.id || m.title) === moduleId);
-                    
-                    const localAssignment = {
-                        id: newAssignment?.id || Date.now().toString() + Math.random(),
-                        user_id: userId,
-                        module_id: moduleId,
-                        user_name: user?.full_name || user?.fullName || user?.username || 'Unknown User',
-                        module_title: module?.title || 'Unknown Module',
-                        due_date: dueDate,
-                        status: status,
-                        notes: notes,
-                        assigned_at: new Date().toISOString()
-                    };
-                    
-                    localAssignments.push(localAssignment);
-                    localStorage.setItem('moduleAssignments', JSON.stringify(localAssignments));
                     
                     successCount++;
                 } catch (error) {
@@ -2255,36 +2220,7 @@ async function saveAssignment() {
         await loadModuleAssignments();
     } catch (error) {
         console.error('Failed to save assignments:', error);
-        
-        // Fallback to localStorage for all modules
-        const localAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
-        const users = getAllUsers();
-        const modules = getAllModules();
-        const user = users.find(u => (u.id || u.username) === userId);
-        
-        for (const moduleId of validModuleIds) {
-            const module = modules.find(m => (m.id || m.title) === moduleId);
-            
-            const localAssignment = {
-                id: Date.now().toString() + Math.random(),
-                user_id: userId,
-                module_id: moduleId,
-                user_name: user?.full_name || user?.fullName || user?.username || 'Unknown User',
-                module_title: module?.title || 'Unknown Module',
-                due_date: dueDate,
-                status: status,
-                notes: notes,
-                assigned_at: new Date().toISOString()
-            };
-            
-            localAssignments.push(localAssignment);
-        }
-        
-        localStorage.setItem('moduleAssignments', JSON.stringify(localAssignments));
-        
-        closeAssignmentModal();
-        await loadModuleAssignments();
-        showToast('warning', 'Database Warning', `${validModuleIds.length} assignments saved locally but may not sync to database`);
+        showToast('error', 'Database Error', 'Failed to save module assignments to database');
     }
 }
 
@@ -2316,13 +2252,9 @@ async function unassignModule(assignmentId) {
         }
     } catch (error) {
         console.error('Failed to remove assignment from database:', error);
-        // Continue with localStorage removal even if database fails
+        showToast('error', 'Database Error', 'Failed to remove assignment from database');
+        return;
     }
-
-    // Remove from localStorage
-    const localAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
-    const updatedAssignments = localAssignments.filter(a => a.id !== assignmentId);
-    localStorage.setItem('moduleAssignments', JSON.stringify(updatedAssignments));
 
     // If this is an existing assignment, also clear the user's progress
     if (assignment.is_existing) {
@@ -2366,17 +2298,11 @@ async function deleteAssignment(assignmentId) {
     try {
         await window.dbService.removeModuleAssignment(assignmentId);
         showToast('success', 'Assignment Deleted', 'Module assignment deleted successfully');
+        await loadModuleAssignments();
     } catch (error) {
         console.error('Failed to delete assignment:', error);
         showToast('error', 'Delete Failed', 'Could not delete module assignment');
     }
-
-    // Remove from localStorage
-    const localAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
-    const updatedAssignments = localAssignments.filter(a => a.id !== assignmentId);
-    localStorage.setItem('moduleAssignments', JSON.stringify(updatedAssignments));
-
-    await loadModuleAssignments();
 }
 
 // Close assignment modal
@@ -2550,10 +2476,6 @@ async function bulkUnassignModules() {
         }
     }
     
-    // Remove from localStorage
-    const localAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
-    const updatedAssignments = localAssignments.filter(a => !selectedIds.includes(a.id));
-    localStorage.setItem('moduleAssignments', JSON.stringify(updatedAssignments));
     
     // Update UI
     const selectAllCheckbox = document.getElementById('selectAllAssignments');
