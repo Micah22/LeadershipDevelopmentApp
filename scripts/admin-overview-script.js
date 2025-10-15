@@ -1902,9 +1902,58 @@ function loadExistingAssignmentsFromProgress() {
                 }
             });
         }
+        
+        // Also check for modules that are assigned based on role requirements
+        modules.forEach(module => {
+            // Check if this module is assigned to this user based on role
+            if (module.requiredRole && user.role) {
+                const roleMatches = checkRoleMatch(user.role, module.requiredRole);
+                if (roleMatches) {
+                    // Check if this assignment doesn't already exist
+                    const existingAssignment = existingAssignments.find(a => 
+                        a.user_id === (user.id || user.username) && 
+                        a.module_id === (module.id || module.title)
+                    );
+                    
+                    if (!existingAssignment) {
+                        const assignment = {
+                            id: `role-based-${user.username}-${module.title}`.replace(/\s+/g, '-'),
+                            user_id: user.id || user.username,
+                            module_id: module.id || module.title,
+                            user_name: user.full_name || user.fullName || user.username,
+                            module_title: module.title,
+                            assigned_at: new Date().toISOString(),
+                            due_date: null,
+                            status: 'assigned',
+                            notes: 'Role-based assignment',
+                            is_existing: true
+                        };
+                        existingAssignments.push(assignment);
+                    }
+                }
+            }
+        });
     });
     
     return existingAssignments;
+}
+
+// Helper function to check if user role matches module requirement
+function checkRoleMatch(userRole, requiredRole) {
+    const roleHierarchy = {
+        'Team Member': 1,
+        'Assistant Supervisor': 2,
+        'Supervisor': 3,
+        'Trainer': 4,
+        'Director': 5,
+        'Admin': 6
+    };
+    
+    const userLevel = roleHierarchy[userRole] || 0;
+    const requiredLevel = roleHierarchy[requiredRole] || 0;
+    
+    // User can access modules for their role level and below
+    return userLevel >= requiredLevel;
 }
 
 // Load module assignments
