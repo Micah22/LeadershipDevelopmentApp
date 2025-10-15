@@ -1,0 +1,25 @@
+# System files and directories
+AppData/
+.vscode/
+node_modules/
+*.log
+*.tmp
+*.cache
+
+# Windows system files
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# IDE files
+*.swp
+*.swo
+*~
+
+# Only track project files
+!*.html
+!*.css
+!*.js
+!*.json
+!*.md
+!*.txt
