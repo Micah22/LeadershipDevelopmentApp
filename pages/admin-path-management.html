@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Path Management - CFA Leadership Development</title>
     <link rel="stylesheet" href="../styles/admin-overview-styles.css">
-    <link rel="stylesheet" href="../styles/admin-path-management-styles.css?v=6">
+    <link rel="stylesheet" href="../styles/admin-path-management-styles.css?v=8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -22,14 +22,31 @@
                 <!-- Navigation will be populated by JavaScript -->
             </nav>
             <div class="user-info">
-                <div class="user-avatar" id="userAvatar">A</div>
+                <div class="user-avatar-container">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-header">
+                            <div class="dropdown-user-info">
+                                <span class="dropdown-user-name" id="dropdownUserName">Admin</span>
+                                <span class="dropdown-user-role" id="dropdownUserRole">Admin</span>
+                            </div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item" id="themeToggle">
+                            <i class="fas fa-moon" id="themeIcon"></i>
+                            <span id="themeText">Dark Mode</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item" id="signOutBtn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Sign Out</span>
+                        </div>
+                    </div>
+                </div>
                 <div class="user-details">
                     <span class="user-name" id="userName">Admin</span>
                     <span class="user-role" id="userRole">Admin</span>
                 </div>
-                <button class="sign-out-btn" id="signOutBtn">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
             </div>
         </div>
     </header>
@@ -142,6 +159,6 @@
         </div>
     </div>
 
-    <script src="../scripts/admin-path-management-script.js?v=7"></script>
+    <script src="../scripts/admin-path-management-script.js?v=8"></script>
 </body>
 </html>

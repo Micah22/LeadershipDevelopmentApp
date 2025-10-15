@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up event listeners
     setupEventListeners();
     
+    // Initialize theme
+    initializeTheme();
+    
     // Load progress data
     loadProgressData();
 });
@@ -85,10 +88,39 @@ function updateNavigation() {
 }
 
 function setupEventListeners() {
-    // Sign out button
+    
+    // Avatar dropdown functionality
+    const userAvatar = document.getElementById('userAvatar');
+    const userDropdown = document.getElementById('userDropdown');
+    
+    if (userAvatar && userDropdown) {
+        userAvatar.addEventListener('click', function(e) {
+            e.stopPropagation();
+            userDropdown.classList.toggle('show');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!userAvatar.contains(e.target) && !userDropdown.contains(e.target)) {
+                userDropdown.classList.remove('show');
+            }
+        });
+    }
+    
+    // Theme toggle button in dropdown
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleTheme();
+        });
+    }
+    
+    // Sign out button in dropdown
     const signOutBtn = document.getElementById('signOutBtn');
     if (signOutBtn) {
-        signOutBtn.addEventListener('click', function() {
+        signOutBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
             if (confirm('Are you sure you want to sign out?')) {
                 localStorage.removeItem('currentUser');
                 localStorage.removeItem('isLoggedIn');
@@ -148,6 +180,7 @@ function setupEventListeners() {
         }
     });
 }
+
 
 function loadProgressData() {
     const username = localStorage.getItem('username');
@@ -855,6 +888,48 @@ function calculateUserOverallProgress(username) {
         completedTasks,
         percentage: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
     };
+}
+
+// Theme toggle functionality
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    // Set the new theme
+    document.documentElement.setAttribute('data-theme', newTheme);
+    
+    // Update the icon
+    const themeIcon = document.getElementById('themeIcon');
+    if (themeIcon) {
+        themeIcon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+    
+    // Update the text
+    const themeText = document.getElementById('themeText');
+    if (themeText) {
+        themeText.textContent = newTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
+    }
+    
+    // Save theme preference
+    localStorage.setItem('theme', newTheme);
+    
+    console.log('Theme switched to:', newTheme);
+}
+
+// Initialize theme on page load
+function initializeTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    const themeIcon = document.getElementById('themeIcon');
+    if (themeIcon) {
+        themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+    
+    const themeText = document.getElementById('themeText');
+    if (themeText) {
+        themeText.textContent = savedTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
+    }
 }
 
 // Export functions for potential use in other scripts

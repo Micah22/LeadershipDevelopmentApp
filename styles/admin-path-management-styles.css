@@ -1,6 +1,116 @@
 /* Import base styles from admin overview */
 @import url('admin-overview-styles.css');
 
+/* Mobile Responsive Styles for Path Management */
+@media (max-width: 768px) {
+    .modules-management-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .module-management-card {
+        padding: 1rem;
+    }
+    
+    .module-management-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .module-management-title {
+        font-size: 1.1rem;
+    }
+    
+    .module-management-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    
+    .module-management-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .checklist-item {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .checklist-task-input {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .checklist-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .checklist-file-section {
+        margin-top: 0.5rem;
+    }
+    
+    .checklist-file-input,
+    .checklist-file-upload {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .add-file-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .checklist-files-list {
+        margin-top: 0.5rem;
+    }
+    
+    .checklist-file-item {
+        padding: 0.5rem;
+    }
+    
+    .checklist-file-item-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .module-management-card {
+        padding: 0.75rem;
+    }
+    
+    .module-management-title {
+        font-size: 1rem;
+    }
+    
+    .module-management-description {
+        font-size: 0.9rem;
+    }
+    
+    .module-management-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .checklist-item {
+        padding: 0.75rem;
+    }
+    
+    .checklist-task-input {
+        font-size: 0.9rem;
+    }
+    
+    .add-file-btn {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+    }
+}
+
 /* Additional styles for path management */
 .modules-management-grid {
     display: grid;
