@@ -1,0 +1,21 @@
+{
+  "name": "leadership-development-project",
+  "version": "1.0.0",
+  "description": "Leadership Development Platform with file upload and progress tracking",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 8000"
+  },
+  "keywords": [
+    "leadership",
+    "development",
+    "training",
+    "progress-tracking"
+  ],
+  "author": "Micah",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
