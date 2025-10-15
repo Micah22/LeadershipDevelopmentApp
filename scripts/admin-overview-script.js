@@ -1868,7 +1868,7 @@ let moduleAssignments = [];
 let currentAssignment = null;
 
 // Load existing assignments from user progress data
-function loadExistingAssignmentsFromProgress() {
+async function loadExistingAssignmentsFromProgress() {
     const users = getAllUsers();
     const modules = getAllModules();
     const existingAssignments = [];
@@ -1916,9 +1916,23 @@ function loadExistingAssignmentsFromProgress() {
                     );
                     
                     // Check if this role-based assignment was previously unassigned
-                    const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
-                    const unassignedKey = `${user.id || user.username}-${module.id || module.title}`;
-                    const wasUnassigned = unassignedRoleBased.includes(unassignedKey);
+                    let wasUnassigned = false;
+                    try {
+                        if (window.dbService && window.dbService.isConfigured) {
+                            wasUnassigned = await window.dbService.isModuleUnassignedForUser(user.id || user.username, module.id || module.title);
+                        } else {
+                            // Fallback to localStorage if database is not available
+                            const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
+                            const unassignedKey = `${user.id || user.username}-${module.id || module.title}`;
+                            wasUnassigned = unassignedRoleBased.includes(unassignedKey);
+                        }
+                    } catch (error) {
+                        console.error('Failed to check unassigned role-based assignment:', error);
+                        // Fallback to localStorage if database check fails
+                        const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
+                        const unassignedKey = `${user.id || user.username}-${module.id || module.title}`;
+                        wasUnassigned = unassignedRoleBased.includes(unassignedKey);
+                    }
                     
                     if (!existingAssignment && !wasUnassigned) {
                         const assignment = {
@@ -1971,7 +1985,7 @@ async function loadModuleAssignments() {
         }
         
         // Also load existing assignments from user progress data
-        const existingAssignments = loadExistingAssignmentsFromProgress();
+        const existingAssignments = await loadExistingAssignmentsFromProgress();
         console.log('Loaded existing assignments from user progress:', existingAssignments.length);
         
         // Combine database assignments with existing assignments
@@ -2268,12 +2282,19 @@ async function unassignModule(assignmentId) {
         
         // Track unassigned role-based assignments to prevent them from reappearing
         if (assignment.notes === 'Role-based assignment') {
-            const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
-            const unassignedKey = `${assignment.user_id}-${assignment.module_id}`;
-            if (!unassignedRoleBased.includes(unassignedKey)) {
-                unassignedRoleBased.push(unassignedKey);
-                localStorage.setItem('unassignedRoleBased', JSON.stringify(unassignedRoleBased));
-                console.log(`Tracked unassigned role-based assignment: ${unassignedKey}`);
+            try {
+                await window.dbService.addUnassignedRoleAssignment(assignment.user_id, assignment.module_id);
+                console.log(`Tracked unassigned role-based assignment in database: ${assignment.user_id}-${assignment.module_id}`);
+            } catch (error) {
+                console.error('Failed to track unassigned role-based assignment in database:', error);
+                // Fallback to localStorage if database fails
+                const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
+                const unassignedKey = `${assignment.user_id}-${assignment.module_id}`;
+                if (!unassignedRoleBased.includes(unassignedKey)) {
+                    unassignedRoleBased.push(unassignedKey);
+                    localStorage.setItem('unassignedRoleBased', JSON.stringify(unassignedRoleBased));
+                    console.log(`Tracked unassigned role-based assignment in localStorage: ${unassignedKey}`);
+                }
             }
         }
     }
@@ -2465,12 +2486,19 @@ async function bulkUnassignModules() {
             
             // Track unassigned role-based assignments to prevent them from reappearing
             if (assignment.notes === 'Role-based assignment') {
-                const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
-                const unassignedKey = `${assignment.user_id}-${assignment.module_id}`;
-                if (!unassignedRoleBased.includes(unassignedKey)) {
-                    unassignedRoleBased.push(unassignedKey);
-                    localStorage.setItem('unassignedRoleBased', JSON.stringify(unassignedRoleBased));
-                    console.log(`Tracked unassigned role-based assignment: ${unassignedKey}`);
+                try {
+                    await window.dbService.addUnassignedRoleAssignment(assignment.user_id, assignment.module_id);
+                    console.log(`Tracked unassigned role-based assignment in database: ${assignment.user_id}-${assignment.module_id}`);
+                } catch (error) {
+                    console.error('Failed to track unassigned role-based assignment in database:', error);
+                    // Fallback to localStorage if database fails
+                    const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
+                    const unassignedKey = `${assignment.user_id}-${assignment.module_id}`;
+                    if (!unassignedRoleBased.includes(unassignedKey)) {
+                        unassignedRoleBased.push(unassignedKey);
+                        localStorage.setItem('unassignedRoleBased', JSON.stringify(unassignedRoleBased));
+                        console.log(`Tracked unassigned role-based assignment in localStorage: ${unassignedKey}`);
+                    }
                 }
             }
         }

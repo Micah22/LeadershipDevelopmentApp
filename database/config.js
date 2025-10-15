@@ -351,6 +351,32 @@ class DatabaseService {
         const modules = await this.getModules();
         return modules.filter(module => moduleIds.includes(module.id));
     }
+
+    // Unassigned Role Assignments Methods
+    async getUnassignedRoleAssignments(userId = null) {
+        const endpoint = userId 
+            ? `unassigned_role_assignments?user_id=eq.${userId}`
+            : 'unassigned_role_assignments';
+        return await this.apiCall(endpoint);
+    }
+
+    async addUnassignedRoleAssignment(userId, moduleId, unassignedBy = null) {
+        const unassignedAssignment = {
+            user_id: userId,
+            module_id: moduleId,
+            unassigned_by: unassignedBy
+        };
+        return await this.apiCall('unassigned_role_assignments', 'POST', unassignedAssignment);
+    }
+
+    async removeUnassignedRoleAssignment(userId, moduleId) {
+        return await this.apiCall(`unassigned_role_assignments?user_id=eq.${userId}&module_id=eq.${moduleId}`, 'DELETE');
+    }
+
+    async isModuleUnassignedForUser(userId, moduleId) {
+        const unassigned = await this.apiCall(`unassigned_role_assignments?user_id=eq.${userId}&module_id=eq.${moduleId}`);
+        return unassigned && unassigned.length > 0;
+    }
 }
 
 // Create global database service instance

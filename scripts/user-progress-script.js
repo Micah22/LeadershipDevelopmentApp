@@ -246,50 +246,50 @@ async function loadProgressData() {
     }
     
     let achievements = 0;
-    const modules = moduleTitles
-        .map(moduleTitle => {
-            const moduleData = getModuleData(moduleTitle);
-            
-            // Skip deleted modules (getModuleData returns null for deleted modules)
-            if (!moduleData) {
-                return null;
-            }
-            
-            const moduleProgress = userProgress[moduleTitle] || { checklist: [] };
-            const completedCount = moduleProgress.checklist.filter(item => item).length;
-            const totalCount = moduleData.checklist.length;
-            const progressPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-            
-            // Check if module is locked (above user's role) or unassigned
-            const isLocked = !canUserAccessModule(userRole, moduleData.requiredRole, moduleTitle);
-            
-            // Count as achievement if 100% complete and not locked
-            if (progressPercentage === 100 && !isLocked) {
-                achievements++;
-            }
-            
-            // Determine status
-            let status = 'not-started';
-            if (isLocked) {
-                status = 'locked';
-            } else if (progressPercentage === 100) {
-                status = 'completed';
-            } else if (progressPercentage > 0) {
-                status = 'in-progress';
-            }
-            
-            return {
-                title: moduleTitle,
-                description: moduleData.description,
-                status: status,
-                progress: isLocked ? 0 : progressPercentage,
-                isLocked: isLocked,
-                requiredRole: moduleData.requiredRole,
-                completedTasks: completedCount,
-                totalTasks: totalCount
-            };
-        })
-        .filter(module => module !== null); // Remove deleted modules
+    const modules = [];
+    
+    for (const moduleTitle of moduleTitles) {
+        const moduleData = getModuleData(moduleTitle);
+        
+        // Skip deleted modules (getModuleData returns null for deleted modules)
+        if (!moduleData) {
+            continue;
+        }
+        
+        const moduleProgress = userProgress[moduleTitle] || { checklist: [] };
+        const completedCount = moduleProgress.checklist.filter(item => item).length;
+        const totalCount = moduleData.checklist.length;
+        const progressPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+        
+        // Check if module is locked (above user's role) or unassigned
+        const isLocked = !(await canUserAccessModule(userRole, moduleData.requiredRole, moduleTitle));
+        
+        // Count as achievement if 100% complete and not locked
+        if (progressPercentage === 100 && !isLocked) {
+            achievements++;
+        }
+        
+        // Determine status
+        let status = 'not-started';
+        if (isLocked) {
+            status = 'locked';
+        } else if (progressPercentage === 100) {
+            status = 'completed';
+        } else if (progressPercentage > 0) {
+            status = 'in-progress';
+        }
+        
+        modules.push({
+            title: moduleTitle,
+            description: moduleData.description,
+            status: status,
+            progress: isLocked ? 0 : progressPercentage,
+            isLocked: isLocked,
+            requiredRole: moduleData.requiredRole,
+            completedTasks: completedCount,
+            totalTasks: totalCount
+        });
+    }
     
     const progressData = {
         overallProgress: overallProgress.percentage,
@@ -729,7 +729,7 @@ function closeModuleModal() {
     }
 }
 
-function canUserAccessModule(userRole, requiredRole, moduleTitle = null) {
+async function canUserAccessModule(userRole, requiredRole, moduleTitle = null) {
     // Define role hierarchy (higher number = higher authority)
     const roleHierarchy = {
         'Team Member': 1,
@@ -756,9 +756,23 @@ function canUserAccessModule(userRole, requiredRole, moduleTitle = null) {
         const user = users.find(u => u.username === username);
         
         if (user) {
-            const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
-            const unassignedKey = `${user.id || user.username}-${moduleTitle}`;
-            const wasUnassigned = unassignedRoleBased.includes(unassignedKey);
+            let wasUnassigned = false;
+            try {
+                if (window.dbService && window.dbService.isConfigured) {
+                    wasUnassigned = await window.dbService.isModuleUnassignedForUser(user.id || user.username, moduleTitle);
+                } else {
+                    // Fallback to localStorage if database is not available
+                    const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
+                    const unassignedKey = `${user.id || user.username}-${moduleTitle}`;
+                    wasUnassigned = unassignedRoleBased.includes(unassignedKey);
+                }
+            } catch (error) {
+                console.error('Failed to check unassigned role-based assignment:', error);
+                // Fallback to localStorage if database check fails
+                const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
+                const unassignedKey = `${user.id || user.username}-${moduleTitle}`;
+                wasUnassigned = unassignedRoleBased.includes(unassignedKey);
+            }
             
             if (wasUnassigned) {
                 console.log(`Module ${moduleTitle} has been unassigned for user ${username}`);
@@ -1181,14 +1195,14 @@ async function calculateUserOverallProgress(username) {
         ];
     }
     
-    moduleTitles.forEach(moduleTitle => {
+    for (const moduleTitle of moduleTitles) {
         const moduleData = getModuleData(moduleTitle);
-        if (moduleData && canUserAccessModule(userRole, moduleData.requiredRole, moduleTitle)) {
+        if (moduleData && (await canUserAccessModule(userRole, moduleData.requiredRole, moduleTitle))) {
             totalTasks += moduleData.checklist.length;
             const moduleProgress = userProgress[moduleTitle] || { checklist: [] };
             completedTasks += moduleProgress.checklist.filter(item => item).length;
         }
-    });
+    }
     
     return {
         totalTasks,
