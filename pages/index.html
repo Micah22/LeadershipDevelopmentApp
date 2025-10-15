@@ -141,11 +141,11 @@
                     users.forEach(function(user, index) {
                         console.log('User ' + index + ':', user);
                         console.log('  Username match: ' + (user.username === username));
-                        console.log('  Password match: ' + (user.password === password));
+                        console.log('  Password match: ' + (user.password_hash === btoa(password)));
                     });
                     
                     const user = users.find(function(u) {
-                        return u.username === username && u.password === password;
+                        return u.username === username && u.password_hash === btoa(password);
                     });
                     console.log('Found user:', user);
                     
