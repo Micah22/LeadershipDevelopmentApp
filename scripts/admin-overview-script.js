@@ -610,8 +610,25 @@ function getUsers() {
 }
 
 // Utility function to save users to localStorage
-function saveUsers(users) {
-    localStorage.setItem('users', JSON.stringify(users));
+async function saveUsers(users) {
+    try {
+        // Save to database first
+        for (const user of users) {
+            if (user.id) {
+                // Update existing user
+                await window.dbService.updateUser(user.id, user);
+            } else {
+                // Create new user
+                await window.dbService.createUser(user);
+            }
+        }
+        console.log('Users saved to database successfully');
+    } catch (error) {
+        console.error('Failed to save users to database:', error);
+        // Fallback to localStorage
+        localStorage.setItem('users', JSON.stringify(users));
+        throw error;
+    }
 }
 
 
@@ -1204,7 +1221,7 @@ function closeModuleModal() {
     }
 }
 
-function saveModuleChanges() {
+async function saveModuleChanges() {
     const modal = document.getElementById('moduleModal');
     const currentModule = modal.dataset.currentModule;
 
@@ -1352,10 +1369,23 @@ function saveModuleChanges() {
         }
     }
 
-    // Save updated modules to global storage
-    localStorage.setItem('globalModules', JSON.stringify(modules));
+    // Save to database first, then localStorage
+    try {
+        if (moduleIndex >= 0) {
+            // Update existing module
+            await window.dbService.updateModule(modules[moduleIndex].id, modules[moduleIndex]);
+        } else {
+            // Create new module
+            await window.dbService.createModule(modules[modules.length - 1]);
+        }
+        console.log('Module saved to database successfully');
+    } catch (error) {
+        console.error('Failed to save module to database:', error);
+        // Fallback to localStorage
+        localStorage.setItem('globalModules', JSON.stringify(modules));
+    }
 
-    console.log('Module saved to global storage:', {
+    console.log('Module saved:', {
         title,
         description,
         status,

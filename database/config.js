@@ -97,15 +97,49 @@ class DatabaseService {
     }
 
     async createUser(userData) {
-        return this.apiCall('users', 'POST', userData);
+        try {
+            const result = await this.apiCall('users', 'POST', userData);
+            // Also save to localStorage for compatibility
+            this.syncUsersToLocalStorage();
+            return result;
+        } catch (error) {
+            console.error('Failed to create user in database:', error);
+            throw error;
+        }
     }
 
     async updateUser(userId, userData) {
-        return this.apiCall(`users?id=eq.${userId}`, 'PATCH', userData);
+        try {
+            const result = await this.apiCall(`users?id=eq.${userId}`, 'PATCH', userData);
+            // Also save to localStorage for compatibility
+            this.syncUsersToLocalStorage();
+            return result;
+        } catch (error) {
+            console.error('Failed to update user in database:', error);
+            throw error;
+        }
     }
 
     async deleteUser(userId) {
-        return this.apiCall(`users?id=eq.${userId}`, 'DELETE');
+        try {
+            const result = await this.apiCall(`users?id=eq.${userId}`, 'DELETE');
+            // Also save to localStorage for compatibility
+            this.syncUsersToLocalStorage();
+            return result;
+        } catch (error) {
+            console.error('Failed to delete user in database:', error);
+            throw error;
+        }
+    }
+
+    // Helper method to sync users to localStorage
+    async syncUsersToLocalStorage() {
+        try {
+            const users = await this.getUsers();
+            localStorage.setItem('users', JSON.stringify(users));
+        } catch (error) {
+            console.warn('Failed to sync users to localStorage:', error);
+        }
     }
 
     // Module operations
@@ -114,15 +148,49 @@ class DatabaseService {
     }
 
     async createModule(moduleData) {
-        return this.apiCall('modules', 'POST', moduleData);
+        try {
+            const result = await this.apiCall('modules', 'POST', moduleData);
+            // Also save to localStorage for compatibility
+            this.syncModulesToLocalStorage();
+            return result;
+        } catch (error) {
+            console.error('Failed to create module in database:', error);
+            throw error;
+        }
     }
 
     async updateModule(moduleId, moduleData) {
-        return this.apiCall(`modules?id=eq.${moduleId}`, 'PATCH', moduleData);
+        try {
+            const result = await this.apiCall(`modules?id=eq.${moduleId}`, 'PATCH', moduleData);
+            // Also save to localStorage for compatibility
+            this.syncModulesToLocalStorage();
+            return result;
+        } catch (error) {
+            console.error('Failed to update module in database:', error);
+            throw error;
+        }
     }
 
     async deleteModule(moduleId) {
-        return this.apiCall(`modules?id=eq.${moduleId}`, 'DELETE');
+        try {
+            const result = await this.apiCall(`modules?id=eq.${moduleId}`, 'DELETE');
+            // Also save to localStorage for compatibility
+            this.syncModulesToLocalStorage();
+            return result;
+        } catch (error) {
+            console.error('Failed to delete module in database:', error);
+            throw error;
+        }
+    }
+
+    // Helper method to sync modules to localStorage
+    async syncModulesToLocalStorage() {
+        try {
+            const modules = await this.getModules();
+            localStorage.setItem('globalModules', JSON.stringify(modules));
+        } catch (error) {
+            console.warn('Failed to sync modules to localStorage:', error);
+        }
     }
 
     // Checklist operations
@@ -154,13 +222,46 @@ class DatabaseService {
     }
 
     async updateUserProgress(userId, moduleId, completedTasks, totalTasks, progressPercentage) {
-        return this.apiCall('user_progress', 'POST', {
-            user_id: userId,
-            module_id: moduleId,
-            completed_tasks: completedTasks,
-            total_tasks: totalTasks,
-            progress_percentage: progressPercentage
-        });
+        try {
+            // Use UPSERT to update or insert progress
+            const result = await this.apiCall('user_progress', 'POST', {
+                user_id: userId,
+                module_id: moduleId,
+                completed_tasks: completedTasks,
+                total_tasks: totalTasks,
+                progress_percentage: progressPercentage
+            });
+            
+            // Also sync to localStorage for compatibility
+            this.syncUserProgressToLocalStorage(userId);
+            return result;
+        } catch (error) {
+            console.error('Failed to update user progress in database:', error);
+            throw error;
+        }
+    }
+
+    // Helper method to sync user progress to localStorage
+    async syncUserProgressToLocalStorage(userId) {
+        try {
+            const users = await this.getUsers();
+            const user = users.find(u => u.id === userId);
+            if (user) {
+                const progress = await this.getUserProgress(userId);
+                const userProgress = {};
+                
+                // Convert database format to localStorage format
+                progress.forEach(p => {
+                    userProgress[p.module_title] = {
+                        checklist: Array(p.total_tasks).fill(false).map((_, i) => i < p.completed_tasks)
+                    };
+                });
+                
+                localStorage.setItem(`userProgress_${user.username}`, JSON.stringify(userProgress));
+            }
+        } catch (error) {
+            console.warn('Failed to sync user progress to localStorage:', error);
+        }
     }
 
     // File operations

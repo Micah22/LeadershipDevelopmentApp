@@ -548,7 +548,7 @@ function openModuleModal(moduleTitle) {
     modal.classList.add('show');
 }
 
-function toggleChecklistItem(moduleTitle, itemIndex) {
+async function toggleChecklistItem(moduleTitle, itemIndex) {
     const username = localStorage.getItem('username');
     const userProgressKey = `userProgress_${username}`;
     let userProgress = JSON.parse(localStorage.getItem(userProgressKey) || '{}');
@@ -578,7 +578,32 @@ function toggleChecklistItem(moduleTitle, itemIndex) {
     const isCompleted = !userProgress[moduleTitle].checklist[itemIndex];
     userProgress[moduleTitle].checklist[itemIndex] = isCompleted;
     
-    // Save progress
+    // Save progress to database first, then localStorage
+    try {
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const user = users.find(u => u.username === username);
+        const modules = JSON.parse(localStorage.getItem('globalModules') || '[]');
+        const module = modules.find(m => m.title === moduleTitle);
+        
+        if (user && module) {
+            const completedCount = userProgress[moduleTitle].checklist.filter(task => task.completed).length;
+            const totalCount = userProgress[moduleTitle].checklist.length;
+            const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+            
+            await window.dbService.updateUserProgress(
+                user.id,
+                module.id,
+                completedCount,
+                totalCount,
+                progressPercentage
+            );
+            console.log('Progress saved to database successfully');
+        }
+    } catch (error) {
+        console.error('Failed to save progress to database:', error);
+    }
+    
+    // Also save to localStorage for compatibility
     localStorage.setItem(userProgressKey, JSON.stringify(userProgress));
     
     // Debug logging
