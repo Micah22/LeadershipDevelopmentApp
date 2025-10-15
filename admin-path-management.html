@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Path Management - CFA Leadership Development</title>
+    <link rel="stylesheet" href="admin-overview-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-img">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="20" cy="20" r="20" fill="#E51636"/>
+                        <path d="M12 16h16v2H12v-2zm0 4h16v2H12v-2zm0 4h12v2H12v-2z" fill="white"/>
+                    </svg>
+                </div>
+                <span class="logo-text">Leadership Development</span>
+            </div>
+            <nav class="nav-links" id="navLinks">
+                <!-- Navigation will be populated by JavaScript -->
+            </nav>
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div class="user-details">
+                    <span class="user-name" id="userName">Admin</span>
+                    <span class="user-role" id="userRole">Admin</span>
+                </div>
+                <button class="sign-out-btn" id="signOutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>ADMIN TOOLS</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="admin-user-overview.html" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>User Management</span>
+                </a>
+                <a href="#" class="nav-item active" id="pathManagement">
+                    <i class="fas fa-cogs"></i>
+                    <span>Path Management</span>
+                </a>
+                <a href="#" class="nav-item" id="reports">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="#" class="nav-item" id="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-header">
+                <h1 class="page-title">Learning Path Management</h1>
+                <p class="page-subtitle">Manage and configure learning modules and paths</p>
+            </div>
+
+            <!-- Learning Modules Section -->
+            <div class="section">
+                <div class="section-header">
+                    <h2>Learning Modules</h2>
+                    <button class="btn btn-primary" id="addModuleBtn">
+                        <i class="fas fa-plus"></i>
+                        Add Module
+                    </button>
+                </div>
+                <div class="section-content">
+                    <div class="modules-management-grid" id="modulesManagementGrid">
+                        <!-- Modules will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Module Details Modal -->
+    <div class="modal-overlay" id="moduleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalModuleTitle">Module Details</h2>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="moduleEditForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editModuleTitle">Module Title</label>
+                            <input type="text" id="editModuleTitle" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editModuleStatus">Status</label>
+                            <select id="editModuleStatus" name="status" required>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="draft">Draft</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editModuleRole">Required Role</label>
+                        <select id="editModuleRole" name="requiredRole" required>
+                            <option value="Team Member">Team Member</option>
+                            <option value="Supervisor">Supervisor</option>
+                            <option value="Director">Director</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editModuleDescription">Description</label>
+                        <textarea id="editModuleDescription" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="checklist-section">
+                        <h3>Learning Tasks</h3>
+                        <div class="checklist" id="modalChecklist">
+                            <!-- Checklist items will be populated here -->
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="addTaskBtn">
+                            <i class="fas fa-plus"></i>
+                            Add Task
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="modalCancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="modalSave">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin-path-management-script.js"></script>
+</body>
+</html>

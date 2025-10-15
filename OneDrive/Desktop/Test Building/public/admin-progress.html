@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Progress Overview - Roadmap</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .admin-progress-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .admin-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .admin-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .admin-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .users-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .users-table th,
+        .users-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .users-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        .users-table tr:hover {
+            background: #f8f9fa;
+        }
+        .role-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .role-admin { background: #e3f2fd; color: #1976d2; }
+        .role-manager { background: #f3e5f5; color: #7b1fa2; }
+        .role-developer { background: #e8f5e8; color: #388e3c; }
+        .role-viewer { background: #fff3e0; color: #f57c00; }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+        .btn-action {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+        .btn-action:hover {
+            background: #5a6fd8;
+        }
+        .no-data {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-progress-container">
+        <!-- Header -->
+        <div class="admin-header">
+            <h1><i class="fas fa-chart-line"></i> Admin Progress Overview</h1>
+            <p>Track and monitor all users' roadmap progress</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users" style="color: #667eea;"></i>
+                </div>
+                <div class="stat-number" id="totalUsers">0</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-tasks" style="color: #764ba2;"></i>
+                </div>
+                <div class="stat-number" id="totalMilestones">0</div>
+                <div class="stat-label">Total Milestones</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle" style="color: #4caf50;"></i>
+                </div>
+                <div class="stat-number" id="completedMilestones">0</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-percentage" style="color: #ff9800;"></i>
+                </div>
+                <div class="stat-number" id="avgProgress">0%</div>
+                <div class="stat-label">Avg Progress</div>
+            </div>
+        </div>
+
+        <!-- Users Section -->
+        <div class="users-section">
+            <h2 class="section-title">
+                <i class="fas fa-users"></i>
+                User Management
+            </h2>
+            <div id="usersContent">
+                <div class="no-data">Loading user data...</div>
+            </div>
+        </div>
+
+        <!-- Back to Dashboard -->
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="index.html" class="btn-action" style="text-decoration: none; display: inline-block;">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script>
+        console.log('Roadmap Admin Progress page loaded');
+        
+        // Load and display data
+        function loadAdminData() {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const milestones = JSON.parse(localStorage.getItem('milestones') || '[]');
+            
+            console.log('Users:', users);
+            console.log('Milestones:', milestones);
+            
+            // Update stats
+            updateStats(users, milestones);
+            
+            // Update users table
+            updateUsersTable(users, milestones);
+        }
+        
+        function updateStats(users, milestones) {
+            document.getElementById('totalUsers').textContent = users.length;
+            document.getElementById('totalMilestones').textContent = milestones.length;
+            
+            const completed = milestones.filter(m => m.status === 'completed').length;
+            document.getElementById('completedMilestones').textContent = completed;
+            
+            const avgProgress = milestones.length > 0 ? 
+                Math.round((completed / milestones.length) * 100) : 0;
+            document.getElementById('avgProgress').textContent = avgProgress + '%';
+        }
+        
+        function updateUsersTable(users, milestones) {
+            const usersContent = document.getElementById('usersContent');
+            
+            if (users.length === 0) {
+                usersContent.innerHTML = '<div class="no-data">No users found. <a href="index.html">Go to login to create users</a></div>';
+                return;
+            }
+            
+            let tableHTML = `
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Milestones</th>
+                            <th>Progress</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            users.forEach(user => {
+                const userMilestones = milestones.filter(m => m.userId === user.id);
+                const completed = userMilestones.filter(m => m.status === 'completed').length;
+                const progress = userMilestones.length > 0 ? 
+                    Math.round((completed / userMilestones.length) * 100) : 0;
+                
+                tableHTML += `
+                    <tr>
+                        <td>
+                            <strong>${user.name}</strong><br>
+                            <small>${user.email}</small>
+                        </td>
+                        <td>
+                            <span class="role-badge role-${user.role}">${user.role}</span>
+                        </td>
+                        <td>${userMilestones.length}</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progress}%"></div>
+                            </div>
+                            <small>${progress}%</small>
+                        </td>
+                        <td>
+                            <span style="color: ${user.status === 'active' ? '#4caf50' : '#f44336'};">
+                                ${user.status === 'active' ? 'Active' : 'Inactive'}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn-action" onclick="editUser('${user.id}')">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += '</tbody></table>';
+            usersContent.innerHTML = tableHTML;
+        }
+        
+        function editUser(userId) {
+            alert('Edit user functionality would go here for user ID: ' + userId);
+        }
+        
+        // Initialize page
+        loadAdminData();
+        
+        console.log('Admin progress page initialization complete');
+    </script>
+</body>
+</html>

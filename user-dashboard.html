@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Leadership Development</title>
+    <link rel="stylesheet" href="user-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-img">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="20" cy="20" r="20" fill="#E51636"/>
+                        <path d="M12 16h16v2H12v-2zm0 4h16v2H12v-2zm0 4h12v2H12v-2z" fill="white"/>
+                    </svg>
+                </div>
+                <span class="logo-text">Leadership Development</span>
+            </div>
+            <nav class="nav-links" id="navLinks">
+                <!-- Navigation will be populated by JavaScript -->
+            </nav>
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div class="user-details">
+                    <span class="user-name" id="userName">Admin User</span>
+                    <span class="user-role" id="userRole">Admin</span>
+                </div>
+                <button class="sign-out-btn" id="signOutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="dashboard-container">
+            <!-- Welcome Section -->
+            <div class="welcome-section">
+                <h1>Welcome to Your Dashboard</h1>
+                <p>Track your leadership development journey and access key resources</p>
+            </div>
+
+            <!-- Dashboard Cards -->
+            <div class="dashboard-cards">
+                <!-- My Progress Card -->
+                <div class="dashboard-card progress-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line"></i>
+                        <h3>My Progress</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="progress-metrics">
+                            <div class="metric-box">
+                                <span class="metric-value" id="progressPercentage">0%</span>
+                                <span class="metric-label">Leadership Path</span>
+                            </div>
+                            <div class="metric-box">
+                                <span class="metric-value" id="completedTasks">0</span>
+                                <span class="metric-label">Modules Completed</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary view-progress-btn" onclick="viewProgress()">
+                            <i class="fas fa-chart-line"></i>
+                            View Progress
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Card -->
+                <div class="dashboard-card quick-actions-card">
+                    <div class="card-header">
+                        <i class="fas fa-bolt"></i>
+                        <h3>Quick Actions</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="action-buttons">
+                            <button class="action-btn" onclick="viewProgress()">
+                                <i class="fas fa-chart-line"></i>
+                                <span>View Progress</span>
+                            </button>
+                            <button class="action-btn" onclick="explorePaths()">
+                                <i class="fas fa-route"></i>
+                                <span>Explore Paths</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resources Card -->
+                <div class="dashboard-card resources-card">
+                    <div class="card-header">
+                        <i class="fas fa-book"></i>
+                        <h3>Resources</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="resource-links">
+                            <a href="#" class="resource-link">
+                                <i class="fas fa-file-pdf"></i>
+                                <span>Training Materials</span>
+                            </a>
+                            <a href="#" class="resource-link">
+                                <i class="fas fa-video"></i>
+                                <span>Video Tutorials</span>
+                            </a>
+                            <a href="#" class="resource-link">
+                                <i class="fas fa-question-circle"></i>
+                                <span>Help Center</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="user-script.js"></script>
+</body>
+</html>

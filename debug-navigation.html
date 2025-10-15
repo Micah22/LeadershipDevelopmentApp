@@ -1,0 +1,174 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Navigation Function</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .console-output { background: #f8f9fa; padding: 10px; border: 1px solid #dee2e6; font-family: monospace; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Debug Navigation Function</h1>
+    
+    <div class="test-section">
+        <h2>Step 1: Check localStorage Data</h2>
+        <button onclick="checkLocalStorage()">Check localStorage</button>
+        <div id="localStorageOutput" class="console-output"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Step 2: Load Script and Check Functions</h2>
+        <button onclick="loadAndCheckScript()">Load Script & Check Functions</button>
+        <div id="scriptOutput" class="console-output"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Step 3: Test updateNavigation Step by Step</h2>
+        <button onclick="testUpdateNavigationStepByStep()">Test updateNavigation</button>
+        <div id="navTestOutput" class="console-output"></div>
+        <div id="testNavContainer" style="border: 1px dashed #ccc; padding: 10px; margin-top: 10px;">
+            <div id="navLinks"></div>
+        </div>
+    </div>
+
+    <script>
+        function checkLocalStorage() {
+            let output = 'localStorage Data:\n';
+            output += 'userEmail: ' + localStorage.getItem('userEmail') + '\n';
+            output += 'isLoggedIn: ' + localStorage.getItem('isLoggedIn') + '\n';
+            output += 'users: ' + localStorage.getItem('users') + '\n';
+            
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            output += 'Parsed users count: ' + users.length + '\n';
+            if (users.length > 0) {
+                output += 'First user: ' + JSON.stringify(users[0], null, 2) + '\n';
+            }
+            
+            document.getElementById('localStorageOutput').textContent = output;
+        }
+        
+        function loadAndCheckScript() {
+            let output = 'Loading leadership-paths.js...\n';
+            
+            const script = document.createElement('script');
+            script.src = 'leadership-paths.js';
+            
+            script.onload = function() {
+                output += 'Script loaded successfully!\n';
+                output += 'updateNavigation function exists: ' + (typeof updateNavigation === 'function') + '\n';
+                output += 'getUsers function exists: ' + (typeof getUsers === 'function') + '\n';
+                output += 'getCurrentUser function exists: ' + (typeof getCurrentUser === 'function') + '\n';
+                
+                document.getElementById('scriptOutput').textContent = output;
+            };
+            
+            script.onerror = function() {
+                output += 'Script failed to load!\n';
+                document.getElementById('scriptOutput').textContent = output;
+            };
+            
+            document.head.appendChild(script);
+        }
+        
+        function testUpdateNavigationStepByStep() {
+            let output = 'Testing updateNavigation step by step:\n\n';
+            
+            // Step 1: Check if function exists
+            if (typeof updateNavigation !== 'function') {
+                output += 'ERROR: updateNavigation function not found!\n';
+                document.getElementById('navTestOutput').textContent = output;
+                return;
+            }
+            output += 'âœ“ updateNavigation function found\n';
+            
+            // Step 2: Check localStorage data
+            const userEmail = localStorage.getItem('userEmail');
+            output += 'userEmail from localStorage: ' + userEmail + '\n';
+            
+            if (!userEmail) {
+                output += 'ERROR: No userEmail in localStorage!\n';
+                document.getElementById('navTestOutput').textContent = output;
+                return;
+            }
+            output += 'âœ“ userEmail found\n';
+            
+            // Step 3: Check getUsers function
+            if (typeof getUsers !== 'function') {
+                output += 'ERROR: getUsers function not found!\n';
+                document.getElementById('navTestOutput').textContent = output;
+                return;
+            }
+            output += 'âœ“ getUsers function found\n';
+            
+            // Step 4: Get users data
+            const users = getUsers();
+            output += 'Users from getUsers(): ' + users.length + ' users found\n';
+            
+            if (users.length === 0) {
+                output += 'ERROR: No users found!\n';
+                document.getElementById('navTestOutput').textContent = output;
+                return;
+            }
+            output += 'âœ“ Users found\n';
+            
+            // Step 5: Find current user
+            const user = users.find(u => u.email === userEmail);
+            output += 'Current user found: ' + (user ? 'Yes' : 'No') + '\n';
+            
+            if (!user) {
+                output += 'ERROR: Current user not found in users array!\n';
+                output += 'Looking for: ' + userEmail + '\n';
+                output += 'Available emails: ' + users.map(u => u.email).join(', ') + '\n';
+                document.getElementById('navTestOutput').textContent = output;
+                return;
+            }
+            output += 'âœ“ Current user found: ' + user.fullName + ' (' + user.role + ')\n';
+            
+            // Step 6: Check navLinks element
+            const navLinks = document.getElementById('navLinks');
+            output += 'navLinks element found: ' + (navLinks ? 'Yes' : 'No') + '\n';
+            
+            if (!navLinks) {
+                output += 'ERROR: navLinks element not found!\n';
+                document.getElementById('navTestOutput').textContent = output;
+                return;
+            }
+            output += 'âœ“ navLinks element found\n';
+            
+            // Step 7: Call updateNavigation
+            output += '\nCalling updateNavigation()...\n';
+            try {
+                updateNavigation();
+                output += 'âœ“ updateNavigation() called successfully\n';
+                
+                // Step 8: Check result
+                const finalHTML = navLinks.innerHTML;
+                output += 'Generated HTML: ' + finalHTML + '\n';
+                
+                if (finalHTML.trim() === '') {
+                    output += 'ERROR: No HTML generated!\n';
+                } else {
+                    output += 'âœ“ HTML generated successfully\n';
+                }
+                
+            } catch (error) {
+                output += 'ERROR calling updateNavigation: ' + error.message + '\n';
+            }
+            
+            document.getElementById('navTestOutput').textContent = output;
+        }
+        
+        // Auto-run localStorage check on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLocalStorage();
+        });
+    </script>
+</body>
+</html>

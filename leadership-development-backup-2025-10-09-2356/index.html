@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CFA Leadership Development</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="login-card">
+            <div class="card-header">
+                <div class="logo">
+                    <svg width="60" height="60" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="20" cy="20" r="20" fill="#E51636"/>
+                        <path d="M12 15C12 15 14 12 20 12C26 12 28 15 28 15C28 15 26 18 20 18C14 18 12 15 12 15Z" fill="white"/>
+                        <circle cx="18" cy="14" r="1.5" fill="white"/>
+                        <path d="M16 10C16 10 17 8 20 8C23 8 24 10 24 10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M26 16C26 16 27 17 26 18" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                        <text x="32" y="35" font-family="Arial" font-size="6" fill="#E51636">TM</text>
+                    </svg>
+                    <h1>CFA Leadership Development</h1>
+                </div>
+                <p>Sign in to access your leadership development portal</p>
+            </div>
+            
+            <div class="card-body">
+                <form class="signin-form" id="signinForm">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Sign In</button>
+                </form>
+                
+                <div class="demo-section">
+                    <p>Demo Credentials:</p>
+                    <div class="demo-buttons">
+                        <button type="button" class="btn btn-secondary" id="demoUserBtn">
+                            <i class="fas fa-user"></i>
+                            User Login
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="demoAdminBtn">
+                            <i class="fas fa-crown"></i>
+                            Admin Login
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize default users if localStorage is empty or needs updating
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Login page loaded');
+            
+            // Clear old data and initialize fresh users
+            console.log('Clearing old data and initializing fresh users...');
+            
+            // Create default users with usernames instead of emails
+            const defaultUsers = [
+                {
+                    fullName: 'Admin User',
+                    username: 'admin',
+                    password: 'admin123',
+                    role: 'Admin',
+                    status: 'active'
+                },
+                {
+                    fullName: 'Lisa Wilson',
+                    username: 'lisa',
+                    password: 'password123',
+                    role: 'Supervisor',
+                    status: 'active'
+                },
+                {
+                    fullName: 'Test User 456',
+                    username: 'test456',
+                    password: '123456',
+                    role: 'Team Member',
+                    status: 'active'
+                }
+            ];
+            
+            // Always save the new user structure (this will overwrite any old data)
+            localStorage.setItem('users', JSON.stringify(defaultUsers));
+            console.log('Fresh users initialized:', defaultUsers);
+            
+            // Clear any old authentication data
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('username');
+            
+            // Set up form submission
+            const signinForm = document.getElementById('signinForm');
+            if (signinForm) {
+                signinForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    console.log('Form submitted!');
+                    
+                    const username = document.getElementById('username').value;
+                    const password = document.getElementById('password').value;
+                    
+                    console.log('Login attempt:', { username: username, password: password });
+                    
+                    // Get users from localStorage
+                    const users = JSON.parse(localStorage.getItem('users') || '[]');
+                    console.log('Available users:', users);
+                    
+                    users.forEach(function(user, index) {
+                        console.log('User ' + index + ':', user);
+                        console.log('  Username match: ' + (user.username === username));
+                        console.log('  Password match: ' + (user.password === password));
+                    });
+                    
+                    const user = users.find(function(u) {
+                        return u.username === username && u.password === password;
+                    });
+                    console.log('Found user:', user);
+                    
+                    if (user) {
+                        // Store current user data in the format expected by other pages
+                        localStorage.setItem('currentUser', JSON.stringify(user));
+                        localStorage.setItem('username', user.username);
+                        localStorage.setItem('isLoggedIn', 'true');
+                        
+                        console.log('Login successful! Stored user data:');
+                        console.log('  currentUser:', localStorage.getItem('currentUser'));
+                        console.log('  username:', localStorage.getItem('username'));
+                        console.log('  isLoggedIn:', localStorage.getItem('isLoggedIn'));
+                        
+                        console.log('Redirecting...');
+                        
+                        // Redirect based on role
+                        if (user.role === 'Admin') {
+                            window.location.href = 'admin.html';
+                        } else {
+                            window.location.href = 'user-dashboard.html';
+                        }
+                    } else {
+                        console.log('No matching user found');
+                        alert('Invalid username or password');
+                    }
+                });
+            }
+            
+            // Set up demo user button
+            const demoUserBtn = document.getElementById('demoUserBtn');
+            if (demoUserBtn) {
+                demoUserBtn.addEventListener('click', function() {
+                    document.getElementById('username').value = 'lisa';
+                    document.getElementById('password').value = 'password123';
+                    console.log('Demo user credentials filled');
+                });
+            }
+            
+            // Set up demo admin button
+            const demoAdminBtn = document.getElementById('demoAdminBtn');
+            if (demoAdminBtn) {
+                demoAdminBtn.addEventListener('click', function() {
+                    document.getElementById('username').value = 'admin';
+                    document.getElementById('password').value = 'admin123';
+                    console.log('Demo admin credentials filled');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

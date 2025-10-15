@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Progress - CFA Leadership Development</title>
+    <link rel="stylesheet" href="user-progress-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-img">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="20" cy="20" r="20" fill="#E51636"/>
+                        <path d="M12 16h16v2H12v-2zm0 4h16v2H12v-2zm0 4h12v2H12v-2z" fill="white"/>
+                    </svg>
+                </div>
+                <span class="logo-text">Leadership Development</span>
+            </div>
+            <nav class="nav-links" id="navLinks">
+                <!-- Navigation will be populated by JavaScript -->
+            </nav>
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <div class="user-details">
+                    <span class="user-name" id="userName">User</span>
+                    <span class="user-role" id="userRole">Team Member</span>
+                </div>
+                <button class="sign-out-btn" id="signOutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="progress-container">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1>My Progress</h1>
+                <p>Track your leadership development journey and achievements</p>
+            </div>
+
+            <!-- Progress Overview Cards -->
+            <div class="progress-cards">
+                <div class="progress-card">
+                    <div class="card-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-number" id="overallProgress">0%</div>
+                        <div class="card-label">Overall Progress</div>
+                    </div>
+                </div>
+                <div class="progress-card">
+                    <div class="card-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-number" id="completedTasks">0</div>
+                        <div class="card-label">Completed Tasks</div>
+                    </div>
+                </div>
+                <div class="progress-card">
+                    <div class="card-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-number" id="totalTasks">0</div>
+                        <div class="card-label">Total Tasks</div>
+                    </div>
+                </div>
+                <div class="progress-card">
+                    <div class="card-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-number" id="achievements">0</div>
+                        <div class="card-label">Achievements</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Sections -->
+            <div class="progress-sections">
+                <!-- Current Learning Path -->
+                <div class="section">
+                    <div class="section-header">
+                        <h2>Current Learning Path</h2>
+                        <span class="section-badge" id="currentPathBadge">Leadership Fundamentals</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="path-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="pathProgressFill"></div>
+                            </div>
+                            <div class="progress-text">
+                                <span id="pathProgressText">0% Complete</span>
+                                <span id="pathProgressDetails">0 of 0 modules completed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Learning Modules -->
+                <div class="section">
+                    <div class="section-header">
+                        <h2>Learning Modules</h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="modules-grid" id="modulesGrid">
+                            <!-- Modules will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Module Details Modal -->
+    <div class="modal-overlay" id="moduleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalModuleTitle">Module Details</h2>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="module-description" id="modalModuleDescription">
+                    <!-- Module description will be populated here -->
+                </div>
+                <div class="checklist-section">
+                    <h3>Learning Checklist</h3>
+                    <div class="checklist" id="modalChecklist">
+                        <!-- Checklist items will be populated here -->
+                    </div>
+                </div>
+                <div class="progress-summary">
+                    <div class="progress-info">
+                        <span class="progress-label">Progress:</span>
+                        <span class="progress-percentage" id="modalProgressPercentage">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="modalProgressFill"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="modalCancel">Close</button>
+                <button type="button" class="btn btn-primary" id="modalStartModule">Start Module</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="user-progress-script.js"></script>
+</body>
+</html>

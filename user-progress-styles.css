@@ -1,0 +1,697 @@
+/* User Progress Styles */
+
+:root {
+    --cfa-red: #E51636;
+    --navy: #002A5C;
+    --light-gray: #F8F9FA;
+    --medium-gray: #6C757D;
+    --white: #FFFFFF;
+    --border-color: #E0E0E0;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --success-green: #28a745;
+    --warning-orange: #ffc107;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--light-gray);
+    color: var(--navy);
+    line-height: 1.6;
+}
+
+/* Header */
+.header {
+    background: linear-gradient(135deg, var(--navy) 0%, #003366 100%);
+    color: var(--white);
+    padding: 1rem 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo-img {
+    width: 40px;
+    height: 40px;
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--white);
+}
+
+.nav-links {
+    display: flex;
+    gap: 2rem;
+}
+
+.nav-link {
+    color: var(--white);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.nav-link.active {
+    background-color: var(--cfa-red);
+    color: var(--white);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--cfa-red);
+    color: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--white);
+}
+
+.user-role {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.sign-out-btn {
+    background: none;
+    border: none;
+    color: var(--white);
+    padding: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sign-out-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Main Content */
+.main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.progress-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 0.5rem;
+}
+
+.page-header p {
+    font-size: 1.1rem;
+    color: var(--medium-gray);
+}
+
+/* Progress Cards */
+.progress-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.progress-card {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.progress-card:hover {
+    transform: translateY(-2px);
+}
+
+.card-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--cfa-red);
+    color: var(--white);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.card-content {
+    flex: 1;
+}
+
+.card-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 0.25rem;
+}
+
+.card-label {
+    color: var(--medium-gray);
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* Progress Sections */
+.progress-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.section {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-header h2 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--navy);
+}
+
+.section-badge {
+    background: var(--cfa-red);
+    color: var(--white);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.section-content {
+    padding: 2rem;
+}
+
+/* Path Progress */
+.path-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background: var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cfa-red) 0%, #ff4757 100%);
+    transition: width 0.3s ease;
+    border-radius: 6px;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.progress-text span:first-child {
+    font-weight: 600;
+    color: var(--navy);
+}
+
+.progress-text span:last-child {
+    color: var(--medium-gray);
+    font-size: 0.9rem;
+}
+
+
+/* Modules Grid */
+.modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.module-card {
+    background: var(--light-gray);
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.module-card:hover {
+    border-color: var(--cfa-red);
+    transform: translateY(-2px);
+}
+
+.module-card.locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #f8f9fa;
+}
+
+.module-card.locked:hover {
+    border-color: transparent;
+    transform: none;
+}
+
+.module-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.module-title {
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.module-lock-icon {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.module-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.module-status.completed {
+    background: var(--success-green);
+    color: var(--white);
+}
+
+.module-status.in-progress {
+    background: var(--warning-orange);
+    color: var(--navy);
+}
+
+.module-status.not-started {
+    background: var(--border-color);
+    color: var(--medium-gray);
+}
+
+.module-status.locked {
+    background: #6c757d;
+    color: var(--white);
+}
+
+.module-description {
+    color: var(--medium-gray);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.module-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.module-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.module-progress-fill {
+    height: 100%;
+    background: var(--cfa-red);
+    transition: width 0.3s ease;
+}
+
+.module-progress-text {
+    font-size: 0.8rem;
+    color: var(--medium-gray);
+    font-weight: 500;
+}
+
+.module-lock-message {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+    text-align: center;
+    padding: 0.5rem;
+    background: rgba(108, 117, 125, 0.1);
+    border-radius: 4px;
+    margin-top: 0.5rem;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--navy);
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--medium-gray);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+    background: var(--light-gray);
+    color: var(--navy);
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.module-description {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--light-gray);
+    border-radius: 6px;
+    color: var(--navy);
+    line-height: 1.6;
+}
+
+.checklist-section h3 {
+    color: var(--navy);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.checklist {
+    margin-bottom: 2rem;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.checklist-item:last-child {
+    border-bottom: none;
+}
+
+.checklist-item:hover {
+    background: var(--light-gray);
+    margin: 0 -1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+}
+
+.checklist-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-right: 1rem;
+    cursor: pointer;
+    accent-color: var(--cfa-red);
+}
+
+.checklist-label {
+    flex: 1;
+    color: var(--navy);
+    cursor: pointer;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.checklist-item.completed .checklist-label {
+    text-decoration: line-through;
+    color: var(--medium-gray);
+}
+
+.progress-summary {
+    background: var(--light-gray);
+    padding: 1.5rem;
+    border-radius: 6px;
+    margin-top: 1rem;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.progress-label {
+    font-weight: 600;
+    color: var(--navy);
+}
+
+.progress-percentage {
+    font-weight: 600;
+    color: var(--cfa-red);
+    font-size: 1.1rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--white);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--cfa-red);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.modal-footer {
+    padding: 1.5rem 2rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.modal-footer .btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.modal-footer .btn-secondary {
+    background: var(--white);
+    color: var(--navy);
+    border: 2px solid var(--border-color);
+}
+
+.modal-footer .btn-secondary:hover {
+    background: var(--light-gray);
+    border-color: var(--medium-gray);
+}
+
+.modal-footer .btn-primary {
+    background: var(--cfa-red);
+    color: var(--white);
+}
+
+.modal-footer .btn-primary:hover {
+    background: #c4122f;
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .header-content {
+        padding: 0 1rem;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .nav-links {
+        gap: 1rem;
+    }
+
+    .main-content {
+        padding: 1rem;
+    }
+
+    .progress-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+    }
+
+    .section-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .modules-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .progress-card {
+        padding: 1.5rem;
+    }
+
+    .card-number {
+        font-size: 2rem;
+    }
+
+    .section-content {
+        padding: 1.5rem;
+    }
+}

@@ -1,0 +1,102 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Script Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Minimal Script Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Load Minimal Script</h2>
+        <button onclick="loadMinimalScript()">Load leadership-paths-minimal.js</button>
+        <div id="minimalTest">Click button to test</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Check Functions</h2>
+        <button onclick="checkMinimalFunctions()">Check Functions</button>
+        <div id="functionTest">Click button to check</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Test updateNavigation</h2>
+        <button onclick="testUpdateNavigation()">Test updateNavigation</button>
+        <div id="navTest">Click button to test</div>
+        <div id="testNavContainer" style="border: 1px dashed #ccc; padding: 10px; margin-top: 10px;">
+            <!-- Navigation will appear here -->
+        </div>
+    </div>
+
+    <script>
+        function loadMinimalScript() {
+            const script = document.createElement('script');
+            script.src = 'leadership-paths-minimal.js';
+            
+            script.onload = function() {
+                document.getElementById('minimalTest').innerHTML = 
+                    '<div class="success"><h3>âœ… Minimal Script Loaded</h3><p>No errors detected</p></div>';
+            };
+            
+            script.onerror = function() {
+                document.getElementById('minimalTest').innerHTML = 
+                    '<div class="error"><h3>âŒ Minimal Script Failed</h3><p>Error loading script</p></div>';
+            };
+            
+            document.head.appendChild(script);
+        }
+        
+        function checkMinimalFunctions() {
+            let html = '<h3>Function Check:</h3>';
+            
+            const functions = ['updateNavigation', 'testFunction', 'getUsers'];
+            
+            functions.forEach(funcName => {
+                const exists = typeof window[funcName] === 'function';
+                const status = exists ? 'âœ…' : 'âŒ';
+                const color = exists ? 'green' : 'red';
+                html += '<p style="color: ' + color + ';">' + status + ' ' + funcName + ': ' + (exists ? 'Found' : 'Not Found') + '</p>';
+            });
+            
+            document.getElementById('functionTest').innerHTML = html;
+        }
+        
+        function testUpdateNavigation() {
+            // Set up test data
+            const testUser = {
+                email: 'test@test.com',
+                fullName: 'Test User',
+                role: 'Admin',
+                status: 'active'
+            };
+            
+            localStorage.setItem('userEmail', testUser.email);
+            localStorage.setItem('users', JSON.stringify([testUser]));
+            
+            // Create a test nav container
+            const testContainer = document.getElementById('testNavContainer');
+            testContainer.innerHTML = '<div id="navLinks"></div>';
+            
+            // Call updateNavigation
+            if (typeof updateNavigation === 'function') {
+                updateNavigation();
+                const navLinks = document.getElementById('navLinks');
+                document.getElementById('navTest').innerHTML = 
+                    '<div class="success"><h3>âœ… updateNavigation Called</h3><p>Navigation HTML: ' + navLinks.innerHTML + '</p></div>';
+            } else {
+                document.getElementById('navTest').innerHTML = 
+                    '<div class="error"><h3>âŒ updateNavigation Not Found</h3><p>Function not available</p></div>';
+            }
+        }
+    </script>
+</body>
+</html>

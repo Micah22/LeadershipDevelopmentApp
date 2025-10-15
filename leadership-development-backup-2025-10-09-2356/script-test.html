@@ -1,0 +1,111 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Script Loading Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Script Loading Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Check if script file exists</h2>
+        <div id="fileTest">Loading...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Load script and check for errors</h2>
+        <button onclick="loadScript()">Load leadership-paths.js</button>
+        <div id="scriptTest">Click button to test script loading</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Check specific functions</h2>
+        <button onclick="checkFunctions()">Check Functions</button>
+        <div id="functionTest">Click button to check functions</div>
+    </div>
+
+    <script>
+        // Test 1: Check if script file exists
+        function checkFileExists() {
+            fetch('leadership-paths.js')
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('fileTest').innerHTML = 
+                            '<div class="success"><h3>âœ… File Exists</h3><p>leadership-paths.js file found</p></div>';
+                    } else {
+                        document.getElementById('fileTest').innerHTML = 
+                            '<div class="error"><h3>âŒ File Not Found</h3><p>leadership-paths.js file not found</p></div>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('fileTest').innerHTML = 
+                        '<div class="error"><h3>âŒ Error</h3><p>Error checking file: ' + error.message + '</p></div>';
+                });
+        }
+        
+        // Test 2: Load script and check for errors
+        function loadScript() {
+            const script = document.createElement('script');
+            script.src = 'leadership-paths.js';
+            
+            script.onload = function() {
+                document.getElementById('scriptTest').innerHTML = 
+                    '<div class="success"><h3>âœ… Script Loaded Successfully</h3><p>No syntax errors detected</p></div>';
+            };
+            
+            script.onerror = function() {
+                document.getElementById('scriptTest').innerHTML = 
+                    '<div class="error"><h3>âŒ Script Load Failed</h3><p>Syntax error or file not found</p></div>';
+            };
+            
+            document.head.appendChild(script);
+        }
+        
+        // Test 3: Check specific functions
+        function checkFunctions() {
+            let html = '<h3>Function Check Results:</h3>';
+            
+            const functions = [
+                'updateNavigation',
+                'getUsers',
+                'getCurrentUser',
+                'updateUserInfo',
+                'setupSignOut',
+                'loadLeadershipPathsData',
+                'displayLeadershipPaths',
+                'createPathCard',
+                'setupEditButtons',
+                'openEditModal',
+                'saveEdit',
+                'closeEditModal',
+                'setupModal',
+                'goBack',
+                'showNotification',
+                'viewAttachment',
+                'downloadAttachment'
+            ];
+            
+            functions.forEach(funcName => {
+                const exists = typeof window[funcName] === 'function';
+                const status = exists ? 'âœ…' : 'âŒ';
+                const color = exists ? 'green' : 'red';
+                html += '<p style="color: ' + color + ';">' + status + ' ' + funcName + ': ' + (exists ? 'Found' : 'Not Found') + '</p>';
+            });
+            
+            document.getElementById('functionTest').innerHTML = html;
+        }
+        
+        // Initialize
+        checkFileExists();
+    </script>
+</body>
+</html>

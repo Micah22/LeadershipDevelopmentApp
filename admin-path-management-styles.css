@@ -1,0 +1,209 @@
+/* Import base styles from admin overview */
+@import url('admin-overview-styles.css');
+
+/* Additional styles for path management */
+.modules-management-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.module-management-card {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.module-management-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.module-management-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.module-management-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--navy);
+    margin: 0;
+}
+
+.module-management-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.module-management-status.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.module-management-status.inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.module-management-status.draft {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.module-management-description {
+    color: var(--medium-gray);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.module-management-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.module-management-tasks {
+    font-size: 0.9rem;
+    color: var(--medium-gray);
+}
+
+.module-management-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.module-management-actions .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+}
+
+/* Modal styles for module editing */
+.modal-body .form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.modal-body .form-group textarea:focus {
+    outline: none;
+    border-color: var(--cfa-red);
+    box-shadow: 0 0 0 3px rgba(229, 22, 54, 0.1);
+}
+
+.checklist-section {
+    margin-top: 1.5rem;
+}
+
+.checklist-section h3 {
+    color: var(--navy);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.checklist-item:last-child {
+    border-bottom: none;
+}
+
+.checklist-item:hover {
+    background: var(--light-gray);
+    margin: 0 -1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+}
+
+.checklist-task-input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    margin-right: 0.5rem;
+}
+
+.checklist-task-input:focus {
+    outline: none;
+    border-color: var(--cfa-red);
+}
+
+.checklist-remove-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background 0.3s ease;
+}
+
+.checklist-remove-btn:hover {
+    background: #c82333;
+}
+
+.add-task-btn {
+    margin-top: 1rem;
+}
+
+/* Section header with button */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+    margin: 0;
+    color: var(--navy);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .modules-management-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .module-management-header {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .module-management-actions {
+        flex-direction: column;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+}

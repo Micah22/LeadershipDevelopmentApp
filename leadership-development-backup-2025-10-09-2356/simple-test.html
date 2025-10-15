@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Script Test</title>
+</head>
+<body>
+    <h1>Simple Script Test</h1>
+    <button onclick="testScript()">Test Script Loading</button>
+    <div id="result"></div>
+
+    <script>
+        function testScript() {
+            // Load test script
+            const script = document.createElement('script');
+            script.src = 'test-script.js';
+            
+            script.onload = function() {
+                if (typeof testFunction === 'function') {
+                    document.getElementById('result').innerHTML = 
+                        '<p style="color: green;">âœ… Script loaded successfully! Result: ' + testFunction() + '</p>';
+                } else {
+                    document.getElementById('result').innerHTML = 
+                        '<p style="color: red;">âŒ Script loaded but function not found</p>';
+                }
+            };
+            
+            script.onerror = function() {
+                document.getElementById('result').innerHTML = 
+                    '<p style="color: red;">âŒ Script failed to load</p>';
+            };
+            
+            document.head.appendChild(script);
+        }
+    </script>
+</body>
+</html>

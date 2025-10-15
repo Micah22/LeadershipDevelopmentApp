@@ -1,0 +1,146 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix User Data</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .console-output { background: #f8f9fa; padding: 10px; border: 1px solid #dee2e6; font-family: monospace; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Fix User Data Issue</h1>
+    
+    <div class="test-section">
+        <h2>Current localStorage Data</h2>
+        <button onclick="showCurrentData()">Show Current Data</button>
+        <div id="currentData" class="console-output"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Fix: Add Missing User</h2>
+        <button onclick="fixUserData()">Add 456@test.com to Users Array</button>
+        <div id="fixOutput" class="console-output"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Navigation After Fix</h2>
+        <button onclick="testNavigationAfterFix()">Test Navigation</button>
+        <div id="navTestOutput" class="console-output"></div>
+        <div id="testNavContainer" style="border: 1px dashed #ccc; padding: 10px; margin-top: 10px;">
+            <div id="navLinks"></div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Go to Leadership Paths</h2>
+        <button onclick="goToLeadershipPaths()">Go to Leadership Paths Page</button>
+    </div>
+
+    <script>
+        function showCurrentData() {
+            let output = 'Current localStorage Data:\n';
+            output += 'userEmail: ' + localStorage.getItem('userEmail') + '\n';
+            output += 'isLoggedIn: ' + localStorage.getItem('isLoggedIn') + '\n';
+            
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            output += 'Users in localStorage: ' + users.length + '\n';
+            users.forEach((user, index) => {
+                output += 'User ' + (index + 1) + ': ' + user.email + ' (' + user.role + ')\n';
+            });
+            
+            document.getElementById('currentData').textContent = output;
+        }
+        
+        function fixUserData() {
+            let output = 'Fixing user data...\n';
+            
+            // Get current users
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            output += 'Current users count: ' + users.length + '\n';
+            
+            // Check if 456@test.com already exists
+            const existingUser = users.find(u => u.email === '456@test.com');
+            if (existingUser) {
+                output += 'User 456@test.com already exists in users array\n';
+            } else {
+                // Add the missing user
+                const newUser = {
+                    email: '456@test.com',
+                    password: '123456',
+                    fullName: 'Test User 456',
+                    role: 'Team Member',
+                    status: 'active'
+                };
+                
+                users.push(newUser);
+                localStorage.setItem('users', JSON.stringify(users));
+                output += 'Added user: 456@test.com (Team Member)\n';
+            }
+            
+            output += 'Updated users count: ' + users.length + '\n';
+            output += 'All users:\n';
+            users.forEach((user, index) => {
+                output += '  ' + (index + 1) + '. ' + user.email + ' (' + user.role + ')\n';
+            });
+            
+            document.getElementById('fixOutput').textContent = output;
+        }
+        
+        function testNavigationAfterFix() {
+            let output = 'Testing navigation after fix...\n';
+            
+            // Load the script if not already loaded
+            if (typeof updateNavigation !== 'function') {
+                const script = document.createElement('script');
+                script.src = 'leadership-paths.js';
+                script.onload = function() {
+                    runNavigationTest();
+                };
+                document.head.appendChild(script);
+            } else {
+                runNavigationTest();
+            }
+            
+            function runNavigationTest() {
+                output += 'Script loaded, testing updateNavigation...\n';
+                
+                try {
+                    updateNavigation();
+                    output += 'updateNavigation() called successfully\n';
+                    
+                    const navLinks = document.getElementById('navLinks');
+                    const html = navLinks.innerHTML;
+                    output += 'Generated HTML: ' + html + '\n';
+                    
+                    if (html.trim() === '') {
+                        output += 'ERROR: Still no HTML generated!\n';
+                    } else {
+                        output += 'SUCCESS: Navigation HTML generated!\n';
+                    }
+                    
+                } catch (error) {
+                    output += 'ERROR: ' + error.message + '\n';
+                }
+                
+                document.getElementById('navTestOutput').textContent = output;
+            }
+        }
+        
+        function goToLeadershipPaths() {
+            window.location.href = 'leadership-paths.html';
+        }
+        
+        // Show current data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            showCurrentData();
+        });
+    </script>
+</body>
+</html>
