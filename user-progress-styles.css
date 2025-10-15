@@ -566,6 +566,24 @@ body {
     color: var(--medium-gray);
 }
 
+.checklist-file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(229, 22, 54, 0.1);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: var(--cfa-red);
+    font-weight: 500;
+}
+
+.checklist-file-info i {
+    color: var(--cfa-red);
+    font-size: 0.8rem;
+}
+
 .progress-summary {
     background: var(--light-gray);
     padding: 1.5rem;

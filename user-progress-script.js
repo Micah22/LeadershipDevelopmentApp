@@ -363,12 +363,14 @@ function openModuleModal(moduleTitle) {
     if (modalChecklist) {
         const checklistHTML = moduleData.checklist.map((item, index) => {
             const isCompleted = moduleProgress.checklist[index] || false;
+            const fileInfo = item.file ? `<div class="checklist-file-info"><i class="fas fa-file"></i> ${item.file}</div>` : '';
             return `
                 <div class="checklist-item ${isCompleted ? 'completed' : ''}">
                     <input type="checkbox" class="checklist-checkbox" id="checklist-${index}" 
                            ${isCompleted ? 'checked' : ''} 
                            onchange="toggleChecklistItem('${moduleTitle}', ${index})">
                     <label for="checklist-${index}" class="checklist-label">${item.task}</label>
+                    ${fileInfo}
                 </div>
             `;
         }).join('');
@@ -528,10 +530,21 @@ function getModuleData(moduleTitle) {
         title: module.title,
         description: module.description,
         requiredRole: module.requiredRole,
-        checklist: module.checklist.map(task => ({
-            task: task,
-            completed: false
-        }))
+        checklist: module.checklist.map(task => {
+            // Handle both old string format and new object format
+            if (typeof task === 'string') {
+                return {
+                    task: task,
+                    completed: false
+                };
+            } else {
+                return {
+                    task: task.description || task.task || '',
+                    file: task.file || '',
+                    completed: false
+                };
+            }
+        })
     };
 }
 
