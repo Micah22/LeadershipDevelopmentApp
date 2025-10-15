@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Progress - CFA Leadership Development</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-    <link rel="stylesheet" href="../styles/user-progress-styles.css?v=24">
+    <link rel="stylesheet" href="../styles/user-progress-styles.css?v=31">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="../scripts/navbar.js?v=17"></script>
 </head>
@@ -14,12 +14,13 @@
 
     <!-- Main Content -->
     <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>My Progress</h1>
+            <p>Track your leadership development journey and achievements</p>
+        </div>
+        
         <div class="progress-container">
-            <!-- Page Header -->
-            <div class="page-header">
-                <h1>My Progress</h1>
-                <p>Track your leadership development journey and achievements</p>
-            </div>
 
             <!-- Progress Overview Cards -->
             <div class="progress-cards">
@@ -61,9 +62,8 @@
                 </div>
             </div>
 
-            <!-- Progress Sections -->
-            <div class="progress-sections">
-                <!-- Current Learning Path -->
+            <!-- Current Learning Path - Floating Left -->
+            <div class="current-path-floating">
                 <div class="section">
                     <div class="section-header">
                         <h2>Current Learning Path</h2>
@@ -81,6 +81,10 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Progress Sections -->
+            <div class="progress-sections">
 
                 <!-- Learning Modules -->
                 <div class="section">
@@ -103,7 +107,7 @@
             <div class="modal-header">
                 <div class="modal-header-content">
                     <div class="modal-title-section">
-                        <h2 id="modalModuleTitle">Module Details</h2>
+                <h2 id="modalModuleTitle">Module Details</h2>
                         <div class="modal-metadata" id="modalMetadata">
                             <!-- Module metadata will be populated here -->
                         </div>
@@ -117,9 +121,9 @@
                             </div>
                         </div>
                     </div>
-                    <button class="modal-close" id="modalClose">
-                        <i class="fas fa-times"></i>
-                    </button>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
                 </div>
             </div>
             <div class="modal-body">
@@ -285,7 +289,7 @@
                                     <input type="date" class="due-date-input">
                                 </div>
                             </div>
-                        </div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -318,6 +322,6 @@
         </div>
     </div>
 
-    <script src="../scripts/user-progress-script.js?v=22"></script>
+    <script src="../scripts/user-progress-script.js?v=24"></script>
 </body>
 </html>

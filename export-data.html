@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export Current Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h2 {
+            color: #666;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .copy-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .copy-btn:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Current LocalStorage Data Export</h1>
+    
+    <div class="container">
+        <h2>Users Data</h2>
+        <button class="copy-btn" onclick="copyToClipboard('users')">Copy Users JSON</button>
+        <pre id="users-data">Loading...</pre>
+    </div>
+    
+    <div class="container">
+        <h2>Global Modules Data</h2>
+        <button class="copy-btn" onclick="copyToClipboard('modules')">Copy Modules JSON</button>
+        <pre id="modules-data">Loading...</pre>
+    </div>
+    
+    <div class="container">
+        <h2>User Progress Data</h2>
+        <button class="copy-btn" onclick="copyToClipboard('progress')">Copy Progress JSON</button>
+        <pre id="progress-data">Loading...</pre>
+    </div>
+    
+    <div class="container">
+        <h2>All LocalStorage Keys</h2>
+        <pre id="all-keys">Loading...</pre>
+    </div>
+
+    <script>
+        function loadData() {
+            // Load users data
+            const users = localStorage.getItem('users');
+            document.getElementById('users-data').textContent = users ? JSON.stringify(JSON.parse(users), null, 2) : 'No users data found';
+            
+            // Load modules data
+            const modules = localStorage.getItem('globalModules');
+            document.getElementById('modules-data').textContent = modules ? JSON.stringify(JSON.parse(modules), null, 2) : 'No modules data found';
+            
+            // Load progress data
+            const progress = localStorage.getItem('userProgress');
+            document.getElementById('progress-data').textContent = progress ? JSON.stringify(JSON.parse(progress), null, 2) : 'No progress data found';
+            
+            // Show all keys
+            const allKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                allKeys.push(key);
+            }
+            document.getElementById('all-keys').textContent = allKeys.join('\n');
+        }
+        
+        function copyToClipboard(type) {
+            let data;
+            switch(type) {
+                case 'users':
+                    data = localStorage.getItem('users');
+                    break;
+                case 'modules':
+                    data = localStorage.getItem('globalModules');
+                    break;
+                case 'progress':
+                    data = localStorage.getItem('userProgress');
+                    break;
+            }
+            
+            if (data) {
+                navigator.clipboard.writeText(data).then(() => {
+                    showStatus(`${type} data copied to clipboard!`, 'success');
+                });
+            } else {
+                showStatus(`No ${type} data found`, 'error');
+            }
+        }
+        
+        function showStatus(message, type) {
+            const status = document.createElement('div');
+            status.className = `status ${type}`;
+            status.textContent = message;
+            document.body.appendChild(status);
+            
+            setTimeout(() => {
+                document.body.removeChild(status);
+            }, 3000);
+        }
+        
+        // Load data when page loads
+        loadData();
+    </script>
+</body>
+</html>

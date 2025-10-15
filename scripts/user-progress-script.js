@@ -224,7 +224,9 @@ function loadProgressData() {
                 status: status,
                 progress: isLocked ? 0 : progressPercentage,
                 isLocked: isLocked,
-                requiredRole: moduleData.requiredRole
+                requiredRole: moduleData.requiredRole,
+                completedTasks: completedCount,
+                totalTasks: totalCount
             };
         })
         .filter(module => module !== null); // Remove deleted modules
@@ -326,10 +328,13 @@ function updateModules(modules) {
             ${module.isLocked ? 
                 `<div class="module-lock-message">Requires ${module.requiredRole} role or higher</div>` :
                 `<div class="module-progress">
-                    <div class="module-progress-bar">
-                        <div class="module-progress-fill" style="width: ${module.progress}%;"></div>
+                    <div class="module-task-count">${module.completedTasks || 0} of ${module.totalTasks || 0} tasks completed</div>
+                    <div class="module-progress-bar-container">
+                        <div class="module-progress-bar">
+                            <div class="module-progress-fill" style="width: ${module.progress}%;"></div>
+                        </div>
+                        <div class="module-progress-text">${module.progress}%</div>
                     </div>
-                    <div class="module-progress-text">${module.progress}%</div>
                 </div>`
             }
         </div>

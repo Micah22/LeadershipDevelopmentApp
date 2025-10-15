@@ -275,6 +275,9 @@ function initializeGlobalModules() {
         
         // Save default modules to global storage
         localStorage.setItem('globalModules', JSON.stringify(defaultModules));
+        console.log('Initialized default global modules');
+    } else {
+        console.log('Existing modules found, preserving data');
     }
 }
 

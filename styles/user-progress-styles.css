@@ -506,7 +506,7 @@ body {
 
 /* Main Content */
 .main-content {
-    max-width: 1200px;
+    max-width: 1600px;
     margin: 0 auto;
     padding: 2rem;
 }
@@ -521,6 +521,8 @@ body {
 .page-header {
     text-align: center;
     margin-bottom: 2rem;
+    margin-left: 320px;
+    max-width: calc(100% - 320px);
 }
 
 .page-header h1 {
@@ -537,21 +539,34 @@ body {
 
 /* Progress Cards */
 .progress-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    position: fixed;
+    left: 20px;
+    top: 20%;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    z-index: 100;
+    width: 280px;
+}
+
+.current-path-floating {
+    position: fixed;
+    left: 20px;
+    top: calc(20% + 400px);
+    width: 280px;
+    z-index: 100;
 }
 
 .progress-card {
     background: var(--white);
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: var(--shadow);
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
-    gap: 1.5rem;
-    transition: transform 0.3s ease;
+    gap: 0.75rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid var(--border-color);
 }
 
 .progress-card:hover {
@@ -559,15 +574,16 @@ body {
 }
 
 .card-icon {
-    width: 60px;
-    height: 60px;
+    width: 40px;
+    height: 40px;
     background: var(--cfa-red);
     color: var(--white);
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1rem;
+    flex-shrink: 0;
 }
 
 .card-content {
@@ -575,7 +591,7 @@ body {
 }
 
 .card-number {
-    font-size: 2.5rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--navy);
     margin-bottom: 0.25rem;
@@ -583,7 +599,7 @@ body {
 
 .card-label {
     color: var(--medium-gray);
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     font-weight: 500;
     letter-spacing: 0.5px;
 }
@@ -593,6 +609,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 2rem;
+    margin-left: 320px;
+    max-width: calc(100% - 320px);
 }
 
 .section {
@@ -871,6 +889,19 @@ body {
 
 .module-progress {
     display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.module-task-count {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.module-progress-bar-container {
+    display: flex;
     align-items: center;
     gap: 0.5rem;
 }
@@ -929,7 +960,7 @@ body {
     border-radius: 8px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     width: 95%;
-    max-width: 1000px;
+    max-width: 1400px;
     max-height: 90vh;
     overflow-y: auto;
     animation: modalSlideIn 0.3s ease;
@@ -1313,7 +1344,31 @@ body {
     }
 
     .progress-cards {
-        grid-template-columns: 1fr;
+        position: relative;
+        left: auto;
+        top: auto;
+        transform: none;
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
+        margin-bottom: 2rem;
+    }
+    
+    .current-path-floating {
+        position: relative;
+        left: auto;
+        top: auto;
+        width: 100%;
+        margin-bottom: 2rem;
+    }
+    
+    .progress-sections {
+        margin-left: 0;
+    }
+    
+    .page-header {
+        margin-left: 0;
+        max-width: 100%;
     }
 
     .page-header h1 {
@@ -1693,4 +1748,15 @@ body {
 
 [data-theme="dark"] .goal-entry {
     border-bottom-color: var(--border-color-dark);
+}
+
+/* Dark mode adjustments for floating progress cards */
+[data-theme="dark"] .progress-card {
+    background: var(--background-dark);
+    border-color: var(--border-color-dark);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .module-task-count {
+    color: var(--text-secondary);
 }

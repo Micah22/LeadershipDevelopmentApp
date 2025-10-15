@@ -82,9 +82,14 @@
                 }
             ];
             
-            // Always save the new user structure (this will overwrite any old data)
-            localStorage.setItem('users', JSON.stringify(defaultUsers));
-            console.log('Fresh users initialized:', defaultUsers);
+            // Only initialize users if none exist (preserve existing data)
+            const existingUsers = localStorage.getItem('users');
+            if (!existingUsers) {
+                localStorage.setItem('users', JSON.stringify(defaultUsers));
+                console.log('Default users initialized:', defaultUsers);
+            } else {
+                console.log('Existing users found, preserving data');
+            }
             
             // Clear any old authentication data
             localStorage.removeItem('userEmail');

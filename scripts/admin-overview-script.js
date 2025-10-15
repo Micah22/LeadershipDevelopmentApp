@@ -670,6 +670,8 @@ function initializeDefaultUsers() {
         
         localStorage.setItem('users', JSON.stringify(defaultUsers));
         console.log('Initialized default users:', defaultUsers);
+    } else {
+        console.log('Existing users found, preserving data');
     }
 }
 
@@ -1018,6 +1020,9 @@ function initializeGlobalModules() {
         
         // Save default modules to global storage
         localStorage.setItem('globalModules', JSON.stringify(defaultModules));
+        console.log('Initialized default global modules');
+    } else {
+        console.log('Existing modules found, preserving data');
     }
 }
 
