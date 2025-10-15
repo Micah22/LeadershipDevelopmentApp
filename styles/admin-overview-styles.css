@@ -670,6 +670,15 @@ body {
     background: #d32f2f;
 }
 
+.btn-unassign {
+    background: #ff9800;
+    color: white;
+}
+
+.btn-unassign:hover {
+    background: #f57c00;
+}
+
 /* Dark mode adjustments for assignments */
 [data-theme="dark"] .filter-select {
     background: var(--dark-bg);

@@ -140,11 +140,16 @@
                                 <option value="completed">Completed</option>
                                 <option value="overdue">Overdue</option>
                             </select>
+                            <button class="btn btn-secondary" id="bulkUnassignBtn" style="display: none;">
+                                <i class="fas fa-user-minus"></i>
+                                Unassign Selected
+                            </button>
                         </div>
                         <div class="table-container">
                             <table class="assignments-table">
                                 <thead>
                                     <tr>
+                                        <th><input type="checkbox" id="selectAllAssignments" title="Select All"></th>
                                         <th>USER</th>
                                         <th>MODULE</th>
                                         <th>ASSIGNED DATE</th>

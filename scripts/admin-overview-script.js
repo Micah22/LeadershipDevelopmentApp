@@ -1899,13 +1899,14 @@ function updateAssignmentsTable() {
     tbody.innerHTML = '';
 
     if (moduleAssignments.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #666;">No module assignments found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: #666;">No module assignments found</td></tr>';
         return;
     }
 
     moduleAssignments.forEach(assignment => {
         const row = document.createElement('tr');
         row.innerHTML = `
+            <td><input type="checkbox" class="assignment-checkbox" data-assignment-id="${assignment.id}"></td>
             <td>${assignment.user_name || 'Unknown User'}</td>
             <td>${assignment.module_title || 'Unknown Module'}</td>
             <td>${formatDate(assignment.assigned_at)}</td>
@@ -1914,16 +1915,25 @@ function updateAssignmentsTable() {
             <td>${assignment.notes || '-'}</td>
             <td>
                 <div class="assignment-actions">
-                    <button class="btn-edit" onclick="editAssignment('${assignment.id}')">
+                    <button class="btn-edit" onclick="editAssignment('${assignment.id}')" title="Edit Assignment">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn-delete" onclick="deleteAssignment('${assignment.id}')">
+                    <button class="btn-unassign" onclick="unassignModule('${assignment.id}')" title="Unassign Module">
+                        <i class="fas fa-user-minus"></i>
+                    </button>
+                    <button class="btn-delete" onclick="deleteAssignment('${assignment.id}')" title="Delete Assignment">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
             </td>
         `;
         tbody.appendChild(row);
+    });
+
+    // Add event listeners to individual checkboxes
+    const assignmentCheckboxes = document.querySelectorAll('.assignment-checkbox');
+    assignmentCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkUnassignButton);
     });
 }
 
@@ -2154,20 +2164,64 @@ function editAssignment(assignmentId) {
     openAssignmentModal(assignmentId);
 }
 
-// Delete assignment
+// Unassign module (soft delete - marks as unassigned)
+async function unassignModule(assignmentId) {
+    const assignment = moduleAssignments.find(a => a.id === assignmentId);
+    if (!assignment) {
+        showToast('error', 'Error', 'Assignment not found');
+        return;
+    }
+
+    const confirmMessage = `Are you sure you want to unassign "${assignment.module_title}" from "${assignment.user_name}"?`;
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+
+    try {
+        // Try to delete from database first
+        await window.dbService.removeModuleAssignment(assignmentId);
+        console.log('Assignment removed from database successfully');
+    } catch (error) {
+        console.error('Failed to remove assignment from database:', error);
+        // Continue with localStorage removal even if database fails
+    }
+
+    // Remove from localStorage
+    const localAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
+    const updatedAssignments = localAssignments.filter(a => a.id !== assignmentId);
+    localStorage.setItem('moduleAssignments', JSON.stringify(updatedAssignments));
+
+    showToast('success', 'Module Unassigned', `"${assignment.module_title}" has been unassigned from "${assignment.user_name}"`);
+    await loadModuleAssignments();
+}
+
+// Delete assignment (permanent delete)
 async function deleteAssignment(assignmentId) {
-    if (!confirm('Are you sure you want to delete this module assignment?')) {
+    const assignment = moduleAssignments.find(a => a.id === assignmentId);
+    if (!assignment) {
+        showToast('error', 'Error', 'Assignment not found');
+        return;
+    }
+
+    const confirmMessage = `Are you sure you want to permanently delete this assignment for "${assignment.user_name}" and "${assignment.module_title}"? This action cannot be undone.`;
+    if (!confirm(confirmMessage)) {
         return;
     }
 
     try {
         await window.dbService.removeModuleAssignment(assignmentId);
         showToast('success', 'Assignment Deleted', 'Module assignment deleted successfully');
-        await loadModuleAssignments();
     } catch (error) {
         console.error('Failed to delete assignment:', error);
         showToast('error', 'Delete Failed', 'Could not delete module assignment');
     }
+
+    // Remove from localStorage
+    const localAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
+    const updatedAssignments = localAssignments.filter(a => a.id !== assignmentId);
+    localStorage.setItem('moduleAssignments', JSON.stringify(updatedAssignments));
+
+    await loadModuleAssignments();
 }
 
 // Close assignment modal
@@ -2231,6 +2285,18 @@ function setupAssignmentEventListeners() {
     if (statusFilter) {
         statusFilter.addEventListener('change', filterAssignments);
     }
+
+    // Bulk unassign button
+    const bulkUnassignBtn = document.getElementById('bulkUnassignBtn');
+    if (bulkUnassignBtn) {
+        bulkUnassignBtn.addEventListener('click', bulkUnassignModules);
+    }
+
+    // Select all checkbox
+    const selectAllCheckbox = document.getElementById('selectAllAssignments');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', toggleSelectAllAssignments);
+    }
 }
 
 // Filter assignments
@@ -2242,4 +2308,81 @@ function filterAssignments() {
     // This would filter the assignments based on the selected filters
     // For now, we'll just reload all assignments
     updateAssignmentsTable();
+}
+
+// Toggle select all assignments
+function toggleSelectAllAssignments() {
+    const selectAllCheckbox = document.getElementById('selectAllAssignments');
+    const assignmentCheckboxes = document.querySelectorAll('.assignment-checkbox');
+    const bulkUnassignBtn = document.getElementById('bulkUnassignBtn');
+    
+    assignmentCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    
+    // Show/hide bulk unassign button based on selections
+    updateBulkUnassignButton();
+}
+
+// Update bulk unassign button visibility
+function updateBulkUnassignButton() {
+    const selectedCheckboxes = document.querySelectorAll('.assignment-checkbox:checked');
+    const bulkUnassignBtn = document.getElementById('bulkUnassignBtn');
+    
+    if (selectedCheckboxes.length > 0) {
+        bulkUnassignBtn.style.display = 'inline-flex';
+        bulkUnassignBtn.textContent = `Unassign Selected (${selectedCheckboxes.length})`;
+    } else {
+        bulkUnassignBtn.style.display = 'none';
+    }
+}
+
+// Bulk unassign selected modules
+async function bulkUnassignModules() {
+    const selectedCheckboxes = document.querySelectorAll('.assignment-checkbox:checked');
+    
+    if (selectedCheckboxes.length === 0) {
+        showToast('warning', 'No Selection', 'Please select at least one assignment to unassign');
+        return;
+    }
+    
+    const selectedIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.assignmentId);
+    const selectedAssignments = moduleAssignments.filter(a => selectedIds.includes(a.id));
+    
+    const confirmMessage = `Are you sure you want to unassign ${selectedAssignments.length} module(s)?\n\nThis will unassign:\n${selectedAssignments.map(a => `• ${a.module_title} from ${a.user_name}`).join('\n')}`;
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const assignmentId of selectedIds) {
+        try {
+            // Try to remove from database
+            await window.dbService.removeModuleAssignment(assignmentId);
+            successCount++;
+        } catch (error) {
+            console.error(`Failed to remove assignment ${assignmentId} from database:`, error);
+            errorCount++;
+        }
+    }
+    
+    // Remove from localStorage
+    const localAssignments = JSON.parse(localStorage.getItem('moduleAssignments') || '[]');
+    const updatedAssignments = localAssignments.filter(a => !selectedIds.includes(a.id));
+    localStorage.setItem('moduleAssignments', JSON.stringify(updatedAssignments));
+    
+    // Update UI
+    const selectAllCheckbox = document.getElementById('selectAllAssignments');
+    selectAllCheckbox.checked = false;
+    updateBulkUnassignButton();
+    
+    const message = errorCount > 0 
+        ? `${successCount} assignments unassigned successfully, ${errorCount} failed`
+        : `${successCount} assignments unassigned successfully`;
+    
+    showToast('success', 'Bulk Unassign Complete', message);
+    await loadModuleAssignments();
 }
