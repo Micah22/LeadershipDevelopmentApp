@@ -91,13 +91,34 @@
                     // Store in localStorage for compatibility
                     localStorage.setItem('users', JSON.stringify(dbUsers));
                 } else {
-                    // No users in database, check localStorage
-                    const existingUsers = localStorage.getItem('users');
-                    if (!existingUsers) {
-                        localStorage.setItem('users', JSON.stringify(defaultUsers));
-                        console.log('Default users initialized:', defaultUsers);
-                    } else {
-                        console.log('Existing users found in localStorage, preserving data');
+                    console.log('No users found in database, creating default admin user...');
+                    // Create default admin user in database
+                    try {
+                        const adminUser = {
+                            username: 'admin',
+                            full_name: 'Admin User',
+                            email: 'admin@company.com',
+                            password_hash: btoa('admin123'),
+                            role: 'Admin',
+                            status: 'active',
+                            start_date: '2024-01-01'
+                        };
+                        await window.dbService.createUser(adminUser);
+                        console.log('Default admin user created in database');
+                        
+                        // Reload users from database
+                        const newDbUsers = await window.dbService.getUsers();
+                        localStorage.setItem('users', JSON.stringify(newDbUsers));
+                        console.log('Users loaded from database after creation:', newDbUsers.length);
+                    } catch (createError) {
+                        console.log('Failed to create admin user in database, using localStorage fallback');
+                        const existingUsers = localStorage.getItem('users');
+                        if (!existingUsers) {
+                            localStorage.setItem('users', JSON.stringify(defaultUsers));
+                            console.log('Default users initialized in localStorage:', defaultUsers);
+                        } else {
+                            console.log('Existing users found in localStorage, preserving data');
+                        }
                     }
                 }
             } catch (error) {
@@ -105,9 +126,9 @@
                 const existingUsers = localStorage.getItem('users');
                 if (!existingUsers) {
                     localStorage.setItem('users', JSON.stringify(defaultUsers));
-                    console.log('Default users initialized:', defaultUsers);
+                    console.log('Default users initialized in localStorage:', defaultUsers);
                 } else {
-                    console.log('Existing users found, preserving data');
+                    console.log('Existing users found in localStorage, preserving data');
                 }
             }
             
