@@ -753,7 +753,120 @@ body {
 .module-description {
     color: var(--medium-gray);
     font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.prerequisites-info {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: var(--background-light);
+    border-radius: 6px;
+    border-left: 3px solid var(--cfa-red);
+    font-size: 0.9rem;
+}
+
+.prerequisites-info strong {
+    color: var(--text-primary);
+}
+
+
+/* Rubric Section */
+.rubric-section {
+    margin-bottom: 1.5rem;
+}
+
+.rubric-section h3 {
+    color: var(--text-primary);
     margin-bottom: 1rem;
+    font-size: 1.1rem;
+    border-bottom: 2px solid var(--cfa-red);
+    padding-bottom: 0.5rem;
+}
+
+.rubric-criteria {
+    margin-bottom: 1.5rem;
+}
+
+.rubric-criteria:last-child {
+    margin-bottom: 0;
+}
+
+/* Make rubric criteria display in a grid for wider modals */
+@media (min-width: 800px) {
+    .rubric-section .rubric-criteria {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+}
+
+.rubric-criteria-item {
+    background: var(--background-light);
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+.rubric-title {
+    color: var(--text-primary);
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.rubric-levels {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.rubric-level {
+    padding: 0.75rem;
+    border-radius: 6px;
+    border-left: 4px solid;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.rubric-level strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.rubric-red {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-left-color: #dc3545;
+    color: #721c24;
+}
+
+.rubric-yellow {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-left-color: #ffc107;
+    color: #856404;
+}
+
+.rubric-green {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-left-color: #28a745;
+    color: #155724;
+}
+
+/* Dark mode adjustments for rubric */
+[data-theme="dark"] .rubric-red {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #f8d7da;
+}
+
+[data-theme="dark"] .rubric-yellow {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: #fff3cd;
+}
+
+[data-theme="dark"] .rubric-green {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: #d4edda;
 }
 
 .module-progress {
@@ -815,8 +928,8 @@ body {
     background: var(--white);
     border-radius: 8px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    width: 90%;
-    max-width: 700px;
+    width: 95%;
+    max-width: 1000px;
     max-height: 90vh;
     overflow-y: auto;
     animation: modalSlideIn 0.3s ease;
@@ -836,9 +949,33 @@ body {
 .modal-header {
     padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header-content {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.modal-title-section {
+    flex: 1;
+}
+
+.modal-metadata {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.metadata-item {
+    display: inline;
+}
+
+.metadata-item strong {
+    color: var(--text-primary);
+    font-weight: 600;
 }
 
 .modal-header h2 {
@@ -966,14 +1103,14 @@ body {
 
 /* File Viewer Modal Styles */
 .file-viewer-modal {
-    max-width: 90vw;
-    max-height: 90vh;
-    width: 800px;
+    max-width: 95vw;
+    max-height: 95vh;
+    width: 1200px;
 }
 
 .file-viewer-content {
-    min-height: 400px;
-    max-height: 60vh;
+    min-height: 500px;
+    max-height: 75vh;
     overflow-y: auto;
     border: 1px solid var(--border-color);
     border-radius: 4px;
@@ -985,7 +1122,7 @@ body {
     width: 100%;
     height: 100%;
     border: none;
-    min-height: 400px;
+    min-height: 500px;
 }
 
 .file-viewer-content .file-preview {

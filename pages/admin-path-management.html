@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Path Management - CFA Leadership Development</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-    <link rel="stylesheet" href="../styles/admin-overview-styles.css">
+    <link rel="stylesheet" href="../styles/admin-overview-styles.css?v=8">
     <link rel="stylesheet" href="../styles/admin-path-management-styles.css?v=8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="../scripts/navbar.js?v=17"></script>
@@ -89,18 +89,85 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="editModuleRole">Required Role</label>
-                        <select id="editModuleRole" name="requiredRole" required>
-                            <option value="Team Member">Team Member</option>
-                            <option value="Supervisor">Supervisor</option>
-                            <option value="Director">Director</option>
-                            <option value="Admin">Admin</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editModuleRole">Required Role</label>
+                            <select id="editModuleRole" name="requiredRole" required>
+                                <option value="Team Member">Team Member</option>
+                                <option value="Supervisor">Supervisor</option>
+                                <option value="Director">Director</option>
+                                <option value="Admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editModuleDifficulty">Phase Level</label>
+                            <select id="editModuleDifficulty" name="difficulty" required>
+                                <option value="Phase 1">Phase 1</option>
+                                <option value="Phase 2">Phase 2</option>
+                                <option value="Phase 3">Phase 3</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editModuleDuration">Estimated Duration (hours)</label>
+                            <input type="number" id="editModuleDuration" name="duration" min="0.5" max="40" step="0.5" placeholder="2.5" required>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="editModuleDescription">Description</label>
                         <textarea id="editModuleDescription" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editModulePrerequisites">Prerequisites</label>
+                        <input type="text" id="editModulePrerequisites" name="prerequisites" placeholder="e.g., Communication Skills Module, 6 months experience">
+                    </div>
+                    <div class="form-group">
+                        <label for="editModuleTags">Tags/Keywords</label>
+                        <input type="text" id="editModuleTags" name="tags" placeholder="e.g., leadership, team building, communication (comma-separated)">
+                    </div>
+                    <div class="form-section">
+                        <h4>Performance Rubric</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editModuleQualityUnsatisfactory">Quality Criteria</label>
+                                <div class="rubric-levels">
+                                    <input type="text" id="editModuleQualityUnsatisfactory" name="qualityUnsatisfactory" class="rubric-input rubric-red" placeholder="Unsatisfactory level criteria">
+                                    <input type="text" id="editModuleQualityAverage" name="qualityAverage" class="rubric-input rubric-yellow" placeholder="Average level criteria">
+                                    <input type="text" id="editModuleQualityExcellent" name="qualityExcellent" class="rubric-input rubric-green" placeholder="Excellent level criteria">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editModuleSpeedUnsatisfactory">Speed/Timing Criteria</label>
+                                <div class="rubric-levels">
+                                    <input type="text" id="editModuleSpeedUnsatisfactory" name="speedUnsatisfactory" class="rubric-input rubric-red" placeholder="Unsatisfactory level criteria">
+                                    <input type="text" id="editModuleSpeedAverage" name="speedAverage" class="rubric-input rubric-yellow" placeholder="Average level criteria">
+                                    <input type="text" id="editModuleSpeedExcellent" name="speedExcellent" class="rubric-input rubric-green" placeholder="Excellent level criteria">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editModuleCommunicationUnsatisfactory">Communication Criteria</label>
+                                <div class="rubric-levels">
+                                    <input type="text" id="editModuleCommunicationUnsatisfactory" name="communicationUnsatisfactory" class="rubric-input rubric-red" placeholder="Unsatisfactory level criteria">
+                                    <input type="text" id="editModuleCommunicationAverage" name="communicationAverage" class="rubric-input rubric-yellow" placeholder="Average level criteria">
+                                    <input type="text" id="editModuleCommunicationExcellent" name="communicationExcellent" class="rubric-input rubric-green" placeholder="Excellent level criteria">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editModuleAuthor">Author/Instructor</label>
+                            <input type="text" id="editModuleAuthor" name="author" placeholder="Module creator name">
+                        </div>
+                        <div class="form-group">
+                            <label for="editModuleVersion">Version</label>
+                            <input type="text" id="editModuleVersion" name="version" value="1.0" placeholder="1.0">
+                        </div>
                     </div>
                     <div class="checklist-section">
                         <h3>Learning Tasks</h3>
@@ -121,6 +188,6 @@
         </div>
     </div>
 
-    <script src="../scripts/admin-path-management-script.js?v=8"></script>
+    <script src="../scripts/admin-path-management-script.js?v=15"></script>
 </body>
 </html>

@@ -348,6 +348,7 @@ function openModuleModal(moduleTitle) {
     const modal = document.getElementById('moduleModal');
     const modalTitle = document.getElementById('modalModuleTitle');
     const modalDescription = document.getElementById('modalModuleDescription');
+    const modalDetails = document.getElementById('modalModuleDetails');
     const modalChecklist = document.getElementById('modalChecklist');
     const modalProgressPercentage = document.getElementById('modalProgressPercentage');
     const modalProgressFill = document.getElementById('modalProgressFill');
@@ -372,9 +373,106 @@ function openModuleModal(moduleTitle) {
         modalTitle.textContent = moduleData.title;
     }
     
-    // Update modal description
+    // Update module metadata in header
+    const modalMetadata = document.getElementById('modalMetadata');
+    if (modalMetadata) {
+        const metadataHTML = [];
+        
+        if (moduleData.difficulty) {
+            metadataHTML.push(`<span class="metadata-item"><strong>Phase Level:</strong> ${moduleData.difficulty}</span>`);
+        }
+        
+        if (moduleData.duration) {
+            metadataHTML.push(`<span class="metadata-item"><strong>Duration:</strong> ${moduleData.duration} hours</span>`);
+        }
+        
+        if (moduleData.author) {
+            metadataHTML.push(`<span class="metadata-item"><strong>Author:</strong> ${moduleData.author}</span>`);
+        }
+        
+        if (moduleData.version) {
+            metadataHTML.push(`<span class="metadata-item"><strong>Version:</strong> ${moduleData.version}</span>`);
+        }
+        
+        if (moduleData.tags) {
+            metadataHTML.push(`<span class="metadata-item"><strong>Tags:</strong> ${moduleData.tags}</span>`);
+        }
+        
+        modalMetadata.innerHTML = metadataHTML.length > 0 ? metadataHTML.join(' • ') : '';
+    }
+    
+    // Update module description with prerequisites if available
     if (modalDescription) {
-        modalDescription.textContent = moduleData.description;
+        if (moduleData.prerequisites) {
+            modalDescription.innerHTML = `
+                <p>${moduleData.description}</p>
+                <div class="prerequisites-info">
+                    <strong>Prerequisites:</strong> ${moduleData.prerequisites}
+                </div>
+            `;
+        } else {
+            modalDescription.textContent = moduleData.description;
+        }
+    }
+    
+    // Update rubric criteria if available
+    const rubricSection = document.getElementById('modalRubricSection');
+    if (rubricSection) {
+        const rubricHTML = [];
+        
+        // Quality Criteria
+        if (moduleData.qualityUnsatisfactory || moduleData.qualityAverage || moduleData.qualityExcellent) {
+            rubricHTML.push(`
+                <div class="rubric-criteria-item">
+                    <h4 class="rubric-title">Quality Criteria</h4>
+                    <div class="rubric-levels">
+                        ${moduleData.qualityUnsatisfactory ? `<div class="rubric-level rubric-red"><strong>Unsatisfactory:</strong> ${moduleData.qualityUnsatisfactory}</div>` : ''}
+                        ${moduleData.qualityAverage ? `<div class="rubric-level rubric-yellow"><strong>Average:</strong> ${moduleData.qualityAverage}</div>` : ''}
+                        ${moduleData.qualityExcellent ? `<div class="rubric-level rubric-green"><strong>Excellent:</strong> ${moduleData.qualityExcellent}</div>` : ''}
+                    </div>
+                </div>
+            `);
+        }
+        
+        // Speed/Timing Criteria
+        if (moduleData.speedUnsatisfactory || moduleData.speedAverage || moduleData.speedExcellent) {
+            rubricHTML.push(`
+                <div class="rubric-criteria-item">
+                    <h4 class="rubric-title">Speed/Timing Criteria</h4>
+                    <div class="rubric-levels">
+                        ${moduleData.speedUnsatisfactory ? `<div class="rubric-level rubric-red"><strong>Unsatisfactory:</strong> ${moduleData.speedUnsatisfactory}</div>` : ''}
+                        ${moduleData.speedAverage ? `<div class="rubric-level rubric-yellow"><strong>Average:</strong> ${moduleData.speedAverage}</div>` : ''}
+                        ${moduleData.speedExcellent ? `<div class="rubric-level rubric-green"><strong>Excellent:</strong> ${moduleData.speedExcellent}</div>` : ''}
+                    </div>
+                </div>
+            `);
+        }
+        
+        // Communication Criteria
+        if (moduleData.communicationUnsatisfactory || moduleData.communicationAverage || moduleData.communicationExcellent) {
+            rubricHTML.push(`
+                <div class="rubric-criteria-item">
+                    <h4 class="rubric-title">Communication Criteria</h4>
+                    <div class="rubric-levels">
+                        ${moduleData.communicationUnsatisfactory ? `<div class="rubric-level rubric-red"><strong>Unsatisfactory:</strong> ${moduleData.communicationUnsatisfactory}</div>` : ''}
+                        ${moduleData.communicationAverage ? `<div class="rubric-level rubric-yellow"><strong>Average:</strong> ${moduleData.communicationAverage}</div>` : ''}
+                        ${moduleData.communicationExcellent ? `<div class="rubric-level rubric-green"><strong>Excellent:</strong> ${moduleData.communicationExcellent}</div>` : ''}
+                    </div>
+                </div>
+            `);
+        }
+        
+        if (rubricHTML.length > 0) {
+            rubricSection.innerHTML = `
+                <h3>Performance Rubric</h3>
+                <div class="rubric-criteria">
+                    ${rubricHTML.join('')}
+                </div>
+            `;
+            rubricSection.style.display = 'block';
+        } else {
+            rubricSection.style.display = 'none';
+        }
     }
     
     // Update checklist with user's saved progress
@@ -388,21 +486,25 @@ function openModuleModal(moduleTitle) {
                 // Multiple files
                 fileInfo = `
                     <div class="checklist-files">
-                        ${item.files.map(file => `
+                        ${item.files.map(file => {
+                            const fileName = typeof file === 'object' ? file.name : file;
+                            return `
                             <div class="checklist-file-info">
                                 <i class="fas fa-file"></i>
-                                <span onclick="openFileViewer('${file}')">${file}</span>
+                                <span onclick="openFileViewer('${fileName}', '${moduleTitle}')">${fileName}</span>
                             </div>
-                        `).join('')}
+                        `;
+                        }).join('')}
                     </div>
                 `;
             } else if (item.file) {
                 // Single file (legacy support)
+                const fileName = typeof item.file === 'object' ? item.file.name : item.file;
                 fileInfo = `
                         <div class="checklist-files">
                             <div class="checklist-file-info">
                                 <i class="fas fa-file"></i>
-                                <span onclick="openFileViewer('${item.file}')">${item.file}</span>
+                                <span onclick="openFileViewer('${fileName}', '${moduleTitle}')">${fileName}</span>
                             </div>
                         </div>
                 `;
@@ -574,6 +676,21 @@ function getModuleData(moduleTitle) {
         title: module.title,
         description: module.description,
         requiredRole: module.requiredRole,
+        difficulty: module.difficulty,
+        duration: module.duration,
+        prerequisites: module.prerequisites,
+        author: module.author,
+        version: module.version,
+        tags: module.tags,
+        qualityUnsatisfactory: module.qualityUnsatisfactory,
+        qualityAverage: module.qualityAverage,
+        qualityExcellent: module.qualityExcellent,
+        speedUnsatisfactory: module.speedUnsatisfactory,
+        speedAverage: module.speedAverage,
+        speedExcellent: module.speedExcellent,
+        communicationUnsatisfactory: module.communicationUnsatisfactory,
+        communicationAverage: module.communicationAverage,
+        communicationExcellent: module.communicationExcellent,
         checklist: module.checklist.map(task => {
             // Handle both old string format and new object format
             if (typeof task === 'string') {
@@ -594,13 +711,30 @@ function getModuleData(moduleTitle) {
 }
 
 // File Viewer Functions
-function openFileViewer(fileName) {
+function openFileViewer(fileName, moduleTitle = null) {
+    console.log('openFileViewer called with:', fileName, moduleTitle);
+    
     const modal = document.getElementById('fileViewerModal');
     const title = document.getElementById('fileViewerTitle');
     const content = document.getElementById('fileViewerContent');
     const downloadBtn = document.getElementById('fileViewerDownload');
     
-    if (!modal) return;
+    console.log('Modal elements found:', {
+        modal: !!modal,
+        title: !!title,
+        content: !!content,
+        downloadBtn: !!downloadBtn
+    });
+    
+    if (!modal) {
+        console.error('File viewer modal not found!');
+        return;
+    }
+    
+    // Store the module context for file content retrieval
+    if (moduleTitle) {
+        modal.dataset.currentModule = moduleTitle;
+    }
     
     // Update modal title
     if (title) {
@@ -694,10 +828,60 @@ function downloadFile(fileName) {
     document.body.removeChild(link);
 }
 
-// Mock file content functions (in a real app, these would fetch from a server)
+// Get all modules from localStorage
+function getAllModules() {
+    const globalModules = localStorage.getItem('globalModules');
+    if (!globalModules) {
+        return [];
+    }
+    return JSON.parse(globalModules);
+}
+
+// Get actual file content from module data
 function getFileContent(fileName) {
-    // This is a mock function - in a real application, you would fetch the actual file content
-    // For demo purposes, we'll return some sample content based on file type
+    console.log('getFileContent called with fileName:', fileName);
+    
+    // First, try to find the file in the current module's data
+    const currentModule = document.getElementById('moduleModal')?.dataset.currentModule;
+    const fileViewerModal = document.getElementById('fileViewerModal');
+    const moduleFromFileViewer = fileViewerModal?.dataset.currentModule;
+    
+    console.log('Current module from moduleModal:', currentModule);
+    console.log('Current module from fileViewerModal:', moduleFromFileViewer);
+    
+    const moduleTitle = currentModule || moduleFromFileViewer;
+    
+    if (moduleTitle) {
+        const modules = getAllModules();
+        const module = modules.find(m => m.title === moduleTitle);
+        
+        console.log('Found module:', module);
+        
+        if (module && module.checklist) {
+            for (const task of module.checklist) {
+                if (task.files) {
+                    for (const file of task.files) {
+                        if (typeof file === 'object' && file.name === fileName && file.content) {
+                            console.log('Found file content for:', fileName);
+                            return file.content;
+                        } else if (typeof file === 'string' && file === fileName) {
+                            // Fallback to mock content for files without stored content
+                            console.log('Found file as string, using mock content for:', fileName);
+                            return getMockFileContent(fileName);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Fallback to mock content if file not found
+    console.log('File not found, using mock content for:', fileName);
+    return getMockFileContent(fileName);
+}
+
+// Mock file content functions (fallback for files without stored content)
+function getMockFileContent(fileName) {
     const fileExtension = fileName.split('.').pop().toLowerCase();
     
     if (fileExtension === 'pdf') {

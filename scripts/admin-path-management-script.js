@@ -320,6 +320,22 @@ function openModuleModal(moduleTitle) {
     document.getElementById('editModuleTitle').value = moduleData.title;
     document.getElementById('editModuleStatus').value = moduleData.status || 'active';
     document.getElementById('editModuleRole').value = moduleData.requiredRole || 'Team Member';
+    document.getElementById('editModuleDifficulty').value = moduleData.difficulty || 'Phase 1';
+    document.getElementById('editModuleDuration').value = moduleData.duration || '';
+    document.getElementById('editModuleDescription').value = moduleData.description || '';
+    document.getElementById('editModulePrerequisites').value = moduleData.prerequisites || '';
+    document.getElementById('editModuleTags').value = moduleData.tags || '';
+    document.getElementById('editModuleQualityUnsatisfactory').value = moduleData.qualityUnsatisfactory || '';
+    document.getElementById('editModuleQualityAverage').value = moduleData.qualityAverage || '';
+    document.getElementById('editModuleQualityExcellent').value = moduleData.qualityExcellent || '';
+    document.getElementById('editModuleSpeedUnsatisfactory').value = moduleData.speedUnsatisfactory || '';
+    document.getElementById('editModuleSpeedAverage').value = moduleData.speedAverage || '';
+    document.getElementById('editModuleSpeedExcellent').value = moduleData.speedExcellent || '';
+    document.getElementById('editModuleCommunicationUnsatisfactory').value = moduleData.communicationUnsatisfactory || '';
+    document.getElementById('editModuleCommunicationAverage').value = moduleData.communicationAverage || '';
+    document.getElementById('editModuleCommunicationExcellent').value = moduleData.communicationExcellent || '';
+    document.getElementById('editModuleAuthor').value = moduleData.author || '';
+    document.getElementById('editModuleVersion').value = moduleData.version || '1.0';
     
     // Update checklist
     if (modalChecklist) {
@@ -341,17 +357,21 @@ function openModuleModal(moduleTitle) {
                         <input type="text" class="checklist-file-input" placeholder="File name or URL (optional)">
                         <input type="file" class="checklist-file-upload" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.mp4,.mp3" onchange="handleFileUpload(this, ${index})" multiple>
                         <div class="checklist-files-list" id="files-list-${index}">
-                            ${files.map((file, fileIndex) => `
-                                <div class="checklist-file-item">
+                            ${files.map((file, fileIndex) => {
+                                const fileName = typeof file === 'object' ? file.name : file;
+                                const fileContent = typeof file === 'object' ? file.content : null;
+                                return `
+                                <div class="checklist-file-item" ${fileContent ? `data-file-content="${fileContent}"` : ''}>
                                     <div class="checklist-file-item-info">
                                         <i class="fas fa-file"></i>
-                                        <span>${file}</span>
+                                        <span>${fileName}</span>
                                     </div>
                                     <button type="button" class="checklist-file-item-remove" onclick="removeFileFromTask(${index}, ${fileIndex})">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </div>
-                            `).join('')}
+                            `;
+                            }).join('')}
                         </div>
                     </div>
                     <button type="button" class="checklist-remove-btn" onclick="removeTask(${index})">
@@ -378,6 +398,23 @@ function openNewModuleModal() {
     
     // Clear form
     document.getElementById('moduleEditForm').reset();
+    
+    // Set default values for new module
+    document.getElementById('editModuleStatus').value = 'active';
+    document.getElementById('editModuleRole').value = 'Team Member';
+    document.getElementById('editModuleDifficulty').value = 'Phase 1';
+    document.getElementById('editModuleVersion').value = '1.0';
+    
+    // Clear rubric fields
+    document.getElementById('editModuleQualityUnsatisfactory').value = '';
+    document.getElementById('editModuleQualityAverage').value = '';
+    document.getElementById('editModuleQualityExcellent').value = '';
+    document.getElementById('editModuleSpeedUnsatisfactory').value = '';
+    document.getElementById('editModuleSpeedAverage').value = '';
+    document.getElementById('editModuleSpeedExcellent').value = '';
+    document.getElementById('editModuleCommunicationUnsatisfactory').value = '';
+    document.getElementById('editModuleCommunicationAverage').value = '';
+    document.getElementById('editModuleCommunicationExcellent').value = '';
     
     // Update modal title
     if (modalTitle) {
@@ -456,6 +493,21 @@ function saveModuleChanges() {
     const description = document.getElementById('editModuleDescription').value;
     const status = document.getElementById('editModuleStatus').value;
     const requiredRole = document.getElementById('editModuleRole').value;
+    const difficulty = document.getElementById('editModuleDifficulty').value;
+    const duration = document.getElementById('editModuleDuration').value;
+    const prerequisites = document.getElementById('editModulePrerequisites').value;
+    const tags = document.getElementById('editModuleTags').value;
+    const qualityUnsatisfactory = document.getElementById('editModuleQualityUnsatisfactory').value;
+    const qualityAverage = document.getElementById('editModuleQualityAverage').value;
+    const qualityExcellent = document.getElementById('editModuleQualityExcellent').value;
+    const speedUnsatisfactory = document.getElementById('editModuleSpeedUnsatisfactory').value;
+    const speedAverage = document.getElementById('editModuleSpeedAverage').value;
+    const speedExcellent = document.getElementById('editModuleSpeedExcellent').value;
+    const communicationUnsatisfactory = document.getElementById('editModuleCommunicationUnsatisfactory').value;
+    const communicationAverage = document.getElementById('editModuleCommunicationAverage').value;
+    const communicationExcellent = document.getElementById('editModuleCommunicationExcellent').value;
+    const author = document.getElementById('editModuleAuthor').value;
+    const version = document.getElementById('editModuleVersion').value;
     
     // Get checklist data
     const checklistItems = document.querySelectorAll('.checklist-item');
@@ -492,6 +544,18 @@ function saveModuleChanges() {
         return;
     }
     
+    // Validate duration if provided
+    if (duration && (isNaN(duration) || duration <= 0 || duration > 40)) {
+        alert('Duration must be a number between 0.5 and 40 hours');
+        return;
+    }
+    
+    // Validate version format
+    if (version && !/^\d+\.\d+$/.test(version)) {
+        alert('Version must be in format X.Y (e.g., 1.0, 2.1)');
+        return;
+    }
+    
     // Save to global storage
     const modules = getModuleData();
     
@@ -502,18 +566,52 @@ function saveModuleChanges() {
             description,
             status,
             requiredRole,
-            checklist
+            difficulty,
+            duration,
+            prerequisites,
+            tags,
+            qualityUnsatisfactory,
+            qualityAverage,
+            qualityExcellent,
+            speedUnsatisfactory,
+            speedAverage,
+            speedExcellent,
+            communicationUnsatisfactory,
+            communicationAverage,
+            communicationExcellent,
+            author,
+            version,
+            checklist,
+            createdAt: new Date().toISOString(),
+            lastUpdated: new Date().toISOString()
         });
     } else {
         // Update existing module
         const moduleIndex = modules.findIndex(m => m.title === currentModule);
         if (moduleIndex !== -1) {
             modules[moduleIndex] = {
+                ...modules[moduleIndex], // Preserve existing data
                 title,
                 description,
                 status,
                 requiredRole,
-                checklist
+                difficulty,
+                duration,
+                prerequisites,
+                tags,
+                qualityUnsatisfactory,
+                qualityAverage,
+                qualityExcellent,
+                speedUnsatisfactory,
+                speedAverage,
+                speedExcellent,
+                communicationUnsatisfactory,
+                communicationAverage,
+                communicationExcellent,
+                author,
+                version,
+                checklist,
+                lastUpdated: new Date().toISOString()
             };
         }
     }
@@ -525,6 +623,22 @@ function saveModuleChanges() {
         title,
         description,
         status,
+        requiredRole,
+        difficulty,
+        duration,
+        prerequisites,
+        tags,
+        qualityUnsatisfactory,
+        qualityAverage,
+        qualityExcellent,
+        speedUnsatisfactory,
+        speedAverage,
+        speedExcellent,
+        communicationUnsatisfactory,
+        communicationAverage,
+        communicationExcellent,
+        author,
+        version,
         checklist
     });
     

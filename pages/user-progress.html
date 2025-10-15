@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Progress - CFA Leadership Development</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-    <link rel="stylesheet" href="../styles/user-progress-styles.css?v=13">
+    <link rel="stylesheet" href="../styles/user-progress-styles.css?v=18">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="../scripts/navbar.js?v=17"></script>
 </head>
@@ -101,14 +101,24 @@
     <div class="modal-overlay" id="moduleModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modalModuleTitle">Module Details</h2>
-                <button class="modal-close" id="modalClose">
-                    <i class="fas fa-times"></i>
-                </button>
+                <div class="modal-header-content">
+                    <div class="modal-title-section">
+                        <h2 id="modalModuleTitle">Module Details</h2>
+                        <div class="modal-metadata" id="modalMetadata">
+                            <!-- Module metadata will be populated here -->
+                        </div>
+                    </div>
+                    <button class="modal-close" id="modalClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
             <div class="modal-body">
                 <div class="module-description" id="modalModuleDescription">
                     <!-- Module description will be populated here -->
+                </div>
+                <div class="rubric-section" id="modalRubricSection" style="display: none;">
+                    <!-- Performance rubric will be populated here -->
                 </div>
                 <div class="checklist-section">
                     <h3>Learning Checklist</h3>
@@ -155,6 +165,6 @@
         </div>
     </div>
 
-    <script src="../scripts/user-progress-script.js?v=14"></script>
+    <script src="../scripts/user-progress-script.js?v=22"></script>
 </body>
 </html>

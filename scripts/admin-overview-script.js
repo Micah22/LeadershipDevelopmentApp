@@ -1085,6 +1085,21 @@ function openModuleModal(moduleTitle) {
         if (descriptionInput) descriptionInput.value = '';
         if (statusSelect) statusSelect.value = 'active';
         if (roleSelect) roleSelect.value = 'Team Member';
+        document.getElementById('editModuleDifficulty').value = 'Phase 1';
+        document.getElementById('editModuleDuration').value = '';
+        document.getElementById('editModulePrerequisites').value = '';
+        document.getElementById('editModuleTags').value = '';
+        document.getElementById('editModuleQualityUnsatisfactory').value = '';
+        document.getElementById('editModuleQualityAverage').value = '';
+        document.getElementById('editModuleQualityExcellent').value = '';
+        document.getElementById('editModuleSpeedUnsatisfactory').value = '';
+        document.getElementById('editModuleSpeedAverage').value = '';
+        document.getElementById('editModuleSpeedExcellent').value = '';
+        document.getElementById('editModuleCommunicationUnsatisfactory').value = '';
+        document.getElementById('editModuleCommunicationAverage').value = '';
+        document.getElementById('editModuleCommunicationExcellent').value = '';
+        document.getElementById('editModuleAuthor').value = '';
+        document.getElementById('editModuleVersion').value = '1.0';
         if (checklistContainer) checklistContainer.innerHTML = '';
     } else {
         // Populate form with existing module data
@@ -1096,6 +1111,21 @@ function openModuleModal(moduleTitle) {
             if (descriptionInput) descriptionInput.value = module.description;
             if (statusSelect) statusSelect.value = module.status || 'active';
             if (roleSelect) roleSelect.value = module.requiredRole || 'Team Member';
+            document.getElementById('editModuleDifficulty').value = module.difficulty || 'Phase 1';
+            document.getElementById('editModuleDuration').value = module.duration || '';
+            document.getElementById('editModulePrerequisites').value = module.prerequisites || '';
+            document.getElementById('editModuleTags').value = module.tags || '';
+            document.getElementById('editModuleQualityUnsatisfactory').value = module.qualityUnsatisfactory || '';
+            document.getElementById('editModuleQualityAverage').value = module.qualityAverage || '';
+            document.getElementById('editModuleQualityExcellent').value = module.qualityExcellent || '';
+            document.getElementById('editModuleSpeedUnsatisfactory').value = module.speedUnsatisfactory || '';
+            document.getElementById('editModuleSpeedAverage').value = module.speedAverage || '';
+            document.getElementById('editModuleSpeedExcellent').value = module.speedExcellent || '';
+            document.getElementById('editModuleCommunicationUnsatisfactory').value = module.communicationUnsatisfactory || '';
+            document.getElementById('editModuleCommunicationAverage').value = module.communicationAverage || '';
+            document.getElementById('editModuleCommunicationExcellent').value = module.communicationExcellent || '';
+            document.getElementById('editModuleAuthor').value = module.author || '';
+            document.getElementById('editModuleVersion').value = module.version || '1.0';
             
             // Populate checklist
             if (checklistContainer) {
@@ -1118,17 +1148,21 @@ function openModuleModal(moduleTitle) {
                                 <input type="text" class="checklist-file-input" placeholder="File name or URL (optional)">
                                 <input type="file" class="checklist-file-upload" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.mp4,.mp3" onchange="handleFileUpload(this, ${index})" multiple>
                                 <div class="checklist-files-list" id="files-list-${index}">
-                                    ${files.map((file, fileIndex) => `
-                                        <div class="checklist-file-item">
+                                    ${files.map((file, fileIndex) => {
+                                        const fileName = typeof file === 'object' ? file.name : file;
+                                        const fileContent = typeof file === 'object' ? file.content : null;
+                                        return `
+                                        <div class="checklist-file-item" ${fileContent ? `data-file-content="${fileContent}"` : ''}>
                                             <div class="checklist-file-item-info">
                                                 <i class="fas fa-file"></i>
-                                                <span>${file}</span>
+                                                <span>${fileName}</span>
                                             </div>
                                             <button type="button" class="checklist-file-item-remove" onclick="removeFileFromTask(${index}, ${fileIndex})">
                                                 <i class="fas fa-times"></i>
                                             </button>
                                         </div>
-                                    `).join('')}
+                                    `;
+                                    }).join('')}
                                 </div>
                             </div>
                             <div class="checklist-actions">
@@ -1179,6 +1213,21 @@ function saveModuleChanges() {
     const description = document.getElementById('editModuleDescription').value;
     const status = document.getElementById('editModuleStatus').value;
     const requiredRole = document.getElementById('editModuleRole').value;
+    const difficulty = document.getElementById('editModuleDifficulty').value;
+    const duration = document.getElementById('editModuleDuration').value;
+    const prerequisites = document.getElementById('editModulePrerequisites').value;
+    const tags = document.getElementById('editModuleTags').value;
+    const qualityUnsatisfactory = document.getElementById('editModuleQualityUnsatisfactory').value;
+    const qualityAverage = document.getElementById('editModuleQualityAverage').value;
+    const qualityExcellent = document.getElementById('editModuleQualityExcellent').value;
+    const speedUnsatisfactory = document.getElementById('editModuleSpeedUnsatisfactory').value;
+    const speedAverage = document.getElementById('editModuleSpeedAverage').value;
+    const speedExcellent = document.getElementById('editModuleSpeedExcellent').value;
+    const communicationUnsatisfactory = document.getElementById('editModuleCommunicationUnsatisfactory').value;
+    const communicationAverage = document.getElementById('editModuleCommunicationAverage').value;
+    const communicationExcellent = document.getElementById('editModuleCommunicationExcellent').value;
+    const author = document.getElementById('editModuleAuthor').value;
+    const version = document.getElementById('editModuleVersion').value;
     
     // Get checklist data
     const checklistItems = document.querySelectorAll('.checklist-item');
@@ -1194,8 +1243,19 @@ function saveModuleChanges() {
             const fileItems = filesList ? filesList.querySelectorAll('.checklist-file-item') : [];
             const files = Array.from(fileItems).map(fileItem => {
                 const fileSpan = fileItem.querySelector('span');
-                return fileSpan ? fileSpan.textContent.trim() : '';
-            }).filter(file => file.length > 0);
+                const fileName = fileSpan ? fileSpan.textContent.trim() : '';
+                const fileContent = fileItem.getAttribute('data-file-content');
+                
+                if (fileName && fileContent) {
+                    return {
+                        name: fileName,
+                        content: fileContent
+                    };
+                } else if (fileName) {
+                    return fileName; // Fallback for files without content
+                }
+                return null;
+            }).filter(file => file !== null);
             
             // Add manual file input if it has a value
             if (taskFile) {
@@ -1214,6 +1274,18 @@ function saveModuleChanges() {
         alert('Please fill in all required fields and add at least one task');
         return;
     }
+    
+    // Validate duration if provided
+    if (duration && (isNaN(duration) || duration <= 0 || duration > 40)) {
+        alert('Duration must be a number between 0.5 and 40 hours');
+        return;
+    }
+    
+    // Validate version format
+    if (version && !/^\d+\.\d+$/.test(version)) {
+        alert('Version must be in format X.Y (e.g., 1.0, 2.1)');
+        return;
+    }
 
     // Save to global storage
     const modules = getAllModules();
@@ -1225,18 +1297,52 @@ function saveModuleChanges() {
             description,
             status,
             requiredRole,
-            checklist
+            difficulty,
+            duration,
+            prerequisites,
+            tags,
+            qualityUnsatisfactory,
+            qualityAverage,
+            qualityExcellent,
+            speedUnsatisfactory,
+            speedAverage,
+            speedExcellent,
+            communicationUnsatisfactory,
+            communicationAverage,
+            communicationExcellent,
+            author,
+            version,
+            checklist,
+            createdAt: new Date().toISOString(),
+            lastUpdated: new Date().toISOString()
         });
     } else {
         // Update existing module
         const moduleIndex = modules.findIndex(m => m.title === currentModule);
         if (moduleIndex !== -1) {
             modules[moduleIndex] = {
+                ...modules[moduleIndex], // Preserve existing data
                 title,
                 description,
                 status,
                 requiredRole,
-                checklist
+                difficulty,
+                duration,
+                prerequisites,
+                tags,
+                qualityUnsatisfactory,
+                qualityAverage,
+                qualityExcellent,
+                speedUnsatisfactory,
+                speedAverage,
+                speedExcellent,
+                communicationUnsatisfactory,
+                communicationAverage,
+                communicationExcellent,
+                author,
+                version,
+                checklist,
+                lastUpdated: new Date().toISOString()
             };
         }
     }
@@ -1249,6 +1355,21 @@ function saveModuleChanges() {
         description,
         status,
         requiredRole,
+        difficulty,
+        duration,
+        prerequisites,
+        tags,
+        qualityUnsatisfactory,
+        qualityAverage,
+        qualityExcellent,
+        speedUnsatisfactory,
+        speedAverage,
+        speedExcellent,
+        communicationUnsatisfactory,
+        communicationAverage,
+        communicationExcellent,
+        author,
+        version,
         checklist
     });
 
@@ -1405,7 +1526,13 @@ function handleFileUpload(fileInput, taskIndex) {
         
         // Add each selected file to the files list
         Array.from(files).forEach(file => {
-            addFileToList(filesList, file.name, file.size);
+            // Read the file content as base64
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Content = e.target.result.split(',')[1]; // Remove data:type;base64, prefix
+                addFileToList(filesList, file.name, file.size, base64Content);
+            };
+            reader.readAsDataURL(file);
         });
         
         // Update button text to reflect new file count
@@ -1417,7 +1544,7 @@ function handleFileUpload(fileInput, taskIndex) {
     }
 }
 
-function addFileToList(filesList, fileName, fileSize) {
+function addFileToList(filesList, fileName, fileSize, base64Content = null) {
     const fileItem = document.createElement('div');
     fileItem.className = 'checklist-file-item';
     
@@ -1434,6 +1561,11 @@ function addFileToList(filesList, fileName, fileSize) {
             <i class="fas fa-times"></i>
         </button>
     `;
+    
+    // Store the base64 content as a data attribute
+    if (base64Content) {
+        fileItem.setAttribute('data-file-content', base64Content);
+    }
     
     filesList.appendChild(fileItem);
 }

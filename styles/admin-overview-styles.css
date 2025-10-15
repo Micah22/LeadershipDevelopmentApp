@@ -1308,6 +1308,117 @@ body {
     box-shadow: 0 0 0 3px rgba(229, 22, 54, 0.1);
 }
 
+/* Enhanced form field styling */
+.modal-body .form-group input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.modal-body .form-group input[type="number"]::-webkit-outer-spin-button,
+.modal-body .form-group input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.modal-body .form-group input::placeholder,
+.modal-body .form-group textarea::placeholder {
+    color: var(--medium-gray);
+    font-style: italic;
+}
+
+/* Form field validation styling */
+.modal-body .form-group input:invalid,
+.modal-body .form-group select:invalid,
+.modal-body .form-group textarea:invalid {
+    border-color: #dc3545;
+}
+
+.modal-body .form-group input:valid,
+.modal-body .form-group select:valid,
+.modal-body .form-group textarea:valid {
+    border-color: #28a745;
+}
+
+/* Enhanced form layout for better organization */
+.modal-body .form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-body .form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.modal-body .form-section h4 {
+    color: var(--navy);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Rubric levels styling */
+.rubric-levels {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.rubric-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 2px solid;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.rubric-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.rubric-red {
+    border-color: #dc3545;
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+.rubric-red:focus {
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+}
+
+.rubric-yellow {
+    border-color: #ffc107;
+    background-color: rgba(255, 193, 7, 0.05);
+}
+
+.rubric-yellow:focus {
+    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
+}
+
+.rubric-green {
+    border-color: #28a745;
+    background-color: rgba(40, 167, 69, 0.05);
+}
+
+.rubric-green:focus {
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+}
+
+/* Dark mode rubric styling */
+[data-theme="dark"] .rubric-red {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+[data-theme="dark"] .rubric-yellow {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+[data-theme="dark"] .rubric-green {
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
 .checklist-section {
     margin-top: 1.5rem;
 }
