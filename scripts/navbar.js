@@ -310,3 +310,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 100);
     }
 });
+
+// Function to refresh navbar when users data becomes available
+function refreshNavbar() {
+    console.log('Navbar v14 - refreshNavbar() called');
+    updateDropdownUserInfo();
+    updateNavigation();
+}
+
+// Make refreshNavbar available globally so other scripts can call it
+window.refreshNavbar = refreshNavbar;

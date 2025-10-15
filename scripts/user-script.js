@@ -21,6 +21,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set up user info
         updateUserInfo();
         
+        // Refresh navbar after user info is updated
+        if (typeof window.refreshNavbar === 'function') {
+            console.log('User Script - Refreshing navbar after user info updated');
+            window.refreshNavbar();
+        }
+        
         // Navigation is now handled by navbar.js
         
         // Set up sign out functionality
@@ -170,6 +176,12 @@ async function ensureUsersData() {
         
         localStorage.setItem('users', JSON.stringify(defaultUsers));
         console.log('User Script - Default users initialized:', defaultUsers.length);
+    }
+    
+    // Refresh navbar after users data is available
+    if (typeof window.refreshNavbar === 'function') {
+        console.log('User Script - Refreshing navbar after users data loaded');
+        window.refreshNavbar();
     }
 }
 
