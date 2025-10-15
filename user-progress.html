@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Progress - CFA Leadership Development</title>
-    <link rel="stylesheet" href="user-progress-styles.css">
+    <link rel="stylesheet" href="user-progress-styles.css?v=6">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -152,11 +152,33 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="modalCancel">Close</button>
-                <button type="button" class="btn btn-primary" id="modalStartModule">Start Module</button>
             </div>
         </div>
     </div>
 
-    <script src="user-progress-script.js"></script>
+    <!-- File Viewer Modal -->
+    <div class="modal-overlay" id="fileViewerModal">
+        <div class="modal-content file-viewer-modal">
+            <div class="modal-header">
+                <h2 id="fileViewerTitle">File Viewer</h2>
+                <button class="modal-close" id="fileViewerClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="file-viewer-content" id="fileViewerContent">
+                    <!-- File content will be displayed here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="fileViewerCancel">Close</button>
+                <button type="button" class="btn btn-primary" id="fileViewerDownload">
+                    <i class="fas fa-download"></i> Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="user-progress-script.js?v=6"></script>
 </body>
 </html>

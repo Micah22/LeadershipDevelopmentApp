@@ -836,8 +836,8 @@ body {
     /* Force Chrome to show the file input properly */
     -webkit-appearance: button;
     appearance: button;
-    background-color: var(--cfa-red);
-    color: var(--white);
+    background-color: #d3d3d3;
+    color: #666;
     border: none;
     border-radius: 4px;
     padding: 0.5rem 1rem;
@@ -861,7 +861,7 @@ body {
 }
 
 .checklist-file-upload:hover {
-    background: #c4122e;
+    background: #b8b8b8;
 }
 
 /* Ensure file input is clickable in Chrome */
@@ -957,19 +957,13 @@ body {
     align-items: center;
     padding: 0.75rem 0;
     border-bottom: 1px solid var(--border-color);
-    transition: all 0.3s ease;
 }
 
 .checklist-item:last-child {
     border-bottom: none;
 }
 
-.checklist-item:hover {
-    background: var(--light-gray);
-    margin: 0 -1rem;
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-}
+/* Hover animations removed */
 
 .checklist-task-input {
     flex: 1;

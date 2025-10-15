@@ -323,14 +323,43 @@ function openModuleModal(moduleTitle) {
     
     // Update checklist
     if (modalChecklist) {
-        const checklistHTML = moduleData.checklist.map((task, index) => `
-            <div class="checklist-item">
-                <input type="text" class="checklist-task-input" value="${task}" data-index="${index}">
-                <button type="button" class="checklist-remove-btn" onclick="removeTask(${index})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        `).join('');
+        const checklistHTML = moduleData.checklist.map((task, index) => {
+            const taskDescription = typeof task === 'object' ? task.description : task;
+            const taskFile = typeof task === 'object' ? (task.file || '') : '';
+            
+            // Handle both old single file format and new multiple files format
+            const files = typeof task === 'object' && task.files ? task.files : (taskFile ? [taskFile] : []);
+            
+            return `
+                <div class="checklist-item">
+                    <input type="text" class="checklist-task-input" value="${taskDescription}" data-index="${index}">
+                    <button type="button" class="add-file-btn" onclick="toggleFileSection(this)">
+                        <i class="fas fa-plus"></i>
+                        ${files.length > 0 ? `Show Files (${files.length} attached)` : 'Add Files'}
+                    </button>
+                    <div class="checklist-file-section">
+                        <input type="text" class="checklist-file-input" placeholder="File name or URL (optional)">
+                        <input type="file" class="checklist-file-upload" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.mp4,.mp3" onchange="handleFileUpload(this, ${index})" multiple>
+                        <div class="checklist-files-list" id="files-list-${index}">
+                            ${files.map((file, fileIndex) => `
+                                <div class="checklist-file-item">
+                                    <div class="checklist-file-item-info">
+                                        <i class="fas fa-file"></i>
+                                        <span>${file}</span>
+                                    </div>
+                                    <button type="button" class="checklist-file-item-remove" onclick="removeFileFromTask(${index}, ${fileIndex})">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <button type="button" class="checklist-remove-btn" onclick="removeTask(${index})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+        }).join('');
         modalChecklist.innerHTML = checklistHTML;
     }
     
@@ -384,6 +413,16 @@ function addNewTask() {
     const taskHTML = `
         <div class="checklist-item">
             <input type="text" class="checklist-task-input" placeholder="Enter new task..." data-index="${taskIndex}">
+            <button type="button" class="add-file-btn" onclick="toggleFileSection(this)">
+                <i class="fas fa-plus"></i>
+                Add Files
+            </button>
+            <div class="checklist-file-section">
+                <input type="text" class="checklist-file-input" placeholder="File name or URL (optional)">
+                <input type="file" class="checklist-file-upload" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.mp4,.mp3" onchange="handleFileUpload(this, ${taskIndex})" multiple>
+                <div class="checklist-files-list" id="files-list-${taskIndex}">
+                </div>
+            </div>
             <button type="button" class="checklist-remove-btn" onclick="removeTask(${taskIndex})">
                 <i class="fas fa-trash"></i>
             </button>
@@ -419,10 +458,33 @@ function saveModuleChanges() {
     const requiredRole = document.getElementById('editModuleRole').value;
     
     // Get checklist data
-    const taskInputs = document.querySelectorAll('.checklist-task-input');
-    const checklist = Array.from(taskInputs)
-        .map(input => input.value.trim())
-        .filter(task => task.length > 0);
+    const checklistItems = document.querySelectorAll('.checklist-item');
+    const checklist = Array.from(checklistItems)
+        .map(item => {
+            const taskInput = item.querySelector('.checklist-task-input');
+            const fileInput = item.querySelector('.checklist-file-input');
+            const taskDescription = taskInput ? taskInput.value.trim() : '';
+            const taskFile = fileInput ? fileInput.value.trim() : '';
+            
+            // Get all files from the files list
+            const filesList = item.querySelector('.checklist-files-list');
+            const fileItems = filesList ? filesList.querySelectorAll('.checklist-file-item') : [];
+            const files = Array.from(fileItems).map(fileItem => {
+                const fileSpan = fileItem.querySelector('span');
+                return fileSpan ? fileSpan.textContent.trim() : '';
+            }).filter(file => file.length > 0);
+            
+            // Add manual file input if it has a value
+            if (taskFile) {
+                files.push(taskFile);
+            }
+            
+            if (taskDescription) {
+                return files.length > 0 ? { description: taskDescription, files: files } : taskDescription;
+            }
+            return null;
+        })
+        .filter(task => task !== null);
     
     // Validate required fields
     if (!title || !description || checklist.length === 0) {
@@ -509,6 +571,101 @@ function deleteModule(moduleTitle) {
     
     // Show success message
     alert(`Module "${moduleTitle}" has been deleted successfully!`);
+}
+
+// File upload functionality
+function toggleFileSection(button) {
+    const checklistItem = button.closest('.checklist-item');
+    const fileSection = checklistItem.querySelector('.checklist-file-section');
+    
+    if (fileSection.classList.contains('show')) {
+        fileSection.classList.remove('show');
+        updateFileButtonText(button);
+    } else {
+        fileSection.classList.add('show');
+        button.innerHTML = '<i class="fas fa-minus"></i> Hide Files';
+    }
+}
+
+function updateFileButtonText(button) {
+    const checklistItem = button.closest('.checklist-item');
+    const filesList = checklistItem.querySelector('.checklist-files-list');
+    const fileCount = filesList ? filesList.children.length : 0;
+    
+    if (fileCount > 0) {
+        button.innerHTML = `<i class="fas fa-plus"></i> Show Files (${fileCount} attached)`;
+    } else {
+        button.innerHTML = '<i class="fas fa-plus"></i> Add Files';
+    }
+}
+
+function handleFileUpload(fileInput, taskIndex) {
+    const files = fileInput.files;
+    if (files && files.length > 0) {
+        const checklistItem = fileInput.closest('.checklist-item');
+        const filesList = checklistItem.querySelector('.checklist-files-list');
+        
+        // Add each selected file to the files list
+        Array.from(files).forEach(file => {
+            addFileToList(filesList, file.name, file.size);
+        });
+        
+        // Update button text to reflect new file count
+        const addFileBtn = checklistItem.querySelector('.add-file-btn');
+        updateFileButtonText(addFileBtn);
+        
+        // Clear the file input
+        fileInput.value = '';
+    }
+}
+
+function addFileToList(filesList, fileName, fileSize) {
+    const fileItem = document.createElement('div');
+    fileItem.className = 'checklist-file-item';
+    
+    const fileIndex = filesList.children.length;
+    fileItem.innerHTML = `
+        <div class="checklist-file-item-info">
+            <i class="fas fa-file"></i>
+            <span>${fileName}</span>
+            <span style="font-size: 0.8rem; color: #6c757d; margin-left: auto;">
+                ${fileSize ? (fileSize / 1024).toFixed(1) + ' KB' : ''}
+            </span>
+        </div>
+        <button type="button" class="checklist-file-item-remove" onclick="removeFileFromList(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    filesList.appendChild(fileItem);
+}
+
+function removeFileFromList(button) {
+    const fileItem = button.closest('.checklist-file-item');
+    fileItem.remove();
+}
+
+function removeFileFromTask(taskIndex, fileIndex) {
+    const filesList = document.getElementById(`files-list-${taskIndex}`);
+    if (filesList) {
+        const fileItems = filesList.querySelectorAll('.checklist-file-item');
+        if (fileItems[fileIndex]) {
+            fileItems[fileIndex].remove();
+            
+            // Update button text to reflect new file count
+            const checklistItem = filesList.closest('.checklist-item');
+            const addFileBtn = checklistItem.querySelector('.add-file-btn');
+            updateFileButtonText(addFileBtn);
+        }
+    }
+}
+
+// Removed addAnotherFileInput function - keeping it simple with one file upload per task
+
+function getTaskIndex(checklistItem) {
+    const modalChecklist = document.getElementById('modalChecklist');
+    const items = modalChecklist.querySelectorAll('.checklist-item');
+    return Array.from(items).indexOf(checklistItem);
 }
 
 // Utility function to get users from localStorage

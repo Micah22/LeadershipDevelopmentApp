@@ -102,8 +102,6 @@ function setupEventListeners() {
     const modal = document.getElementById('moduleModal');
     const modalClose = document.getElementById('modalClose');
     const modalCancel = document.getElementById('modalCancel');
-    const modalStartModule = document.getElementById('modalStartModule');
-    
     if (modalClose) {
         modalClose.addEventListener('click', closeModuleModal);
     }
@@ -112,12 +110,24 @@ function setupEventListeners() {
         modalCancel.addEventListener('click', closeModuleModal);
     }
     
-    if (modalStartModule) {
-        modalStartModule.addEventListener('click', function() {
-            const currentModule = modal.dataset.currentModule;
-            if (currentModule) {
-                alert(`Starting module: ${currentModule}`);
-                closeModuleModal();
+    // File viewer modal event listeners
+    const fileViewerClose = document.getElementById('fileViewerClose');
+    const fileViewerCancel = document.getElementById('fileViewerCancel');
+    
+    if (fileViewerClose) {
+        fileViewerClose.addEventListener('click', closeFileViewer);
+    }
+    
+    if (fileViewerCancel) {
+        fileViewerCancel.addEventListener('click', closeFileViewer);
+    }
+    
+    // Close file viewer when clicking outside the modal
+    const fileViewerModal = document.getElementById('fileViewerModal');
+    if (fileViewerModal) {
+        fileViewerModal.addEventListener('click', function(e) {
+            if (e.target === fileViewerModal) {
+                closeFileViewer();
             }
         });
     }
@@ -363,7 +373,33 @@ function openModuleModal(moduleTitle) {
     if (modalChecklist) {
         const checklistHTML = moduleData.checklist.map((item, index) => {
             const isCompleted = moduleProgress.checklist[index] || false;
-            const fileInfo = item.file ? `<div class="checklist-file-info"><i class="fas fa-file"></i> ${item.file}</div>` : '';
+            
+            // Handle both single file and multiple files
+            let fileInfo = '';
+            if (item.files && item.files.length > 0) {
+                // Multiple files
+                fileInfo = `
+                    <div class="checklist-files">
+                        ${item.files.map(file => `
+                            <div class="checklist-file-info">
+                                <i class="fas fa-file"></i>
+                                <span onclick="openFileViewer('${file}')">${file}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (item.file) {
+                // Single file (legacy support)
+                fileInfo = `
+                        <div class="checklist-files">
+                            <div class="checklist-file-info">
+                                <i class="fas fa-file"></i>
+                                <span onclick="openFileViewer('${item.file}')">${item.file}</span>
+                            </div>
+                        </div>
+                `;
+            }
+            
             return `
                 <div class="checklist-item ${isCompleted ? 'completed' : ''}">
                     <input type="checkbox" class="checklist-checkbox" id="checklist-${index}" 
@@ -541,11 +577,142 @@ function getModuleData(moduleTitle) {
                 return {
                     task: task.description || task.task || '',
                     file: task.file || '',
+                    files: task.files || [],
                     completed: false
                 };
             }
         })
     };
+}
+
+// File Viewer Functions
+function openFileViewer(fileName) {
+    const modal = document.getElementById('fileViewerModal');
+    const title = document.getElementById('fileViewerTitle');
+    const content = document.getElementById('fileViewerContent');
+    const downloadBtn = document.getElementById('fileViewerDownload');
+    
+    if (!modal) return;
+    
+    // Update modal title
+    if (title) {
+        title.textContent = `Viewing: ${fileName}`;
+    }
+    
+    // Set up download button
+    if (downloadBtn) {
+        downloadBtn.onclick = () => downloadFile(fileName);
+    }
+    
+    // Determine file type and display accordingly
+    const fileExtension = fileName.split('.').pop().toLowerCase();
+    
+    if (fileExtension === 'pdf') {
+        // For PDF files, try to embed them
+        content.innerHTML = `
+            <iframe src="data:application/pdf;base64,${getFileContent(fileName)}" type="application/pdf">
+                <div class="file-preview">
+                    <i class="fas fa-file-pdf"></i>
+                    <h3>${fileName}</h3>
+                    <p>PDF file preview not available in this browser.</p>
+                    <div class="file-info">
+                        <strong>File Type:</strong> PDF Document<br>
+                        <strong>Size:</strong> ${getFileSize(fileName)}<br>
+                        <strong>Last Modified:</strong> ${getFileDate(fileName)}
+                    </div>
+                </div>
+            </iframe>
+        `;
+    } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension)) {
+        // For image files
+        content.innerHTML = `
+            <div class="file-preview">
+                <img src="data:image/${fileExtension};base64,${getFileContent(fileName)}" alt="${fileName}" style="max-width: 100%; max-height: 500px;">
+                <h3>${fileName}</h3>
+                <div class="file-info">
+                    <strong>File Type:</strong> Image (${fileExtension.toUpperCase()})<br>
+                    <strong>Size:</strong> ${getFileSize(fileName)}<br>
+                    <strong>Last Modified:</strong> ${getFileDate(fileName)}
+                </div>
+            </div>
+        `;
+    } else if (['txt', 'md', 'csv'].includes(fileExtension)) {
+        // For text files
+        content.innerHTML = `
+            <div class="file-preview">
+                <pre style="text-align: left; white-space: pre-wrap; font-family: monospace; background: #f8f9fa; padding: 1rem; border-radius: 4px;">${getFileContent(fileName)}</pre>
+                <h3>${fileName}</h3>
+                <div class="file-info">
+                    <strong>File Type:</strong> Text File (${fileExtension.toUpperCase()})<br>
+                    <strong>Size:</strong> ${getFileSize(fileName)}<br>
+                    <strong>Last Modified:</strong> ${getFileDate(fileName)}
+                </div>
+            </div>
+        `;
+    } else {
+        // For other file types, show file info
+        content.innerHTML = `
+            <div class="file-preview">
+                <i class="fas fa-file"></i>
+                <h3>${fileName}</h3>
+                <p>This file type cannot be previewed in the browser.</p>
+                <div class="file-info">
+                    <strong>File Type:</strong> ${fileExtension.toUpperCase() || 'Unknown'}<br>
+                    <strong>Size:</strong> ${getFileSize(fileName)}<br>
+                    <strong>Last Modified:</strong> ${getFileDate(fileName)}
+                </div>
+            </div>
+        `;
+    }
+    
+    // Show modal
+    modal.classList.add('show');
+}
+
+function closeFileViewer() {
+    const modal = document.getElementById('fileViewerModal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
+function downloadFile(fileName) {
+    // Create a download link for the file
+    const link = document.createElement('a');
+    link.href = `data:application/octet-stream;base64,${getFileContent(fileName)}`;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Mock file content functions (in a real app, these would fetch from a server)
+function getFileContent(fileName) {
+    // This is a mock function - in a real application, you would fetch the actual file content
+    // For demo purposes, we'll return some sample content based on file type
+    const fileExtension = fileName.split('.').pop().toLowerCase();
+    
+    if (fileExtension === 'pdf') {
+        return 'JVBERi0xLjQKJcfsj6IKNSAwIG9iago8PAovVHlwZSAvUGFnZQovUGFyZW50IDMgMCBSCi9NZWRpYUJveCBbMCAwIDU5NSA4NDJdCi9SZXNvdXJjZXMgPDwKL0ZvbnQgPDwKL0YxIDQgMCBSCj4+Cj4+Ci9Db250ZW50cyA2IDAgUgo+PgplbmRvYmoKNiAwIG9iago8PAovTGVuZ3RoIDQ0Cj4+CnN0cmVhbQpCVAovRjEgMTIgVGYKNzIgNzIwIFRkCihIZWxsbyBXb3JsZCkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoyIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovQ291bnQgMQovS2lkcyBbNSAwIFJdCj4+CmVuZG9iagoxIDAgb2JqCjw8Ci9UeXBlIC9DYXRhbG9nCi9QYWdlcyAyIDAgUgo+PgplbmRvYmoKMyAwIG9iago8PAovVHlwZSAvUGFnZXMKL0NvdW50IDEKL0tpZHMgWzUgMCBSXQovTWVkaWFCb3ggWzAgMCA1OTUgODQyXQo+PgplbmRvYmoKeHJlZgowIDcKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTggMDAwMDAgbiAKMDAwMDAwMDExNSAwMDAwMCBuIAowMDAwMDAwMjQ5IDAwMDAwIG4gCjAwMDAwMDAzMjcgMDAwMDAgbiAKMDAwMDAwMDQwNSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDcKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjQ5NQolJUVPRgo=';
+    } else if (['jpg', 'jpeg', 'png'].includes(fileExtension)) {
+        return 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+    } else if (fileExtension === 'txt') {
+        return 'This is a sample text file content.\n\nIt contains multiple lines of text that can be displayed in the file viewer.\n\nThis is a demonstration of how text files would appear when viewed.';
+    } else {
+        return 'Sample file content for ' + fileName;
+    }
+}
+
+function getFileSize(fileName) {
+    // Mock file size - in a real app, this would be the actual file size
+    const sizes = ['2.3 KB', '1.8 MB', '456 KB', '3.2 MB', '128 KB'];
+    return sizes[Math.floor(Math.random() * sizes.length)];
+}
+
+function getFileDate(fileName) {
+    // Mock file date - in a real app, this would be the actual modification date
+    const dates = ['Oct 14, 2025', 'Oct 13, 2025', 'Oct 12, 2025', 'Oct 11, 2025'];
+    return dates[Math.floor(Math.random() * dates.length)];
 }
 
 function getFallbackModuleData(moduleTitle) {
@@ -556,10 +723,10 @@ function getFallbackModuleData(moduleTitle) {
             description: 'Learn effective communication techniques for leaders. This module covers verbal and non-verbal communication, active listening, and how to deliver clear, impactful messages to your team.',
             requiredRole: 'Team Member',
             checklist: [
-                { task: 'Complete communication fundamentals video', completed: false },
-                { task: 'Read "The Art of Active Listening" article', completed: false },
-                { task: 'Practice delivering a team update presentation', completed: false },
-                { task: 'Complete communication style assessment', completed: false },
+                { task: 'Complete communication fundamentals video', files: ['communication-fundamentals.pdf', 'video-transcript.docx'], completed: false },
+                { task: 'Read "The Art of Active Listening" article', files: ['active-listening-guide.pdf'], completed: false },
+                { task: 'Practice delivering a team update presentation', files: ['presentation-template.pptx', 'evaluation-rubric.pdf'], completed: false },
+                { task: 'Complete communication style assessment', files: ['assessment-questionnaire.pdf'], completed: false },
                 { task: 'Submit reflection on communication challenges', completed: false }
             ]
         },
@@ -568,10 +735,10 @@ function getFallbackModuleData(moduleTitle) {
             description: 'Master the fundamentals of leading teams effectively. Learn about team dynamics, motivation techniques, and how to build a cohesive, high-performing team.',
             requiredRole: 'Supervisor',
             checklist: [
-                { task: 'Watch team dynamics overview video', completed: false },
-                { task: 'Complete team assessment questionnaire', completed: false },
-                { task: 'Read "Building Trust in Teams" guide', completed: false },
-                { task: 'Practice conducting a team meeting', completed: false },
+                { task: 'Watch team dynamics overview video', files: ['team-dynamics-video.mp4'], completed: false },
+                { task: 'Complete team assessment questionnaire', files: ['team-assessment.pdf', 'scoring-guide.docx'], completed: false },
+                { task: 'Read "Building Trust in Teams" guide', files: ['trust-building-guide.pdf'], completed: false },
+                { task: 'Practice conducting a team meeting', files: ['meeting-agenda-template.docx', 'facilitation-tips.pdf'], completed: false },
                 { task: 'Submit team leadership action plan', completed: false }
             ]
         },

@@ -124,19 +124,170 @@
     align-items: center;
     padding: 0.75rem 0;
     border-bottom: 1px solid var(--border-color);
-    transition: all 0.3s ease;
 }
 
 .checklist-item:last-child {
     border-bottom: none;
 }
 
-.checklist-item:hover {
-    background: var(--light-gray);
-    margin: 0 -1rem;
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
+/* Hover animations removed */
+
+/* Add File Button Styles */
+.add-file-btn {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 1px dashed #dee2e6;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    transition: all 0.3s ease;
 }
+
+.add-file-btn:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.add-file-btn i {
+    font-size: 0.8rem;
+}
+
+/* Hidden file upload section */
+.checklist-file-section {
+    display: none;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.checklist-file-section.show {
+    display: flex;
+}
+
+/* Files display in the file upload section */
+
+.checklist-file-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.checklist-file-upload {
+    -webkit-appearance: button;
+    appearance: button;
+    background-color: #d3d3d3;
+    color: #666;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-block;
+    text-align: center;
+    line-height: 1.2;
+    min-width: 120px;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1000;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    opacity: 1;
+    visibility: visible;
+}
+
+.checklist-file-upload:hover {
+    background: #b8b8b8;
+}
+
+.checklist-file-upload::file-selector-button {
+    display: none;
+}
+
+.checklist-file-upload::-webkit-file-upload-button {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    border: none;
+    color: transparent;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: pointer;
+}
+
+.checklist-file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: var(--light-gray);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: var(--medium-gray);
+}
+
+/* Multiple files support */
+.checklist-files-list {
+    margin-top: 0.5rem;
+}
+
+.checklist-file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.checklist-file-item:last-child {
+    margin-bottom: 0;
+}
+
+.checklist-file-item-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.checklist-file-item-remove {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background 0.3s ease;
+}
+
+.checklist-file-item-remove:hover {
+    background: #c82333;
+}
+
+/* Removed add-another-file-btn styles - keeping it simple with one file upload per task */
 
 .checklist-task-input {
     flex: 1;
