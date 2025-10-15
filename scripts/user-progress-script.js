@@ -166,6 +166,10 @@ async function loadProgressData() {
     const user = users.find(u => u.username === username);
     const userRole = user ? user.role : 'Team Member';
 
+    // Calculate real progress data from user's saved progress
+    const overallProgress = calculateUserOverallProgress(username);
+    const userProgress = getUserProgress(username);
+
     // Try to load modules from database first
     let moduleTitles = [];
     try {
@@ -190,11 +194,12 @@ async function loadProgressData() {
             const modules = JSON.parse(globalModules);
             moduleTitles = modules.map(m => m.title);
         } else {
-        // Fallback to default module titles
-        moduleTitles = [
-            'Communication Skills', 'Team Leadership', 'Decision Making',
-            'Conflict Resolution', 'Strategic Planning', 'Performance Management'
-        ];
+            // Fallback to default module titles
+            moduleTitles = [
+                'Communication Skills', 'Team Leadership', 'Decision Making',
+                'Conflict Resolution', 'Strategic Planning', 'Performance Management'
+            ];
+        }
     }
     
     let achievements = 0;
