@@ -7,10 +7,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     const username = localStorage.getItem('username');
     
+    console.log('User Progress - Login check:', { isLoggedIn, username });
+    
     if (!isLoggedIn || !username) {
+        console.log('User not logged in, redirecting to login page');
         window.location.href = 'index.html';
         return;
     }
+    
+    console.log('User is logged in, proceeding with page load');
     
     // Initialize the page
     await initializePage();

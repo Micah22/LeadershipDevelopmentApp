@@ -281,7 +281,9 @@ function signOut() {
 // Get users from localStorage
 function getUsers() {
     const usersData = localStorage.getItem('users');
-    return usersData ? JSON.parse(usersData) : [];
+    const users = usersData ? JSON.parse(usersData) : [];
+    console.log('Navbar v14 - getUsers() called, returning:', users.length, 'users');
+    return users;
 }
 
 // Load navbar when DOM is ready

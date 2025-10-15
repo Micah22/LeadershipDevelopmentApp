@@ -55,8 +55,8 @@
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('Login page loaded');
             
-            // Clear old data and initialize fresh users
-            console.log('Clearing old data and initializing fresh users...');
+            // Initialize users (don't clear existing data when navigating)
+            console.log('Initializing users...');
             
             // Create default users with usernames instead of emails
             const defaultUsers = [
