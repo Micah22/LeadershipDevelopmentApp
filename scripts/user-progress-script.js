@@ -67,13 +67,14 @@ async function updateUserInfo() {
         // Update avatar
         const avatar = document.getElementById('userAvatar');
         if (avatar) {
-            avatar.textContent = user.fullName.charAt(0).toUpperCase();
+            const fullName = user.full_name || user.fullName || user.username;
+            avatar.textContent = fullName.charAt(0).toUpperCase();
         }
         
         // Update name
         const userName = document.getElementById('userName');
         if (userName) {
-            userName.textContent = user.fullName;
+            userName.textContent = user.full_name || user.fullName || user.username;
         }
         
         // Update role

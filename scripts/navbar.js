@@ -195,19 +195,21 @@ function updateDropdownUserInfo() {
         userAvatar: !!userAvatar
     });
     
-    if (dropdownUserName && user?.fullName) {
-        dropdownUserName.textContent = user.fullName;
+    if (dropdownUserName && user) {
+        const fullName = user.full_name || user.fullName || user.username;
+        dropdownUserName.textContent = fullName;
     }
     
     if (dropdownUserRole && user?.role) {
         dropdownUserRole.textContent = user.role;
     }
     
-    if (userAvatar && user?.fullName) {
-        userAvatar.textContent = user.fullName.charAt(0).toUpperCase();
-        console.log('Navbar v14 - Avatar updated to:', user.fullName.charAt(0).toUpperCase());
+    if (userAvatar && user) {
+        const fullName = user.full_name || user.fullName || user.username;
+        userAvatar.textContent = fullName.charAt(0).toUpperCase();
+        console.log('Navbar v14 - Avatar updated to:', fullName.charAt(0).toUpperCase());
     } else {
-        console.log('Navbar v14 - Avatar NOT updated. userAvatar:', !!userAvatar, 'user.fullName:', user?.fullName);
+        console.log('Navbar v14 - Avatar NOT updated. userAvatar:', !!userAvatar, 'user:', !!user);
     }
 }
 
