@@ -131,7 +131,21 @@ function isPathUnlocked(path, userRole) {
 }
 
 // Initialize default global modules if none exist
-function initializeDefaultLeadershipPaths() {
+async function initializeDefaultLeadershipPaths() {
+    try {
+        // Try to get modules from database first
+        const dbModules = await window.dbService.getModules();
+        if (dbModules && dbModules.length > 0) {
+            console.log('Modules loaded from database:', dbModules.length);
+            // Store in localStorage for compatibility
+            localStorage.setItem('globalModules', JSON.stringify(dbModules));
+            return;
+        }
+    } catch (error) {
+        console.log('Database not available, checking localStorage');
+    }
+    
+    // Fallback to localStorage
     const existingModules = localStorage.getItem('globalModules');
     if (!existingModules) {
         const defaultModules = [
@@ -181,7 +195,7 @@ function initializeDefaultLeadershipPaths() {
 }
 
 // Load dashboard data - FIXED TO UPDATE ALL STATS
-function loadDashboardData() {
+async function loadDashboardData() {
     const username = localStorage.getItem('username');
     const users = getUsers();
     const user = users.find(u => u.username === username);
@@ -192,7 +206,7 @@ function loadDashboardData() {
     }
     
     // Initialize default paths if none exist
-    initializeDefaultLeadershipPaths();
+    await initializeDefaultLeadershipPaths();
     
     const leadershipPaths = getLeadershipPaths();
     const userProgress = getUserProgress(username);
@@ -273,3 +287,8 @@ function explorePaths() {
 }
 
 // Theme and dropdown functionality is now handled by navbar.js
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadDashboardData();
+});

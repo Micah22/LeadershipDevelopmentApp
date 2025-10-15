@@ -7,6 +7,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
     <link rel="stylesheet" href="../styles/styles.css?v=2">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="../database/config.js"></script>
 </head>
 <body>
     <div class="container">
@@ -51,7 +52,7 @@
 
     <script>
         // Initialize default users if localStorage is empty or needs updating
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             console.log('Login page loaded');
             
             // Clear old data and initialize fresh users
@@ -82,13 +83,32 @@
                 }
             ];
             
-            // Only initialize users if none exist (preserve existing data)
-            const existingUsers = localStorage.getItem('users');
-            if (!existingUsers) {
-                localStorage.setItem('users', JSON.stringify(defaultUsers));
-                console.log('Default users initialized:', defaultUsers);
-            } else {
-                console.log('Existing users found, preserving data');
+            // Try to get users from database first, fallback to localStorage
+            try {
+                const dbUsers = await window.dbService.getUsers();
+                if (dbUsers && dbUsers.length > 0) {
+                    console.log('Users loaded from database:', dbUsers.length);
+                    // Store in localStorage for compatibility
+                    localStorage.setItem('users', JSON.stringify(dbUsers));
+                } else {
+                    // No users in database, check localStorage
+                    const existingUsers = localStorage.getItem('users');
+                    if (!existingUsers) {
+                        localStorage.setItem('users', JSON.stringify(defaultUsers));
+                        console.log('Default users initialized:', defaultUsers);
+                    } else {
+                        console.log('Existing users found in localStorage, preserving data');
+                    }
+                }
+            } catch (error) {
+                console.log('Database not available, using localStorage fallback');
+                const existingUsers = localStorage.getItem('users');
+                if (!existingUsers) {
+                    localStorage.setItem('users', JSON.stringify(defaultUsers));
+                    console.log('Default users initialized:', defaultUsers);
+                } else {
+                    console.log('Existing users found, preserving data');
+                }
             }
             
             // Clear any old authentication data

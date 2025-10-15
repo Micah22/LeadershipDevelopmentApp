@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗄️ Database Connection Test</h1>
+        <p>This page will test your Supabase database connection and help you migrate your data.</p>
+        
+        <div id="status" class="status info">Ready to test connection...</div>
+        
+        <div>
+            <button onclick="testConnection()">Test Database Connection</button>
+            <button onclick="testTables()">Test Database Tables</button>
+            <button onclick="migrateData()">Migrate localStorage Data</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <h3>Test Results:</h3>
+        <div id="log" class="log">Click "Test Database Connection" to begin...</div>
+    </div>
+
+    <!-- Load database configuration -->
+    <script src="config.js"></script>
+    <script src="migrate.js"></script>
+    
+    <script>
+        let logElement = document.getElementById('log');
+        let statusElement = document.getElementById('status');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}\n`;
+            logElement.textContent += logMessage;
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            if (type === 'error') {
+                statusElement.className = 'status error';
+                statusElement.textContent = '❌ Error occurred - check log below';
+            } else if (type === 'success') {
+                statusElement.className = 'status success';
+                statusElement.textContent = '✅ Test completed successfully';
+            }
+        }
+        
+        function clearLog() {
+            logElement.textContent = '';
+            statusElement.className = 'status info';
+            statusElement.textContent = 'Ready to test connection...';
+        }
+        
+        async function testConnection() {
+            log('🔍 Testing database connection...');
+            
+            try {
+                if (!window.dbService) {
+                    throw new Error('Database service not loaded');
+                }
+                
+                log(`Database URL: ${window.dbService.supabaseUrl}`);
+                log(`Configured: ${window.dbService.isConfigured}`);
+                
+                if (!window.dbService.isConfigured) {
+                    throw new Error('Database not properly configured');
+                }
+                
+                // Test basic API call
+                const response = await fetch(`${window.dbService.supabaseUrl}/rest/v1/`, {
+                    headers: {
+                        'Authorization': `Bearer ${window.dbService.supabaseKey}`,
+                        'apikey': window.dbService.supabaseKey
+                    }
+                });
+                
+                if (response.ok) {
+                    log('✅ Database connection successful!', 'success');
+                    log('Database is ready for operations');
+                } else {
+                    throw new Error(`Connection failed: ${response.status} ${response.statusText}`);
+                }
+                
+            } catch (error) {
+                log(`❌ Connection failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testTables() {
+            log('🔍 Testing database tables...');
+            
+            try {
+                // Test users table
+                log('Testing users table...');
+                const users = await window.dbService.getUsers();
+                log(`✅ Users table accessible (${users.length} records)`);
+                
+                // Test modules table
+                log('Testing modules table...');
+                const modules = await window.dbService.getModules();
+                log(`✅ Modules table accessible (${modules.length} records)`);
+                
+                log('✅ All tables are accessible!', 'success');
+                
+            } catch (error) {
+                log(`❌ Table test failed: ${error.message}`, 'error');
+                log('Make sure you have run the schema.sql in your Supabase SQL Editor');
+            }
+        }
+        
+        async function migrateData() {
+            log('🔄 Starting data migration...');
+            
+            try {
+                if (!window.dataMigration) {
+                    throw new Error('Migration script not loaded');
+                }
+                
+                await window.dataMigration.migrateAllData();
+                log('✅ Data migration completed successfully!', 'success');
+                
+                // Verify migration
+                log('🔍 Verifying migration...');
+                await window.dataMigration.verifyMigration();
+                
+            } catch (error) {
+                log(`❌ Migration failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-test connection on page load
+        window.addEventListener('load', () => {
+            log('Page loaded, database service available');
+            if (window.dbService && window.dbService.isConfigured) {
+                log('✅ Database configuration detected');
+            } else {
+                log('⚠️ Database not configured - check config.js');
+            }
+        });
+    </script>
+</body>
+</html>
