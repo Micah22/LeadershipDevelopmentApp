@@ -13,18 +13,21 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    // Set up user info
-    updateUserInfo();
-    
-    // Navigation is now handled by navbar.js
-    
-    // Set up sign out functionality
-    setupSignOut();
-    
-    // Theme is now handled by navbar.js
-    
-    // Load dashboard data
-    loadDashboardData();
+    // Wait a bit for navbar and users data to load first
+    setTimeout(() => {
+        // Set up user info
+        updateUserInfo();
+        
+        // Navigation is now handled by navbar.js
+        
+        // Set up sign out functionality
+        setupSignOut();
+        
+        // Theme is now handled by navbar.js
+        
+        // Load dashboard data
+        loadDashboardData();
+    }, 300);
     
     // Set up storage event listener for real-time updates
     window.addEventListener('storage', function(e) {
@@ -39,9 +42,13 @@ function updateUserInfo() {
     const username = localStorage.getItem('username');
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     
+    console.log('User Script - updateUserInfo() called:', { username, isLoggedIn });
+    
     if (username && isLoggedIn) {
         const users = getUsers();
         const user = users.find(u => u.username === username);
+        
+        console.log('User Script - updateUserInfo() - users found:', users.length, 'user match:', !!user);
         
         if (user) {
             // Update avatar
@@ -89,15 +96,25 @@ function setupSignOut() {
 
 // Get users from localStorage
 function getUsers() {
-    const users = localStorage.getItem('users');
-    return users ? JSON.parse(users) : [];
+    const usersData = localStorage.getItem('users');
+    const users = usersData ? JSON.parse(usersData) : [];
+    console.log('User Script - getUsers() called, returning:', users.length, 'users');
+    return users;
 }
 
 // Get current user
 function getCurrentUser() {
     const username = localStorage.getItem('username');
     const users = getUsers();
-    return users.find(u => u.username === username);
+    const user = users.find(u => u.username === username);
+    
+    console.log('User Script - getCurrentUser() called:', { username, usersCount: users.length, userFound: !!user });
+    
+    if (!user) {
+        console.log('User Script - User not found for username:', username);
+    }
+    
+    return user;
 }
 
 // Get user-specific progress data
