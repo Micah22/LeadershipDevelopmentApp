@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Test Data to Database</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Add Test Data to Database</h1>
+    <div id="results"></div>
+    
+    <button onclick="addTestUsers()">Add Test Users</button>
+    <button onclick="addTestModules()">Add Test Modules</button>
+    <button onclick="addTestProgress()">Add Test Progress</button>
+    <button onclick="clearResults()">Clear Results</button>
+
+    <script src="config.js"></script>
+    <script>
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = message;
+            resultsDiv.appendChild(div);
+        }
+        
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+        }
+        
+        async function addTestUsers() {
+            addResult('Adding test users...', 'info');
+            
+            const testUsers = [
+                {
+                    username: 'admin',
+                    full_name: 'Admin User',
+                    email: 'admin@company.com',
+                    password_hash: btoa('admin123'),
+                    role: 'Admin',
+                    status: 'active',
+                    start_date: '2024-01-01'
+                },
+                {
+                    username: 'john',
+                    full_name: 'John Smith',
+                    email: 'john@company.com',
+                    password_hash: btoa('123456'),
+                    role: 'Director',
+                    status: 'active',
+                    start_date: '2024-01-01'
+                },
+                {
+                    username: 'sarah',
+                    full_name: 'Sarah Johnson',
+                    email: 'sarah@company.com',
+                    password_hash: btoa('123456'),
+                    role: 'Manager',
+                    status: 'active',
+                    start_date: '2024-01-01'
+                }
+            ];
+            
+            try {
+                for (const user of testUsers) {
+                    await window.dbService.createUser(user);
+                    addResult(`Added user: ${user.username}`, 'success');
+                }
+            } catch (error) {
+                addResult(`Failed to add users: ${error.message}`, 'error');
+            }
+        }
+        
+        async function addTestModules() {
+            addResult('Adding test modules...', 'info');
+            
+            const testModules = [
+                {
+                    title: 'Communication Skills',
+                    description: 'Develop effective communication techniques',
+                    required_role: 'Team Member',
+                    difficulty: 'Phase 1',
+                    duration: 2,
+                    prerequisites: 'None',
+                    author: 'Training Team',
+                    version: '1.0',
+                    tags: 'communication,soft-skills',
+                    status: 'active',
+                    checklist: [
+                        'Practice active listening',
+                        'Deliver a presentation',
+                        'Write a professional email'
+                    ]
+                },
+                {
+                    title: 'Team Leadership',
+                    description: 'Learn to lead and motivate teams effectively',
+                    required_role: 'Supervisor',
+                    difficulty: 'Phase 2',
+                    duration: 4,
+                    prerequisites: 'Communication Skills',
+                    author: 'Training Team',
+                    version: '1.0',
+                    tags: 'leadership,management',
+                    status: 'active',
+                    checklist: [
+                        'Lead a team meeting',
+                        'Provide constructive feedback',
+                        'Resolve team conflicts'
+                    ]
+                }
+            ];
+            
+            try {
+                for (const module of testModules) {
+                    await window.dbService.createModule(module);
+                    addResult(`Added module: ${module.title}`, 'success');
+                }
+            } catch (error) {
+                addResult(`Failed to add modules: ${error.message}`, 'error');
+            }
+        }
+        
+        async function addTestProgress() {
+            addResult('Adding test progress...', 'info');
+            
+            try {
+                const progress = {
+                    username: 'admin',
+                    overallProgress: 25,
+                    completedModules: 1,
+                    totalModules: 4,
+                    currentPath: 'Leadership Fundamentals',
+                    modules: {
+                        'Communication Skills': {
+                            completed: true,
+                            progress: 100,
+                            checklist: [
+                                { task: 'Practice active listening', completed: true },
+                                { task: 'Deliver a presentation', completed: true },
+                                { task: 'Write a professional email', completed: true }
+                            ]
+                        }
+                    }
+                };
+                
+                await window.dbService.updateUserProgress('admin', progress);
+                addResult('Added test progress for admin', 'success');
+            } catch (error) {
+                addResult(`Failed to add progress: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
