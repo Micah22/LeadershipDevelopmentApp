@@ -14,7 +14,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Wait a bit for navbar and users data to load first
-    setTimeout(() => {
+    setTimeout(async () => {
+        // Ensure users data is available
+        await ensureUsersData();
+        
         // Set up user info
         updateUserInfo();
         
@@ -93,6 +96,60 @@ function setupSignOut() {
     }
 }
 
+
+// Ensure users data is available
+async function ensureUsersData() {
+    console.log('User Script - ensureUsersData() called');
+    
+    const existingUsers = localStorage.getItem('users');
+    if (!existingUsers) {
+        console.log('User Script - No users found, initializing default users...');
+        
+        // Create default users (same as in index.html)
+        const defaultUsers = [
+            {
+                fullName: 'Admin User',
+                username: 'admin',
+                password: 'admin123',
+                role: 'Admin',
+                status: 'active'
+            },
+            {
+                fullName: 'John Smith',
+                username: 'john',
+                password: '123456',
+                role: 'Director',
+                status: 'active'
+            },
+            {
+                fullName: 'Sarah Johnson',
+                username: 'sarah',
+                password: '123456',
+                role: 'Manager',
+                status: 'active'
+            },
+            {
+                fullName: 'Mike Wilson',
+                username: 'mike',
+                password: '123456',
+                role: 'Supervisor',
+                status: 'active'
+            },
+            {
+                fullName: 'Lisa Brown',
+                username: 'lisa',
+                password: '123456',
+                role: 'Team Member',
+                status: 'active'
+            }
+        ];
+        
+        localStorage.setItem('users', JSON.stringify(defaultUsers));
+        console.log('User Script - Default users initialized:', defaultUsers.length);
+    } else {
+        console.log('User Script - Users data already exists');
+    }
+}
 
 // Get users from localStorage
 function getUsers() {
