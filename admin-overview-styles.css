@@ -742,6 +742,20 @@ body {
     text-align: center;
 }
 
+.module-management-files {
+    color: var(--teal);
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.module-management-files i {
+    color: var(--teal);
+}
+
 .module-management-stats {
     margin-bottom: 1rem;
 }
@@ -781,6 +795,131 @@ body {
     padding: 2rem;
     background: var(--light-gray);
     min-height: calc(100vh - 80px);
+}
+
+/* File Upload Styles */
+.checklist-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    background: var(--white);
+}
+
+.checklist-task-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.checklist-file-section {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.checklist-file-input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.checklist-file-upload {
+    /* Force Chrome to show the file input properly */
+    -webkit-appearance: button;
+    appearance: button;
+    background-color: var(--cfa-red);
+    color: var(--white);
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-block;
+    text-align: center;
+    line-height: 1.2;
+    min-width: 120px;
+    transition: all 0.3s ease;
+    /* Ensure it's always clickable */
+    position: relative;
+    z-index: 1000;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    opacity: 1;
+    visibility: visible;
+}
+
+.checklist-file-upload:hover {
+    background: #c4122e;
+}
+
+/* Ensure file input is clickable in Chrome */
+.checklist-file-upload::file-selector-button {
+    display: none;
+}
+
+/* Hide the default file input styling in Chrome */
+.checklist-file-upload::-webkit-file-upload-button {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    border: none;
+    color: transparent;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: pointer;
+}
+
+.checklist-file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: var(--light-gray);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: var(--medium-gray);
+}
+
+.checklist-file-info i {
+    color: var(--cfa-red);
+}
+
+.checklist-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.checklist-remove-btn {
+    background: #dc3545;
+    color: var(--white);
+    border: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.checklist-remove-btn:hover {
+    background: #c82333;
 }
 
 /* Modal styles for module editing */

@@ -794,31 +794,40 @@ function loadModulesData() {
             return;
         }
         
-        const modulesHTML = modules.map(module => `
-            <div class="module-management-card">
-                <div class="module-management-header">
-                    <h3 class="module-management-title">${module.title}</h3>
-                    <span class="module-management-status ${module.status || 'active'}">${(module.status || 'active').replace('-', ' ')}</span>
+        const modulesHTML = modules.map(module => {
+            // Count tasks with files
+            const tasksWithFiles = module.checklist.filter(task => {
+                if (typeof task === 'string') return false;
+                return task.file && task.file.trim() !== '';
+            }).length;
+            
+            return `
+                <div class="module-management-card">
+                    <div class="module-management-header">
+                        <h3 class="module-management-title">${module.title}</h3>
+                        <span class="module-management-status ${module.status || 'active'}">${(module.status || 'active').replace('-', ' ')}</span>
+                    </div>
+                    <div class="module-management-description">${module.description}</div>
+                    <div class="module-management-stats">
+                        <div class="module-management-tasks">${module.checklist.length} learning tasks</div>
+                        ${tasksWithFiles > 0 ? `<div class="module-management-files"><i class="fas fa-file"></i> ${tasksWithFiles} tasks with files</div>` : ''}
+                    </div>
+                    <div class="module-management-role">
+                        <strong>Required Role:</strong> ${module.requiredRole || 'Team Member'}
+                    </div>
+                    <div class="module-management-actions">
+                        <button class="btn btn-secondary" onclick="editModule('${module.title}')">
+                            <i class="fas fa-edit"></i>
+                            Edit
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteModule('${module.title}')">
+                            <i class="fas fa-trash"></i>
+                            Delete
+                        </button>
+                    </div>
                 </div>
-                <div class="module-management-description">${module.description}</div>
-                <div class="module-management-stats">
-                    <div class="module-management-tasks">${module.checklist.length} learning tasks</div>
-                </div>
-                <div class="module-management-role">
-                    <strong>Required Role:</strong> ${module.requiredRole || 'Team Member'}
-                </div>
-                <div class="module-management-actions">
-                    <button class="btn btn-secondary" onclick="editModule('${module.title}')">
-                        <i class="fas fa-edit"></i>
-                        Edit
-                    </button>
-                    <button class="btn btn-danger" onclick="deleteModule('${module.title}')">
-                        <i class="fas fa-trash"></i>
-                        Delete
-                    </button>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
         
         console.log('Modules HTML generated');
         modulesGrid.innerHTML = modulesHTML;
@@ -993,15 +1002,39 @@ function openModuleModal(moduleTitle) {
             
             // Populate checklist
             if (checklistContainer) {
-                const checklistHTML = module.checklist.map((task, index) => `
-                    <div class="checklist-item">
-                        <input type="text" class="checklist-task-input" value="${task}" placeholder="Enter task description">
-                        <button type="button" class="btn btn-danger btn-sm" onclick="removeChecklistItem(this)">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                `).join('');
+                const checklistHTML = module.checklist.map((task, index) => {
+                    // Handle both old string format and new object format
+                    const taskDescription = typeof task === 'string' ? task : (task.description || '');
+                    const taskFile = typeof task === 'object' ? (task.file || '') : '';
+                    
+                    return `
+                        <div class="checklist-item">
+                            <input type="text" class="checklist-task-input" value="${taskDescription}" placeholder="Enter task description">
+                            <div class="checklist-file-section">
+                                <input type="text" class="checklist-file-input" value="${taskFile}" placeholder="File name or URL (optional)">
+                                <input type="file" class="checklist-file-upload" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.mp4,.mp3" onchange="handleFileUpload(this, ${index})" style="position: relative; z-index: 10; opacity: 1; visibility: visible; pointer-events: auto;">
+                            </div>
+                            ${taskFile ? `
+                                <div class="checklist-file-info">
+                                    <i class="fas fa-file"></i>
+                                    <span>File: ${taskFile}</span>
+                                </div>
+                            ` : ''}
+                            <div class="checklist-actions">
+                                <span class="task-number">Task ${index + 1}</span>
+                                <button type="button" class="checklist-remove-btn" onclick="removeChecklistItem(this)">
+                                    <i class="fas fa-trash"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
                 checklistContainer.innerHTML = checklistHTML;
+                
+                // Ensure Chrome compatibility for existing file inputs
+                setTimeout(() => {
+                    ensureChromeFileInputCompatibility();
+                }, 100);
             }
         }
     }
@@ -1037,10 +1070,23 @@ function saveModuleChanges() {
     const requiredRole = document.getElementById('editModuleRole').value;
     
     // Get checklist data
-    const taskInputs = document.querySelectorAll('.checklist-task-input');
-    const checklist = Array.from(taskInputs)
-        .map(input => input.value.trim())
-        .filter(task => task.length > 0);
+    const checklistItems = document.querySelectorAll('.checklist-item');
+    const checklist = Array.from(checklistItems)
+        .map(item => {
+            const taskInput = item.querySelector('.checklist-task-input');
+            const fileInput = item.querySelector('.checklist-file-input');
+            const taskDescription = taskInput ? taskInput.value.trim() : '';
+            const taskFile = fileInput ? fileInput.value.trim() : '';
+            
+            if (taskDescription) {
+                return {
+                    description: taskDescription,
+                    file: taskFile || ''
+                };
+            }
+            return null;
+        })
+        .filter(task => task !== null);
 
     // Validate required fields
     if (!title || !description || checklist.length === 0) {
@@ -1099,21 +1145,104 @@ function addChecklistItem() {
     const checklistContainer = document.getElementById('modalChecklist');
     if (!checklistContainer) return;
     
+    const taskIndex = checklistContainer.children.length;
     const newItem = document.createElement('div');
     newItem.className = 'checklist-item';
     newItem.innerHTML = `
         <input type="text" class="checklist-task-input" placeholder="Enter task description">
-        <button type="button" class="btn btn-danger btn-sm" onclick="removeChecklistItem(this)">
-            <i class="fas fa-trash"></i>
-        </button>
+        <div class="checklist-file-section">
+            <input type="text" class="checklist-file-input" placeholder="File name or URL (optional)">
+            <input type="file" class="checklist-file-upload" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.mp4,.mp3" onchange="handleFileUpload(this, ${taskIndex})" style="position: relative; z-index: 10; opacity: 1; visibility: visible; pointer-events: auto;">
+        </div>
+        <div class="checklist-actions">
+            <span class="task-number">Task ${taskIndex + 1}</span>
+            <button type="button" class="checklist-remove-btn" onclick="removeChecklistItem(this)">
+                <i class="fas fa-trash"></i> Remove
+            </button>
+        </div>
     `;
     
     checklistContainer.appendChild(newItem);
+    
+    // Ensure Chrome compatibility for the new file input
+    setTimeout(() => {
+        ensureChromeFileInputCompatibility();
+    }, 100);
 }
 
 function removeChecklistItem(button) {
-    const item = button.parentElement;
+    const item = button.closest('.checklist-item');
     item.remove();
+    // Update task numbers after removal
+    updateTaskNumbers();
+}
+
+function handleFileUpload(fileInput, taskIndex) {
+    const file = fileInput.files[0];
+    if (file) {
+        // Update the file input text field with the file name
+        const fileTextInput = fileInput.previousElementSibling;
+        fileTextInput.value = file.name;
+        
+        // Show file info
+        showFileInfo(fileInput, file);
+    }
+}
+
+function showFileInfo(fileInput, file) {
+    const checklistItem = fileInput.closest('.checklist-item');
+    let fileInfo = checklistItem.querySelector('.checklist-file-info');
+    
+    if (!fileInfo) {
+        fileInfo = document.createElement('div');
+        fileInfo.className = 'checklist-file-info';
+        fileInput.parentElement.parentElement.insertBefore(fileInfo, fileInput.parentElement.nextSibling);
+    }
+    
+    fileInfo.innerHTML = `
+        <i class="fas fa-file"></i>
+        <span>File: ${file.name} (${formatFileSize(file.size)})</span>
+    `;
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function updateTaskNumbers() {
+    const checklistItems = document.querySelectorAll('.checklist-item');
+    checklistItems.forEach((item, index) => {
+        const taskNumber = item.querySelector('.task-number');
+        if (taskNumber) {
+            taskNumber.textContent = `Task ${index + 1}`;
+        }
+    });
+}
+
+function ensureChromeFileInputCompatibility() {
+    // Ensure all file inputs are properly configured for Chrome
+    const fileInputs = document.querySelectorAll('.checklist-file-upload');
+    fileInputs.forEach(input => {
+        // Force Chrome to recognize the file input
+        input.style.position = 'relative';
+        input.style.zIndex = '10';
+        input.style.opacity = '1';
+        input.style.visibility = 'visible';
+        input.style.pointerEvents = 'auto';
+        input.style.cursor = 'pointer';
+        
+        // Ensure the input is not hidden by other elements
+        input.setAttribute('tabindex', '0');
+        
+        // Add click event listener as backup
+        input.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
 }
 
 // Export functions for potential use in other scripts
