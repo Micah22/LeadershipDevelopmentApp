@@ -283,8 +283,30 @@ function getUsers() {
     const usersData = localStorage.getItem('users');
     const users = usersData ? JSON.parse(usersData) : [];
     console.log('Navbar v14 - getUsers() called, returning:', users.length, 'users');
+    
+    // If no users found, try to initialize them
+    if (users.length === 0) {
+        console.log('Navbar v14 - No users found, checking if we need to initialize...');
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        if (isLoggedIn) {
+            console.log('Navbar v14 - User is logged in but no users found, this is a problem!');
+        }
+    }
+    
     return users;
 }
 
-// Load navbar when DOM is ready
-document.addEventListener('DOMContentLoaded', loadNavbar);
+// Load navbar when DOM is ready (only if not already loaded)
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if navbar is already loaded to prevent multiple loads
+    if (!document.getElementById('navbar')) {
+        loadNavbar();
+    } else {
+        console.log('Navbar already loaded, just updating user info');
+        // Just update the user info without reloading
+        setTimeout(() => {
+            updateDropdownUserInfo();
+            updateNavigation();
+        }, 100);
+    }
+});

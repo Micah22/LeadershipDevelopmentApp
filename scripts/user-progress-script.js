@@ -17,17 +17,20 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     console.log('User is logged in, proceeding with page load');
     
-    // Initialize the page
-    await initializePage();
-    
-    // Set up event listeners
-    setupEventListeners();
-    
-    // Initialize theme
-    initializeTheme();
-    
-    // Load progress data
-    await loadProgressData();
+    // Wait a bit for navbar to load first
+    setTimeout(async () => {
+        // Initialize the page
+        await initializePage();
+        
+        // Set up event listeners
+        setupEventListeners();
+        
+        // Initialize theme
+        initializeTheme();
+        
+        // Load progress data
+        await loadProgressData();
+    }, 200);
 });
 
 async function initializePage() {
