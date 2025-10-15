@@ -29,8 +29,7 @@ function initializePage() {
     // Set up user info
     updateUserInfo();
     
-    // Set up navigation
-    updateNavigation();
+    // Navigation is handled by navbar.js
 }
 
 function updateUserInfo() {
@@ -59,33 +58,7 @@ function updateUserInfo() {
     }
 }
 
-function updateNavigation() {
-    const username = localStorage.getItem('username');
-    const users = getUsers();
-    const user = users.find(u => u.username === username);
-    const navLinks = document.getElementById('navLinks');
-    
-    if (!navLinks) {
-        return;
-    }
-    
-    if (!user) {
-        navLinks.innerHTML = '<a href="index.html" class="nav-link">Login</a>';
-        return;
-    }
-    
-    let navigationHTML = '';
-    
-    if (user.role === 'Admin') {
-        navigationHTML = '<a href="user-dashboard.html" class="nav-link">Dashboard</a><a href="user-progress.html" class="nav-link active">My Progress</a><a href="admin-user-overview.html" class="nav-link">User Overview</a><a href="#" class="nav-link">Resources</a>';
-    } else if (user.role === 'Director' || user.role === 'Supervisor') {
-        navigationHTML = '<a href="user-dashboard.html" class="nav-link">Dashboard</a><a href="user-progress.html" class="nav-link active">My Progress</a><a href="admin-user-overview.html" class="nav-link">User Overview</a><a href="#" class="nav-link">Resources</a>';
-    } else {
-        navigationHTML = '<a href="user-dashboard.html" class="nav-link">Dashboard</a><a href="user-progress.html" class="nav-link active">My Progress</a><a href="#" class="nav-link">Resources</a>';
-    }
-    
-    navLinks.innerHTML = navigationHTML;
-}
+// updateNavigation() function removed - handled by navbar.js
 
 function setupEventListeners() {
     
@@ -107,8 +80,7 @@ function setupEventListeners() {
         });
     }
     
-    // Update dropdown user info
-    updateDropdownUserInfo();
+    // Dropdown user info is handled by navbar.js
     
     // Theme toggle button in dropdown
     const themeToggle = document.getElementById('themeToggle');
@@ -828,9 +800,7 @@ function getFallbackModuleData(moduleTitle) {
 }
 
 // Utility function to get users from localStorage
-function getUsers() {
-    return JSON.parse(localStorage.getItem('users') || '[]');
-}
+// getUsers() function removed - handled by navbar.js
 
 // Utility function to get user's progress data
 function getUserProgress(username) {
@@ -936,22 +906,7 @@ function initializeTheme() {
 }
 
 // Update dropdown user info
-function updateDropdownUserInfo() {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    const username = currentUser.username || localStorage.getItem('username') || 'User';
-    const role = currentUser.role || 'Team Member';
-    
-    const dropdownUserName = document.getElementById('dropdownUserName');
-    const dropdownUserRole = document.getElementById('dropdownUserRole');
-    
-    if (dropdownUserName) {
-        dropdownUserName.textContent = username;
-    }
-    
-    if (dropdownUserRole) {
-        dropdownUserRole.textContent = role;
-    }
-}
+// updateDropdownUserInfo() function removed - handled by navbar.js
 
 // Export functions for potential use in other scripts
 window.userProgress = {
