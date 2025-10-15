@@ -394,10 +394,10 @@ function updateUserProgressTable(users) {
                 <td>
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
                         <div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.9rem;">
-                            ${user.fullName.charAt(0).toUpperCase()}
+                            ${(user.full_name || user.fullName || user.username).charAt(0).toUpperCase()}
                         </div>
                         <div>
-                            <div style="font-weight: 600;">${user.fullName}</div>
+                            <div style="font-weight: 600;">${user.full_name || user.fullName || user.username}</div>
                             <div style="font-size: 0.8rem; color: var(--medium-gray);">${user.username}</div>
                         </div>
                     </div>
@@ -509,7 +509,7 @@ function openNewUserModal() {
     modal.classList.add('show');
 }
 
-function saveUserChanges() {
+async function saveUserChanges() {
     const modal = document.getElementById('userModal');
     const currentUsername = modal.dataset.currentUsername;
     
@@ -540,14 +540,18 @@ function saveUserChanges() {
             return;
         }
         
-        // Create new user object
+        // Create new user object (matching database schema)
         const newUser = {
-            fullName: formData.fullName,
+            full_name: formData.fullName,
             username: formData.username,
-            password: formData.password,
+            password_hash: btoa(formData.password), // Base64 encode password
             role: formData.role,
-            status: formData.status || 'Active',
+            status: formData.status || 'active',
             email: formData.email || '',
+            start_date: formData.startDate || new Date().toISOString().split('T')[0],
+            // Keep localStorage fields for compatibility
+            fullName: formData.fullName,
+            password: formData.password,
             startDate: formData.startDate || new Date().toISOString().split('T')[0],
             progress: 0,
             completedTasks: 0,
@@ -556,7 +560,18 @@ function saveUserChanges() {
         
         // Add new user
         users.push(newUser);
-        saveUsers(users);
+        
+        // Save to localStorage first
+        localStorage.setItem('users', JSON.stringify(users));
+        
+        // Try to save new user to database
+        try {
+            await window.dbService.createUser(newUser);
+            console.log('New user saved to database successfully');
+        } catch (error) {
+            console.error('Failed to save new user to database:', error);
+            showToast('warning', 'Database Warning', 'User created locally but may not sync to database');
+        }
         
         alert('New user created successfully!');
         closeUserModal();
@@ -572,14 +587,33 @@ function saveUserChanges() {
         return;
     }
     
-    // Update user data
+    // Update user data (mapping form fields to database schema)
     users[userIndex] = {
         ...users[userIndex],
-        ...formData
+        full_name: formData.fullName,
+        username: formData.username,
+        password_hash: btoa(formData.password), // Base64 encode password
+        role: formData.role,
+        status: formData.status || 'active',
+        email: formData.email || '',
+        start_date: formData.startDate || users[userIndex].start_date,
+        // Keep localStorage fields for compatibility
+        fullName: formData.fullName,
+        password: formData.password,
+        startDate: formData.startDate || users[userIndex].startDate
     };
     
-    // Save updated users
+    // Save updated users to localStorage
     localStorage.setItem('users', JSON.stringify(users));
+    
+    // Try to save updated user to database
+    try {
+        await window.dbService.updateUser(users[userIndex].id, users[userIndex]);
+        console.log('User updated in database successfully');
+    } catch (error) {
+        console.error('Failed to update user in database:', error);
+        showToast('warning', 'Database Warning', 'User updated locally but may not sync to database');
+    }
     
     // Refresh the table
     loadUserData();
