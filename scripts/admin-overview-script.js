@@ -649,6 +649,16 @@ function getUsers() {
     return JSON.parse(localStorage.getItem('users') || '[]');
 }
 
+// Utility function to get all users (alias for getUsers)
+function getAllUsers() {
+    return getUsers();
+}
+
+// Utility function to get all modules
+function getAllModules() {
+    return JSON.parse(localStorage.getItem('globalModules') || '[]');
+}
+
 // Utility function to save users to localStorage
 async function saveUsers(users) {
     try {
