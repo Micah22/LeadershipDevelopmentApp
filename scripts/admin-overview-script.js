@@ -1331,6 +1331,7 @@ async function saveModuleChanges() {
 
     // Save to global storage
     const modules = getAllModules();
+    const moduleIndex = modules.findIndex(m => m.title === currentModule);
 
     if (currentModule === 'new') {
         // Add new module
@@ -1360,7 +1361,6 @@ async function saveModuleChanges() {
         });
     } else {
         // Update existing module
-        const moduleIndex = modules.findIndex(m => m.title === currentModule);
         if (moduleIndex !== -1) {
             modules[moduleIndex] = {
                 ...modules[moduleIndex], // Preserve existing data
