@@ -260,8 +260,8 @@ async function loadProgressData() {
             const totalCount = moduleData.checklist.length;
             const progressPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
             
-            // Check if module is locked (above user's role)
-            const isLocked = !canUserAccessModule(userRole, moduleData.requiredRole);
+            // Check if module is locked (above user's role) or unassigned
+            const isLocked = !canUserAccessModule(userRole, moduleData.requiredRole, moduleTitle);
             
             // Count as achievement if 100% complete and not locked
             if (progressPercentage === 100 && !isLocked) {
@@ -729,7 +729,7 @@ function closeModuleModal() {
     }
 }
 
-function canUserAccessModule(userRole, requiredRole) {
+function canUserAccessModule(userRole, requiredRole, moduleTitle = null) {
     // Define role hierarchy (higher number = higher authority)
     const roleHierarchy = {
         'Team Member': 1,
@@ -741,8 +741,33 @@ function canUserAccessModule(userRole, requiredRole) {
     const userLevel = roleHierarchy[userRole] || 1;
     const requiredLevel = roleHierarchy[requiredRole] || 1;
     
-    // User can access modules at their level or below
-    return userLevel >= requiredLevel;
+    // Check if user has role-based access
+    const hasRoleAccess = userLevel >= requiredLevel;
+    
+    // If no role access, return false
+    if (!hasRoleAccess) {
+        return false;
+    }
+    
+    // If moduleTitle is provided, check if this specific module has been unassigned
+    if (moduleTitle) {
+        const username = localStorage.getItem('username');
+        const users = getUsers();
+        const user = users.find(u => u.username === username);
+        
+        if (user) {
+            const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
+            const unassignedKey = `${user.id || user.username}-${moduleTitle}`;
+            const wasUnassigned = unassignedRoleBased.includes(unassignedKey);
+            
+            if (wasUnassigned) {
+                console.log(`Module ${moduleTitle} has been unassigned for user ${username}`);
+                return false;
+            }
+        }
+    }
+    
+    return true;
 }
 
 function getModuleData(moduleTitle) {
@@ -1158,7 +1183,7 @@ async function calculateUserOverallProgress(username) {
     
     moduleTitles.forEach(moduleTitle => {
         const moduleData = getModuleData(moduleTitle);
-        if (moduleData && canUserAccessModule(userRole, moduleData.requiredRole)) {
+        if (moduleData && canUserAccessModule(userRole, moduleData.requiredRole, moduleTitle)) {
             totalTasks += moduleData.checklist.length;
             const moduleProgress = userProgress[moduleTitle] || { checklist: [] };
             completedTasks += moduleProgress.checklist.filter(item => item).length;
