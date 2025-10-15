@@ -140,6 +140,14 @@ function setupEventListeners() {
         }
     });
     
+    // New User button
+    const newUserBtn = document.getElementById('newUserBtn');
+    if (newUserBtn) {
+        newUserBtn.addEventListener('click', function() {
+            openNewUserModal();
+        });
+    }
+    
     // Navigation items
     const navItems = document.querySelectorAll('.nav-item');
     console.log('Found navigation items:', navItems.length);
@@ -401,6 +409,8 @@ function viewUserDetails(username) {
 
 function openUserModal(username) {
     const modal = document.getElementById('userModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSave = document.getElementById('modalSave');
     const users = getUsers();
     const user = users.find(u => u.username === username);
     
@@ -408,6 +418,10 @@ function openUserModal(username) {
         alert('User not found');
         return;
     }
+    
+    // Update modal title and button for editing
+    modalTitle.textContent = 'Edit User';
+    modalSave.textContent = 'Save Changes';
     
     // Populate form with user data
     document.getElementById('editFullName').value = user.fullName || '';
@@ -434,14 +448,28 @@ function closeUserModal() {
     document.getElementById('userEditForm').reset();
 }
 
+function openNewUserModal() {
+    const modal = document.getElementById('userModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSave = document.getElementById('modalSave');
+    
+    // Update modal title
+    modalTitle.textContent = 'Add New User';
+    modalSave.textContent = 'Create User';
+    
+    // Clear the form
+    document.getElementById('userEditForm').reset();
+    
+    // Set modal to new user mode
+    modal.dataset.currentUsername = '';
+    
+    // Show modal
+    modal.classList.add('show');
+}
+
 function saveUserChanges() {
     const modal = document.getElementById('userModal');
     const currentUsername = modal.dataset.currentUsername;
-    
-    if (!currentUsername) {
-        alert('No user selected');
-        return;
-    }
     
     // Get form data
     const formData = {
@@ -460,8 +488,41 @@ function saveUserChanges() {
         return;
     }
     
-    // Update user in localStorage
     const users = getUsers();
+    
+    if (!currentUsername) {
+        // Creating new user
+        // Check if username already exists
+        if (users.find(u => u.username === formData.username)) {
+            alert('Username already exists. Please choose a different username.');
+            return;
+        }
+        
+        // Create new user object
+        const newUser = {
+            fullName: formData.fullName,
+            username: formData.username,
+            password: formData.password,
+            role: formData.role,
+            status: formData.status || 'Active',
+            email: formData.email || '',
+            startDate: formData.startDate || new Date().toISOString().split('T')[0],
+            progress: 0,
+            completedTasks: 0,
+            totalTasks: 0
+        };
+        
+        // Add new user
+        users.push(newUser);
+        saveUsers(users);
+        
+        alert('New user created successfully!');
+        closeUserModal();
+        loadUserData();
+        return;
+    }
+    
+    // Editing existing user
     const userIndex = users.findIndex(u => u.username === currentUsername);
     
     if (userIndex === -1) {

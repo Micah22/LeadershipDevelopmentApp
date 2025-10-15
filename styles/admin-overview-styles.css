@@ -309,6 +309,12 @@ body {
     gap: 1rem;
 }
 
+.section-header .section-title-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
 .section-icon {
     width: 40px;
     height: 40px;
