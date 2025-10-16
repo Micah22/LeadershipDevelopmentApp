@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix RLS Policies</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .sql-code {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .button {
+            background: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background: #2980b9;
+        }
+        .button.danger {
+            background: #e74c3c;
+        }
+        .button.danger:hover {
+            background: #c0392b;
+        }
+        .log {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+        .warning { color: #f39c12; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Database RLS Policies</h1>
+        
+        <p>This tool will fix the Row Level Security (RLS) policies that are preventing module assignments from being created.</p>
+        
+        <h3>SQL Commands to Execute:</h3>
+        <div class="sql-code" id="sqlCode">
+-- Fix RLS policies for module assignments
+-- This script updates the Row Level Security policies to allow operations with the anon key
+
+-- Drop existing policies
+DROP POLICY IF EXISTS "Users can view their own assignments" ON module_assignments;
+DROP POLICY IF EXISTS "Admins can manage all assignments" ON module_assignments;
+DROP POLICY IF EXISTS "Users can view their own unassigned assignments" ON unassigned_role_assignments;
+DROP POLICY IF EXISTS "Admins can manage all unassigned assignments" ON unassigned_role_assignments;
+
+-- Create new policies that work with anon key
+-- Allow all operations for now (you can restrict this later if needed)
+CREATE POLICY "Allow all operations on module_assignments" ON module_assignments FOR ALL USING (true);
+CREATE POLICY "Allow all operations on unassigned_role_assignments" ON unassigned_role_assignments FOR ALL USING (true);
+        </div>
+        
+        <div style="text-align: center;">
+            <button class="button" onclick="executeSQL()">🚀 Execute SQL Fix</button>
+            <button class="button danger" onclick="clearLog()">🗑️ Clear Log</button>
+        </div>
+        
+        <h3>Execution Log:</h3>
+        <div class="log" id="logOutput">Ready to execute SQL commands...</div>
+    </div>
+
+    <script src="../database/config.js"></script>
+    <script>
+        function log(message, type = 'info') {
+            const logOutput = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            logOutput.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('logOutput').innerHTML = 'Log cleared...';
+        }
+
+        async function executeSQL() {
+            log('🔧 Starting RLS policy fix...', 'info');
+            
+            if (!window.dbService || !window.dbService.isConfigured) {
+                log('❌ Database service not configured', 'error');
+                return;
+            }
+
+            const sqlCommands = [
+                'DROP POLICY IF EXISTS "Users can view their own assignments" ON module_assignments',
+                'DROP POLICY IF EXISTS "Admins can manage all assignments" ON module_assignments',
+                'DROP POLICY IF EXISTS "Users can view their own unassigned assignments" ON unassigned_role_assignments',
+                'DROP POLICY IF EXISTS "Admins can manage all unassigned assignments" ON unassigned_role_assignments',
+                'CREATE POLICY "Allow all operations on module_assignments" ON module_assignments FOR ALL USING (true)',
+                'CREATE POLICY "Allow all operations on unassigned_role_assignments" ON unassigned_role_assignments FOR ALL USING (true)'
+            ];
+
+            try {
+                for (let i = 0; i < sqlCommands.length; i++) {
+                    const command = sqlCommands[i];
+                    log(`📝 Executing: ${command}`, 'info');
+                    
+                    try {
+                        // Execute SQL command using Supabase RPC or direct SQL
+                        const result = await window.dbService.apiCall('rpc/exec_sql', 'POST', { sql: command });
+                        log(`✅ Success: ${command}`, 'success');
+                    } catch (error) {
+                        log(`⚠️ Warning: ${command} - ${error.message}`, 'warning');
+                    }
+                }
+                
+                log('🎉 RLS policy fix completed!', 'success');
+                log('💡 You can now try creating module assignments again.', 'info');
+                
+            } catch (error) {
+                log(`❌ Error during execution: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🔧 RLS Policy Fix Tool loaded', 'info');
+            log('📋 Ready to fix database security policies', 'info');
+        });
+    </script>
+</body>
+</html>

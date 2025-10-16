@@ -1,5 +1,53 @@
 /* User Progress Styles */
 
+/* Toast Notifications */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    min-width: 300px;
+    max-width: 500px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast-header {
+    padding: 12px 16px 8px;
+    border-bottom: 1px solid #e0e0e0;
+    font-weight: 600;
+}
+
+.toast-body {
+    padding: 8px 16px 12px;
+    color: #333;
+}
+
+.toast-success .toast-header {
+    color: #28a745;
+}
+
+.toast-error .toast-header {
+    color: #dc3545;
+}
+
+.toast-warning .toast-header {
+    color: #ffc107;
+}
+
+.toast-info .toast-header {
+    color: #17a2b8;
+}
+
 :root {
     --cfa-red: #E51636;
     --navy: #002A5C;
@@ -1759,4 +1807,88 @@ body {
 
 [data-theme="dark"] .module-task-count {
     color: var(--text-secondary);
+}
+
+/* Module Rubric Styles */
+.module-rubric {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: var(--light-gray);
+    border-radius: 8px;
+    border-left: 4px solid var(--success-green);
+}
+
+.module-rubric h4 {
+    color: var(--navy);
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.rubric-section {
+    margin-bottom: 0.75rem;
+}
+
+.rubric-section:last-child {
+    margin-bottom: 0;
+}
+
+.rubric-section strong {
+    display: block;
+    color: var(--navy);
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.rubric-level {
+    display: block;
+    padding: 0.25rem 0.5rem;
+    margin: 0.25rem 0;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.rubric-level.red {
+    background-color: #ffebee;
+    color: #c62828;
+    border-left: 3px solid #f44336;
+}
+
+.rubric-level.yellow {
+    background-color: #fff8e1;
+    color: #f57c00;
+    border-left: 3px solid #ff9800;
+}
+
+.rubric-level.green {
+    background-color: #e8f5e8;
+    color: #2e7d32;
+    border-left: 3px solid #4caf50;
+}
+
+/* Dark mode rubric styles */
+[data-theme="dark"] .module-rubric {
+    background: var(--background-dark);
+    border-left-color: var(--success-green);
+}
+
+[data-theme="dark"] .module-rubric h4,
+[data-theme="dark"] .rubric-section strong {
+    color: var(--text-light);
+}
+
+[data-theme="dark"] .rubric-level.red {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: #ffcdd2;
+}
+
+[data-theme="dark"] .rubric-level.yellow {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: #ffe0b2;
+}
+
+[data-theme="dark"] .rubric-level.green {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #c8e6c9;
 }

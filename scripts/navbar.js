@@ -26,16 +26,13 @@ async function loadNavbar() {
         
         // Populate navigation with a small delay to ensure DOM is ready
         setTimeout(() => {
-            console.log('Navbar v14 - About to call updateNavigation()');
             try {
                 updateNavigation();
-                console.log('Navbar v14 - updateNavigation() completed successfully');
             } catch (error) {
                 console.error('Navbar v14 - Error in updateNavigation():', error);
             }
         }, 100);
         
-        console.log('Navbar loaded successfully');
     } catch (error) {
         console.error('Error loading navbar:', error);
         // Fallback: create a basic navbar if loading fails
@@ -179,7 +176,6 @@ function initializeTheme() {
 
 // Update user info in dropdown
 function updateDropdownUserInfo() {
-        console.log('Navbar v14 - updateDropdownUserInfo() called - START - PAGE:', window.location.pathname);
     const username = localStorage.getItem('username');
     const users = getUsers();
     const user = users.find(u => u.username === username);
@@ -188,12 +184,6 @@ function updateDropdownUserInfo() {
     const dropdownUserRole = document.getElementById('dropdownUserRole');
     const userAvatar = document.getElementById('userAvatar');
     
-        console.log('Navbar v14 - Avatar update - User:', user?.fullName, 'Role:', user?.role);
-    console.log('Navbar v14 - Avatar elements found:', {
-        dropdownUserName: !!dropdownUserName,
-        dropdownUserRole: !!dropdownUserRole,
-        userAvatar: !!userAvatar
-    });
     
     if (dropdownUserName && user) {
         const fullName = user.full_name || user.fullName || user.username;
@@ -207,9 +197,7 @@ function updateDropdownUserInfo() {
     if (userAvatar && user) {
         const fullName = user.full_name || user.fullName || user.username;
         userAvatar.textContent = fullName.charAt(0).toUpperCase();
-        console.log('Navbar v14 - Avatar updated to:', fullName.charAt(0).toUpperCase());
     } else {
-        console.log('Navbar v14 - Avatar NOT updated. userAvatar:', !!userAvatar, 'user:', !!user);
     }
 }
 
@@ -222,26 +210,18 @@ function signOut() {
 
     // Update navigation based on user role
     function updateNavigation() {
-        console.log('Navbar v14 - updateNavigation() function called - START - PAGE:', window.location.pathname);
         try {
             const username = localStorage.getItem('username');
             const users = getUsers();
             const user = users.find(u => u.username === username);
             const navLinks = document.getElementById('navLinks');
         
-            console.log('Navbar v14 - Variables set, about to log DEBUG INFO');
-            console.log('Navbar v14 - DEBUG INFO:');
-            console.log('- Stored username:', username);
-            console.log('- Available users:', users.map(u => ({username: u.username, role: u.role})));
-            console.log('- Found user:', user);
-            console.log('- User role:', user?.role);
         
         if (!navLinks) {
             return;
         }
         
         if (!user) {
-            console.log('Navbar v6 - No user found, showing login link');
             navLinks.innerHTML = '<a href="index.html" class="nav-link">Login</a>';
             return;
         }
@@ -273,7 +253,6 @@ function signOut() {
             `;
         }
         
-            console.log('Navbar v14 - Generated navigation for role:', user.role);
         navLinks.innerHTML = navigationHTML;
         } catch (error) {
             console.error('Navbar v14 - Error in updateNavigation():', error);
@@ -284,14 +263,11 @@ function signOut() {
 function getUsers() {
     const usersData = localStorage.getItem('users');
     const users = usersData ? JSON.parse(usersData) : [];
-    console.log('Navbar v14 - getUsers() called, returning:', users.length, 'users');
     
     // If no users found, try to initialize them
     if (users.length === 0) {
-        console.log('Navbar v14 - No users found, checking if we need to initialize...');
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
         if (isLoggedIn) {
-            console.log('Navbar v14 - User is logged in but no users found, this is a problem!');
         }
     }
     
@@ -304,7 +280,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!document.getElementById('navbar')) {
         loadNavbar();
     } else {
-        console.log('Navbar already loaded, just updating user info');
         // Just update the user info without reloading
         setTimeout(() => {
             updateDropdownUserInfo();
@@ -315,7 +290,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Function to refresh navbar when users data becomes available
 function refreshNavbar() {
-    console.log('Navbar v14 - refreshNavbar() called');
     updateDropdownUserInfo();
     updateNavigation();
 }

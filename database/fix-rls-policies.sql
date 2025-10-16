@@ -1,31 +1,19 @@
--- Fix RLS policies to allow anonymous access for development
--- This temporarily disables RLS to allow the application to work
+-- Fix RLS policies for module assignments
+-- This script updates the Row Level Security policies to allow operations with the anon key
 
--- Disable RLS temporarily for development
-ALTER TABLE users DISABLE ROW LEVEL SECURITY;
-ALTER TABLE modules DISABLE ROW LEVEL SECURITY;
-ALTER TABLE user_progress DISABLE ROW LEVEL SECURITY;
-ALTER TABLE module_files DISABLE ROW LEVEL SECURITY;
-ALTER TABLE performance_reviews DISABLE ROW LEVEL SECURITY;
+-- Drop existing policies
+DROP POLICY IF EXISTS "Users can view their own assignments" ON module_assignments;
+DROP POLICY IF EXISTS "Admins can manage all assignments" ON module_assignments;
+DROP POLICY IF EXISTS "Users can view their own unassigned assignments" ON unassigned_role_assignments;
+DROP POLICY IF EXISTS "Admins can manage all unassigned assignments" ON unassigned_role_assignments;
 
--- Alternative: Create more permissive policies for anonymous access
--- Uncomment these if you want to keep RLS enabled but allow anonymous access
+-- Create new policies that work with anon key
+-- Allow all operations for now (you can restrict this later if needed)
+CREATE POLICY "Allow all operations on module_assignments" ON module_assignments FOR ALL USING (true);
+CREATE POLICY "Allow all operations on unassigned_role_assignments" ON unassigned_role_assignments FOR ALL USING (true);
 
-/*
--- Drop existing restrictive policies
-DROP POLICY IF EXISTS "Users can view their own data" ON users;
-DROP POLICY IF EXISTS "Users can update their own data" ON users;
-DROP POLICY IF EXISTS "Everyone can view active modules" ON modules;
-DROP POLICY IF EXISTS "Admins can manage modules" ON modules;
-DROP POLICY IF EXISTS "Users can view their own progress" ON user_progress;
-DROP POLICY IF EXISTS "Users can update their own progress" ON user_progress;
-DROP POLICY IF EXISTS "Users can view files for their modules" ON module_files;
-DROP POLICY IF EXISTS "Users can view their own reviews" ON performance_reviews;
-
--- Create permissive policies for anonymous access
-CREATE POLICY "Allow anonymous access to users" ON users FOR ALL USING (true);
-CREATE POLICY "Allow anonymous access to modules" ON modules FOR ALL USING (true);
-CREATE POLICY "Allow anonymous access to user_progress" ON user_progress FOR ALL USING (true);
-CREATE POLICY "Allow anonymous access to module_files" ON module_files FOR ALL USING (true);
-CREATE POLICY "Allow anonymous access to performance_reviews" ON performance_reviews FOR ALL USING (true);
-*/
+-- Alternative: If you want to keep some security, you can use this instead:
+-- CREATE POLICY "Allow module assignment operations" ON module_assignments FOR ALL USING (
+--     auth.role() = 'anon' OR 
+--     EXISTS (SELECT 1 FROM users WHERE id = auth.uid()::uuid AND role = 'Admin')
+-- );

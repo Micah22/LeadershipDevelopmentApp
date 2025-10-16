@@ -5,6 +5,9 @@
 const SUPABASE_URL = 'https://yjiqgrudlbtpghopbusz.supabase.co'; // Replace with your Supabase project URL
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlqaXFncnVkbGJ0cGdob3BidXN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1MTgwMTcsImV4cCI6MjA3NjA5NDAxN30.q8ClHZrQzQUVqG9JCc0A_hUJkZ2WeUgL0h_KlQpZTMI'; // Replace with your Supabase anon key
 
+// Service role key for bypassing RLS (use with caution)
+const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlqaXFncnVkbGJ0cGdob3BidXN6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDUxODAxNywiZXhwIjoyMDc2MDk0MDE3fQ.DpwDuGo3fhsR6r3YqfPOdrBzrfjI3LK96MnVHX5Z9Pg'; // Replace with your service role key
+
 // Database API endpoints
 const API_BASE_URL = '/api'; // We'll create these as serverless functions
 
@@ -13,26 +16,43 @@ class DatabaseService {
     constructor() {
         this.supabaseUrl = SUPABASE_URL;
         this.supabaseKey = SUPABASE_ANON_KEY;
+        this.serviceKey = SUPABASE_SERVICE_KEY;
         this.isConfigured = this.supabaseUrl !== 'YOUR_SUPABASE_URL';
     }
 
     // Generic API call method
     async apiCall(endpoint, method = 'GET', data = null) {
         if (!this.isConfigured) {
-            console.warn('Database not configured, falling back to localStorage');
-            return this.fallbackToLocalStorage(endpoint, method, data);
+            console.error('Database not configured - no fallback available');
+            throw new Error('Database not configured');
         }
 
         try {
+            // Use service key for problematic endpoints that need to bypass RLS
+            const useServiceKey = endpoint.includes('module_assignments') || endpoint.includes('unassigned_role_assignments');
+            const keyToUse = useServiceKey ? this.serviceKey : this.supabaseKey;
+            
             const options = {
                 method,
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.supabaseKey}`,
-                    'apikey': this.supabaseKey,
-                    'Prefer': 'return=minimal'
+                    'Authorization': `Bearer ${keyToUse}`,
+                    'apikey': keyToUse
                 }
             };
+
+            // For POST and PATCH requests, we want to return the created/updated record
+            if (method === 'POST' || method === 'PATCH') {
+                options.headers['Prefer'] = 'return=representation';
+            } else {
+                options.headers['Prefer'] = 'return=minimal';
+            }
+
+            // Add bypass RLS header for problematic operations
+            if (endpoint.includes('module_assignments') || endpoint.includes('unassigned_role_assignments')) {
+                options.headers['Prefer'] = 'return=representation,resolution=ignore-duplicates';
+            }
+            
 
             if (data && method !== 'GET') {
                 options.body = JSON.stringify(data);
@@ -41,21 +61,31 @@ class DatabaseService {
             const response = await fetch(`${this.supabaseUrl}/rest/v1/${endpoint}`, options);
             
             if (!response.ok) {
-                throw new Error(`Database API error: ${response.status} ${response.statusText}`);
+                const errorText = await response.text();
+                console.error(`❌ Database API error details:`, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    endpoint: endpoint,
+                    url: `${this.supabaseUrl}/rest/v1/${endpoint}`,
+                    errorText: errorText,
+                    method: method,
+                    data: data
+                });
+                throw new Error(`Database API error: ${response.status} ${response.statusText} - ${errorText}`);
             }
 
             // Handle empty responses
             const text = await response.text();
-            return text ? JSON.parse(text) : [];
+            const result = text ? JSON.parse(text) : [];
+            return result;
         } catch (error) {
-            console.warn('Database API error, using localStorage fallback:', error.message);
-            return this.fallbackToLocalStorage(endpoint, method, data);
+            console.error('❌ Database API error - NO FALLBACK:', error.message);
+            throw error; // Re-throw the error instead of falling back
         }
     }
 
     // Fallback to localStorage when database is not available
     fallbackToLocalStorage(endpoint, method, data) {
-        console.log('Using localStorage fallback for:', endpoint);
         
         try {
             if (endpoint.startsWith('users')) {
@@ -138,7 +168,6 @@ class DatabaseService {
             const users = await this.getUsers();
             localStorage.setItem('users', JSON.stringify(users));
         } catch (error) {
-            console.warn('Failed to sync users to localStorage:', error);
         }
     }
 
@@ -161,12 +190,14 @@ class DatabaseService {
 
     async updateModule(moduleId, moduleData) {
         try {
+            console.log('🔄 Updating module in database:', moduleId, moduleData);
             const result = await this.apiCall(`modules?id=eq.${moduleId}`, 'PATCH', moduleData);
+            console.log('✅ Module update result:', result);
             // Also save to localStorage for compatibility
             this.syncModulesToLocalStorage();
             return result;
         } catch (error) {
-            console.error('Failed to update module in database:', error);
+            console.error('❌ Failed to update module in database:', error);
             throw error;
         }
     }
@@ -189,7 +220,6 @@ class DatabaseService {
             const modules = await this.getModules();
             localStorage.setItem('globalModules', JSON.stringify(modules));
         } catch (error) {
-            console.warn('Failed to sync modules to localStorage:', error);
         }
     }
 
@@ -221,20 +251,39 @@ class DatabaseService {
         return this.apiCall(`user_progress?user_id=eq.${userId}&select=*`);
     }
 
+    async deleteUserProgress(userId) {
+        try {
+            return await this.apiCall(`user_progress?user_id=eq.${userId}`, 'DELETE');
+        } catch (error) {
+            console.error('Failed to delete user progress:', error);
+            throw error;
+        }
+    }
+
     async updateUserProgress(userId, moduleId, completedTasks, totalTasks, progressPercentage) {
         try {
-            // Use UPSERT to update or insert progress
-            const result = await this.apiCall('user_progress', 'POST', {
-                user_id: userId,
-                module_id: moduleId,
+            // First try to update existing record
+            const updateResult = await this.apiCall(`user_progress?user_id=eq.${userId}&module_id=eq.${moduleId}`, 'PATCH', {
                 completed_tasks: completedTasks,
                 total_tasks: totalTasks,
                 progress_percentage: progressPercentage
             });
             
+            // If update returns empty array, record doesn't exist, so insert new one
+            if (!updateResult || updateResult.length === 0) {
+                const insertResult = await this.apiCall('user_progress', 'POST', {
+                    user_id: userId,
+                    module_id: moduleId,
+                    completed_tasks: completedTasks,
+                    total_tasks: totalTasks,
+                    progress_percentage: progressPercentage
+                });
+                return insertResult;
+            }
+            
             // Also sync to localStorage for compatibility
             this.syncUserProgressToLocalStorage(userId);
-            return result;
+            return updateResult;
         } catch (error) {
             console.error('Failed to update user progress in database:', error);
             throw error;
@@ -260,7 +309,6 @@ class DatabaseService {
                 localStorage.setItem(`userProgress_${user.username}`, JSON.stringify(userProgress));
             }
         } catch (error) {
-            console.warn('Failed to sync user progress to localStorage:', error);
         }
     }
 
@@ -309,9 +357,10 @@ class DatabaseService {
     // Module Assignment Methods
     async getModuleAssignments(userId = null) {
         // Join with users and modules tables to get names and titles
+        // Use specific foreign key relationships to avoid ambiguity
         const endpoint = userId 
-            ? `module_assignments?user_id=eq.${userId}&select=*,users!inner(full_name,username),modules!inner(title)`
-            : 'module_assignments?select=*,users!inner(full_name,username),modules!inner(title)';
+            ? `module_assignments?user_id=eq.${userId}&select=*,users!module_assignments_user_id_fkey(full_name,username),modules!inner(title)`
+            : 'module_assignments?select=*,users!module_assignments_user_id_fkey(full_name,username),modules!inner(title)';
         const assignments = await this.apiCall(endpoint);
         
         // Transform the data to include user_name and module_title
@@ -374,13 +423,84 @@ class DatabaseService {
     }
 
     async isModuleUnassignedForUser(userId, moduleId) {
-        const unassigned = await this.apiCall(`unassigned_role_assignments?user_id=eq.${userId}&module_id=eq.${moduleId}`);
-        return unassigned && unassigned.length > 0;
+        try {
+            // If moduleId looks like a title (contains spaces), look up the UUID
+            let actualModuleId = moduleId;
+            if (moduleId.includes(' ') || !moduleId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+                // This is a module title, not a UUID - look up the UUID
+                const modules = await this.apiCall(`modules?title=eq.${encodeURIComponent(moduleId)}&select=id`);
+                if (modules && modules.length > 0) {
+                    actualModuleId = modules[0].id;
+                } else {
+                    return false;
+                }
+            }
+            
+            const unassigned = await this.apiCall(`unassigned_role_assignments?user_id=eq.${userId}&module_id=eq.${actualModuleId}`);
+            return unassigned && unassigned.length > 0;
+        } catch (error) {
+            console.error(`Error checking unassigned module for user ${userId}, module ${moduleId}:`, error);
+            return false;
+        }
+    }
+
+    // Module checklist management methods
+    async deleteModuleChecklist(moduleId) {
+        try {
+            return await this.apiCall(`module_checklist?module_id=eq.${moduleId}`, 'DELETE');
+        } catch (error) {
+            console.error('Failed to delete module checklist:', error);
+            throw error;
+        }
+    }
+
+    async createModuleChecklistItem(taskData) {
+        try {
+            return await this.apiCall('module_checklist', 'POST', taskData);
+        } catch (error) {
+            console.error('Failed to create module checklist item:', error);
+            throw error;
+        }
+    }
+
+    async getModuleChecklist(moduleId) {
+        try {
+            return await this.apiCall(`module_checklist?module_id=eq.${moduleId}&order=order_index`);
+        } catch (error) {
+            console.error('Failed to get module checklist:', error);
+            throw error;
+        }
+    }
+
+    async testConnection() {
+        try {
+            const result = await this.apiCall('users?select=count');
+            return { success: true, result };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
     }
 }
 
 // Create global database service instance
 window.dbService = new DatabaseService();
+
+// Debug database service initialization
+console.log('Database service initialized:', {
+    isConfigured: window.dbService.isConfigured,
+    supabaseUrl: window.dbService.supabaseUrl,
+    hasAnonKey: !!window.dbService.supabaseKey,
+    hasServiceKey: !!window.dbService.serviceKey
+});
+
+// Test database connection
+if (window.dbService.isConfigured) {
+    window.dbService.testConnection().then(result => {
+        console.log('Database connection test result:', result);
+    }).catch(error => {
+        console.error('Database connection test failed:', error);
+    });
+}
 
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {

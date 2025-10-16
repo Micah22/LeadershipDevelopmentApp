@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Progress Overview - CFA Leadership Development</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-    <link rel="stylesheet" href="../styles/admin-overview-styles.css?v=9">
+    <link rel="stylesheet" href="../styles/admin-overview-styles.css?v=24">
     <link rel="stylesheet" href="../styles/admin-path-management-styles.css?v=8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="../scripts/navbar.js?v=17"></script>
@@ -95,9 +95,6 @@
                                 <tr>
                                     <th>USER</th>
                                     <th>ROLE</th>
-                                    <th>PROGRESS</th>
-                                    <th>COMPLETED</th>
-                                    <th>TOTAL TASKS</th>
                                     <th>STATUS</th>
                                     <th>ACTIONS</th>
                                 </tr>
@@ -155,6 +152,7 @@
                                         <th>ASSIGNED DATE</th>
                                         <th>DUE DATE</th>
                                         <th>STATUS</th>
+                                        <th>PROGRESS</th>
                                         <th>NOTES</th>
                                         <th>ACTIONS</th>
                                     </tr>
@@ -175,17 +173,51 @@
                     <p class="page-subtitle">Manage learning modules and their requirements</p>
                 </div>
 
+                <!-- Search and Filter Section -->
+                <div class="search-filter-section">
+                    <div class="search-filter-container">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="moduleSearchInput" placeholder="Search modules by title or description..." />
+                            <button type="button" id="clearSearchBtn" class="clear-search-btn" style="display: none;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="filter-controls">
+                            <select id="statusFilter" class="filter-select">
+                                <option value="">All Statuses</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="draft">Draft</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                            <select id="phaseFilter" class="filter-select">
+                                <option value="">All Phases</option>
+                                <option value="phase1">Phase 1</option>
+                                <option value="phase2">Phase 2</option>
+                                <option value="phase3">Phase 3</option>
+                                <option value="phase4">Phase 4</option>
+                            </select>
+                            <button type="button" id="clearFiltersBtn" class="clear-filters-btn">
+                                <i class="fas fa-times"></i>
+                                Clear Filters
+                            </button>
+                        </div>
+                        <div class="add-module-inline">
+                            <button class="btn btn-primary" id="addModuleBtn">
+                                <i class="fas fa-plus"></i>
+                                Add New Module
+                            </button>
+                        </div>
+                    </div>
+                    <div class="search-results-info" id="searchResultsInfo" style="display: none;">
+                        <span id="resultsCount">0</span> modules found
+                    </div>
+                </div>
+
                 <!-- Modules Management Grid -->
                 <div class="modules-management-grid" id="modulesManagementGrid">
                     <!-- Modules will be populated here -->
-                </div>
-
-                <!-- Add Module Button -->
-                <div class="add-module-section">
-                    <button class="btn btn-primary" id="addModuleBtn">
-                        <i class="fas fa-plus"></i>
-                        Add New Module
-                    </button>
                 </div>
             </div>
         </main>
@@ -258,13 +290,13 @@
     <!-- Module Edit Modal -->
     <div class="modal-overlay" id="moduleModal">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header sticky-header">
                 <h2 id="modalModuleTitle">Edit Module</h2>
                 <button class="modal-close" id="moduleModalClose">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body scrollable-content">
                 <form id="moduleEditForm">
                     <div class="form-row">
                         <div class="form-group">
@@ -277,17 +309,6 @@
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                                 <option value="draft">Draft</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="editModuleRole">Required Role</label>
-                            <select id="editModuleRole" name="requiredRole" required>
-                                <option value="Team Member">Team Member</option>
-                                <option value="Supervisor">Supervisor</option>
-                                <option value="Director">Director</option>
-                                <option value="Admin">Admin</option>
                             </select>
                         </div>
                     </div>
@@ -372,7 +393,7 @@
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer sticky-footer">
                 <button type="button" class="btn btn-secondary" id="moduleModalCancel">Cancel</button>
                 <button type="button" class="btn btn-primary" id="moduleModalSave">Save Changes</button>
             </div>
@@ -392,17 +413,18 @@
                 <form id="assignmentForm">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="assignmentUser">User</label>
-                            <select id="assignmentUser" name="userId" required>
-                                <option value="">Select a user...</option>
-                            </select>
+                            <label>Users</label>
+                            <div id="userCheckboxes" class="user-checkboxes">
+                                <!-- User checkboxes will be populated here -->
+                            </div>
+                            <small class="form-help">Select one or more users to assign modules to</small>
                         </div>
                         <div class="form-group">
-                            <label for="assignmentModule">Modules</label>
-                            <select id="assignmentModule" name="moduleId" multiple required>
-                                <option value="">Select modules...</option>
-                            </select>
-                            <small class="form-help">Hold Ctrl/Cmd to select multiple modules</small>
+                            <label>Modules</label>
+                            <div id="moduleCheckboxes" class="module-checkboxes">
+                                <!-- Module checkboxes will be populated here -->
+                            </div>
+                            <small class="form-help">Select one or more modules to assign</small>
                         </div>
                     </div>
                     <div class="form-row">
@@ -436,6 +458,13 @@
     <!-- Toast Notification -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <script src="../scripts/admin-overview-script.js?v=27"></script>
+    <script>
+        console.log('🔍 HTML: About to load admin-overview-script.js');
+    </script>
+    <script src="../scripts/admin-overview-script.js?v=72"></script>
+    <script>
+        console.log('🔍 HTML: admin-overview-script.js should be loaded now');
+        console.log('🔍 HTML: testScript available?', typeof window.testScript);
+    </script>
 </body>
 </html>

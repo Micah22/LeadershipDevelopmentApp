@@ -1,21 +1,53 @@
 // User Progress Script
 
+// Toast notification function
+function showToast(type, title, message) {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <div class="toast-header">
+            <strong>${title}</strong>
+        </div>
+        <div class="toast-body">
+            ${message}
+        </div>
+    `;
+    
+    // Add to page
+    document.body.appendChild(toast);
+    
+    // Show toast
+    setTimeout(() => toast.classList.add('show'), 100);
+    
+    // Remove toast after 5 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => document.body.removeChild(toast), 300);
+    }, 5000);
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('User Progress page loaded');
     
     // Check if user is logged in
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    const username = localStorage.getItem('username');
+    const currentUserData = localStorage.getItem('currentUser');
     
-    console.log('User Progress - Login check:', { isLoggedIn, username });
-    
-    if (!isLoggedIn || !username) {
-        console.log('User not logged in, redirecting to login page');
+    if (!isLoggedIn || !currentUserData) {
         window.location.href = 'index.html';
         return;
     }
     
-    console.log('User is logged in, proceeding with page load');
+    // Parse the user data - it might be a JSON string or just a username
+    let username;
+    try {
+        const userObj = JSON.parse(currentUserData);
+        username = userObj.username;
+    } catch (e) {
+        // If it's not JSON, assume it's just the username string
+        username = currentUserData;
+    }
+    
     
     // Wait a bit for navbar to load first
     setTimeout(async () => {
@@ -41,24 +73,41 @@ async function initializePage() {
 }
 
 async function updateUserInfo() {
-    const username = localStorage.getItem('username');
+    const currentUserData = localStorage.getItem('currentUser');
     
-    // Try to load users from database first
+    // Parse the user data - it might be a JSON string or just a username
+    let username;
+    try {
+        const userObj = JSON.parse(currentUserData);
+        username = userObj.username;
+    } catch (e) {
+        // If it's not JSON, assume it's just the username string
+        username = currentUserData;
+    }
+    
+    // Load users from database
     let users = [];
     try {
         if (window.dbService && window.dbService.isConfigured) {
             users = await window.dbService.getUsers();
-            // Store in localStorage for compatibility
-            localStorage.setItem('users', JSON.stringify(users));
+        } else {
+            console.warn('Database service not configured, using localStorage fallback');
+            showToast('warning', 'Database Unavailable', 'Using offline mode - progress may not be synchronized');
         }
     } catch (error) {
-        console.warn('Failed to load users from database, using localStorage:', error);
-        users = getUsers();
-    }
-    
-    // Fallback to localStorage if database failed
-    if (users.length === 0) {
-        users = getUsers();
+        console.error('Failed to load users from database:', error);
+        showToast('error', 'Database Error', `Failed to load user data: ${error.message || 'Unknown error'}`);
+        
+        // Fallback to localStorage if available
+        try {
+            const localUsers = JSON.parse(localStorage.getItem('users') || '[]');
+            if (localUsers.length > 0) {
+                users = localUsers;
+                showToast('info', 'Using Offline Data', 'Loaded user data from local storage');
+            }
+        } catch (localError) {
+            console.error('Failed to load users from localStorage:', localError);
+        }
     }
     
     const user = users.find(u => u.username === username);
@@ -185,25 +234,31 @@ function setupEventListeners() {
 
 
 async function loadProgressData() {
-    const username = localStorage.getItem('username');
-    if (!username) return;
+    const currentUserData = localStorage.getItem('currentUser');
+    if (!currentUserData) return;
+    
+    // Parse the user data - it might be a JSON string or just a username
+    let username;
+    try {
+        const userObj = JSON.parse(currentUserData);
+        username = userObj.username;
+    } catch (e) {
+        // If it's not JSON, assume it's just the username string
+        username = currentUserData;
+    }
+    
+    console.log('Current user data from localStorage:', currentUserData);
+    console.log('Extracted username:', username);
 
-    // Get user's role from database first
+    // Get user's role from database
     let users = [];
     try {
         if (window.dbService && window.dbService.isConfigured) {
             users = await window.dbService.getUsers();
-            // Store in localStorage for compatibility
-            localStorage.setItem('users', JSON.stringify(users));
         }
     } catch (error) {
-        console.warn('Failed to load users from database, using localStorage:', error);
-        users = getUsers();
-    }
-    
-    // Fallback to localStorage if database failed
-    if (users.length === 0) {
-        users = getUsers();
+        console.error('Failed to load users from database:', error);
+        showToast('error', 'Database Error', 'Failed to load user data from database');
     }
     
     const user = users.find(u => u.username === username);
@@ -212,36 +267,40 @@ async function loadProgressData() {
     // Calculate real progress data from user's saved progress
     const overallProgress = await calculateUserOverallProgress(username);
     const userProgress = await getUserProgress(username);
+    
+    console.log('Overall progress calculated:', overallProgress);
+    console.log('User progress data:', userProgress);
 
-    // Try to load modules from database first
+    // Load modules from database - only assigned modules for this user
     let moduleTitles = [];
     try {
-        if (window.dbService && window.dbService.isConfigured) {
-            const dbModules = await window.dbService.getModules();
-            if (dbModules && dbModules.length > 0) {
-                console.log('Loading modules from database for progress page:', dbModules.length);
-                moduleTitles = dbModules.map(m => m.title);
-                
-                // Store in localStorage for compatibility
-                localStorage.setItem('globalModules', JSON.stringify(dbModules));
+        if (window.dbService && window.dbService.isConfigured && user && user.id) {
+            // Get user's assigned modules
+            const userAssignments = await window.dbService.getModuleAssignments(user.id);
+            
+            if (userAssignments && userAssignments.length > 0) {
+                // Get the module titles from assignments
+                moduleTitles = userAssignments.map(assignment => assignment.module_title);
+            } else {
             }
+        } else {
+            console.warn('Database service not configured, using localStorage fallback for modules');
         }
     } catch (error) {
-        console.warn('Failed to load modules from database, using localStorage:', error);
+        console.error('Failed to load modules from database:', error);
+        showToast('error', 'Database Error', `Failed to load modules: ${error.message || 'Unknown error'}`);
     }
     
-    // Fallback to localStorage if database failed
+    // Fallback to localStorage if no modules loaded from database
     if (moduleTitles.length === 0) {
-        const globalModules = localStorage.getItem('globalModules');
-        if (globalModules) {
-            const modules = JSON.parse(globalModules);
-            moduleTitles = modules.map(m => m.title);
-        } else {
-            // Fallback to default module titles
-            moduleTitles = [
-                'Communication Skills', 'Team Leadership', 'Decision Making',
-                'Conflict Resolution', 'Strategic Planning', 'Performance Management'
-            ];
+        try {
+            const globalModules = localStorage.getItem('globalModules');
+            if (globalModules) {
+                const modules = JSON.parse(globalModules);
+                moduleTitles = modules.map(m => m.title);
+            }
+        } catch (localError) {
+            console.error('Failed to load modules from localStorage:', localError);
         }
     }
     
@@ -249,7 +308,7 @@ async function loadProgressData() {
     const modules = [];
     
     for (const moduleTitle of moduleTitles) {
-        const moduleData = getModuleData(moduleTitle);
+        const moduleData = await getModuleData(moduleTitle);
         
         // Skip deleted modules (getModuleData returns null for deleted modules)
         if (!moduleData) {
@@ -261,19 +320,14 @@ async function loadProgressData() {
         const totalCount = moduleData.checklist.length;
         const progressPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
         
-        // Check if module is locked (above user's role) or unassigned
-        const isLocked = !(await canUserAccessModule(userRole, moduleData.requiredRole, moduleTitle));
-        
-        // Count as achievement if 100% complete and not locked
-        if (progressPercentage === 100 && !isLocked) {
+        // Count as achievement if 100% complete
+        if (progressPercentage === 100) {
             achievements++;
         }
         
         // Determine status
         let status = 'not-started';
-        if (isLocked) {
-            status = 'locked';
-        } else if (progressPercentage === 100) {
+        if (progressPercentage === 100) {
             status = 'completed';
         } else if (progressPercentage > 0) {
             status = 'in-progress';
@@ -283,9 +337,8 @@ async function loadProgressData() {
             title: moduleTitle,
             description: moduleData.description,
             status: status,
-            progress: isLocked ? 0 : progressPercentage,
-            isLocked: isLocked,
-            requiredRole: moduleData.requiredRole,
+            progress: progressPercentage,
+            isLocked: false,
             completedTasks: completedCount,
             totalTasks: totalCount
         });
@@ -313,11 +366,12 @@ async function loadProgressData() {
     // Update modules
     updateModules(progressData.modules);
     
-    console.log('Loaded real progress data:', progressData);
 }
 
 
 function updateProgressCards(data) {
+    console.log('Updating progress cards with data:', data);
+    
     const overallProgress = document.getElementById('overallProgress');
     const completedTasks = document.getElementById('completedTasks');
     const totalTasks = document.getElementById('totalTasks');
@@ -325,10 +379,12 @@ function updateProgressCards(data) {
     
     if (overallProgress) {
         overallProgress.textContent = data.overallProgress + '%';
+        console.log('Updated overall progress to:', data.overallProgress + '%');
     }
     
     if (completedTasks) {
         completedTasks.textContent = data.completedTasks;
+        console.log('Updated completed tasks to:', data.completedTasks);
     }
     
     if (totalTasks) {
@@ -359,7 +415,7 @@ function updateCurrentPath(data) {
     }
     
     if (pathProgressDetails) {
-        pathProgressDetails.textContent = `${data.pathCompleted} of ${data.pathTotal} modules completed`;
+        pathProgressDetails.textContent = `${data.pathCompleted} of ${data.pathTotal} tasks completed`;
     }
 }
 
@@ -385,18 +441,46 @@ function updateModules(modules) {
                 <div class="module-status ${module.status}">${module.status.replace('-', ' ')}</div>
             </div>
             <div class="module-description">${module.description}</div>
-            ${module.isLocked ? 
-                `<div class="module-lock-message">Requires ${module.requiredRole} role or higher</div>` :
-                `<div class="module-progress">
-                    <div class="module-task-count">${module.completedTasks || 0} of ${module.totalTasks || 0} tasks completed</div>
-                    <div class="module-progress-bar-container">
-                        <div class="module-progress-bar">
-                            <div class="module-progress-fill" style="width: ${module.progress}%;"></div>
-                        </div>
-                        <div class="module-progress-text">${module.progress}%</div>
+            ${module.qualityUnsatisfactory || module.quality_average || module.quality_excellent || 
+              module.speedUnsatisfactory || module.speed_average || module.speed_excellent || 
+              module.communicationUnsatisfactory || module.communication_average || module.communication_excellent ? `
+            <div class="module-rubric">
+                <h4>Performance Rubric:</h4>
+                ${module.qualityUnsatisfactory || module.quality_average || module.quality_excellent ? `
+                <div class="rubric-section">
+                    <strong>Quality:</strong>
+                    ${module.qualityUnsatisfactory ? `<span class="rubric-level red">Unsatisfactory: ${module.qualityUnsatisfactory}</span>` : ''}
+                    ${module.quality_average ? `<span class="rubric-level yellow">Average: ${module.quality_average}</span>` : ''}
+                    ${module.quality_excellent ? `<span class="rubric-level green">Excellent: ${module.quality_excellent}</span>` : ''}
+                </div>
+                ` : ''}
+                ${module.speedUnsatisfactory || module.speed_average || module.speed_excellent ? `
+                <div class="rubric-section">
+                    <strong>Speed:</strong>
+                    ${module.speedUnsatisfactory ? `<span class="rubric-level red">Unsatisfactory: ${module.speedUnsatisfactory}</span>` : ''}
+                    ${module.speed_average ? `<span class="rubric-level yellow">Average: ${module.speed_average}</span>` : ''}
+                    ${module.speed_excellent ? `<span class="rubric-level green">Excellent: ${module.speed_excellent}</span>` : ''}
+                </div>
+                ` : ''}
+                ${module.communicationUnsatisfactory || module.communication_average || module.communication_excellent ? `
+                <div class="rubric-section">
+                    <strong>Communication:</strong>
+                    ${module.communicationUnsatisfactory ? `<span class="rubric-level red">Unsatisfactory: ${module.communicationUnsatisfactory}</span>` : ''}
+                    ${module.communication_average ? `<span class="rubric-level yellow">Average: ${module.communication_average}</span>` : ''}
+                    ${module.communication_excellent ? `<span class="rubric-level green">Excellent: ${module.communication_excellent}</span>` : ''}
+                </div>
+                ` : ''}
+            </div>
+            ` : ''}
+            <div class="module-progress">
+                <div class="module-task-count">${module.completedTasks || 0} of ${module.totalTasks || 0} tasks completed</div>
+                <div class="module-progress-bar-container">
+                    <div class="module-progress-bar">
+                        <div class="module-progress-fill" style="width: ${module.progress}%;"></div>
                     </div>
-                </div>`
-            }
+                    <div class="module-progress-text">${module.progress}%</div>
+                </div>
+            </div>
         </div>
     `;
     }).join('');
@@ -404,12 +488,11 @@ function updateModules(modules) {
     modulesGrid.innerHTML = modulesHTML;
 }
 
-function openModule(moduleTitle) {
-    console.log('Opening module:', moduleTitle);
-    openModuleModal(moduleTitle);
+async function openModule(moduleTitle) {
+    await openModuleModal(moduleTitle);
 }
 
-function openModuleModal(moduleTitle) {
+async function openModuleModal(moduleTitle) {
     const modal = document.getElementById('moduleModal');
     const modalTitle = document.getElementById('modalModuleTitle');
     const modalDescription = document.getElementById('modalModuleDescription');
@@ -421,14 +504,25 @@ function openModuleModal(moduleTitle) {
     if (!modal) return;
     
     // Get module data
-    const moduleData = getModuleData(moduleTitle);
+    const moduleData = await getModuleData(moduleTitle);
     if (!moduleData) {
         alert('Module not found');
         return;
     }
     
     // Get user's saved progress
-    const username = localStorage.getItem('username');
+    const currentUserData = localStorage.getItem('currentUser');
+    
+    // Parse the user data - it might be a JSON string or just a username
+    let username;
+    try {
+        const userObj = JSON.parse(currentUserData);
+        username = userObj.username;
+    } catch (e) {
+        // If it's not JSON, assume it's just the username string
+        username = currentUserData;
+    }
+    
     const userProgressKey = `userProgress_${username}`;
     const userProgress = JSON.parse(localStorage.getItem(userProgressKey) || '{}');
     const moduleProgress = userProgress[moduleTitle] || { checklist: [] };
@@ -486,42 +580,54 @@ function openModuleModal(moduleTitle) {
         const rubricHTML = [];
         
         // Quality Criteria
-        if (moduleData.qualityUnsatisfactory || moduleData.qualityAverage || moduleData.qualityExcellent) {
+        const qualityUnsatisfactory = moduleData.qualityUnsatisfactory || moduleData.quality_unsatisfactory;
+        const qualityAverage = moduleData.qualityAverage || moduleData.quality_average;
+        const qualityExcellent = moduleData.qualityExcellent || moduleData.quality_excellent;
+        
+        if (qualityUnsatisfactory || qualityAverage || qualityExcellent) {
             rubricHTML.push(`
                 <div class="rubric-criteria-item">
                     <h4 class="rubric-title">Quality Criteria</h4>
                     <div class="rubric-levels">
-                        ${moduleData.qualityUnsatisfactory ? `<div class="rubric-level rubric-red"><strong>Unsatisfactory:</strong> ${moduleData.qualityUnsatisfactory}</div>` : ''}
-                        ${moduleData.qualityAverage ? `<div class="rubric-level rubric-yellow"><strong>Average:</strong> ${moduleData.qualityAverage}</div>` : ''}
-                        ${moduleData.qualityExcellent ? `<div class="rubric-level rubric-green"><strong>Excellent:</strong> ${moduleData.qualityExcellent}</div>` : ''}
+                        ${qualityUnsatisfactory ? `<div class="rubric-level rubric-red"><strong>Unsatisfactory:</strong> ${qualityUnsatisfactory}</div>` : ''}
+                        ${qualityAverage ? `<div class="rubric-level rubric-yellow"><strong>Average:</strong> ${qualityAverage}</div>` : ''}
+                        ${qualityExcellent ? `<div class="rubric-level rubric-green"><strong>Excellent:</strong> ${qualityExcellent}</div>` : ''}
                     </div>
                 </div>
             `);
         }
         
         // Speed/Timing Criteria
-        if (moduleData.speedUnsatisfactory || moduleData.speedAverage || moduleData.speedExcellent) {
+        const speedUnsatisfactory = moduleData.speedUnsatisfactory || moduleData.speed_unsatisfactory;
+        const speedAverage = moduleData.speedAverage || moduleData.speed_average;
+        const speedExcellent = moduleData.speedExcellent || moduleData.speed_excellent;
+        
+        if (speedUnsatisfactory || speedAverage || speedExcellent) {
             rubricHTML.push(`
                 <div class="rubric-criteria-item">
                     <h4 class="rubric-title">Speed/Timing Criteria</h4>
                     <div class="rubric-levels">
-                        ${moduleData.speedUnsatisfactory ? `<div class="rubric-level rubric-red"><strong>Unsatisfactory:</strong> ${moduleData.speedUnsatisfactory}</div>` : ''}
-                        ${moduleData.speedAverage ? `<div class="rubric-level rubric-yellow"><strong>Average:</strong> ${moduleData.speedAverage}</div>` : ''}
-                        ${moduleData.speedExcellent ? `<div class="rubric-level rubric-green"><strong>Excellent:</strong> ${moduleData.speedExcellent}</div>` : ''}
+                        ${speedUnsatisfactory ? `<div class="rubric-level rubric-red"><strong>Unsatisfactory:</strong> ${speedUnsatisfactory}</div>` : ''}
+                        ${speedAverage ? `<div class="rubric-level rubric-yellow"><strong>Average:</strong> ${speedAverage}</div>` : ''}
+                        ${speedExcellent ? `<div class="rubric-level rubric-green"><strong>Excellent:</strong> ${speedExcellent}</div>` : ''}
                     </div>
                 </div>
             `);
         }
         
         // Communication Criteria
-        if (moduleData.communicationUnsatisfactory || moduleData.communicationAverage || moduleData.communicationExcellent) {
+        const communicationUnsatisfactory = moduleData.communicationUnsatisfactory || moduleData.communication_unsatisfactory;
+        const communicationAverage = moduleData.communicationAverage || moduleData.communication_average;
+        const communicationExcellent = moduleData.communicationExcellent || moduleData.communication_excellent;
+        
+        if (communicationUnsatisfactory || communicationAverage || communicationExcellent) {
             rubricHTML.push(`
                 <div class="rubric-criteria-item">
                     <h4 class="rubric-title">Communication Criteria</h4>
                     <div class="rubric-levels">
-                        ${moduleData.communicationUnsatisfactory ? `<div class="rubric-level rubric-red"><strong>Unsatisfactory:</strong> ${moduleData.communicationUnsatisfactory}</div>` : ''}
-                        ${moduleData.communicationAverage ? `<div class="rubric-level rubric-yellow"><strong>Average:</strong> ${moduleData.communicationAverage}</div>` : ''}
-                        ${moduleData.communicationExcellent ? `<div class="rubric-level rubric-green"><strong>Excellent:</strong> ${moduleData.communicationExcellent}</div>` : ''}
+                        ${communicationUnsatisfactory ? `<div class="rubric-level rubric-red"><strong>Unsatisfactory:</strong> ${communicationUnsatisfactory}</div>` : ''}
+                        ${communicationAverage ? `<div class="rubric-level rubric-yellow"><strong>Average:</strong> ${communicationAverage}</div>` : ''}
+                        ${communicationExcellent ? `<div class="rubric-level rubric-green"><strong>Excellent:</strong> ${communicationExcellent}</div>` : ''}
                     </div>
                 </div>
             `);
@@ -609,7 +715,18 @@ function openModuleModal(moduleTitle) {
 }
 
 async function toggleChecklistItem(moduleTitle, itemIndex) {
-    const username = localStorage.getItem('username');
+    const currentUserData = localStorage.getItem('currentUser');
+    
+    // Parse the user data - it might be a JSON string or just a username
+    let username;
+    try {
+        const userObj = JSON.parse(currentUserData);
+        username = userObj.username;
+    } catch (e) {
+        // If it's not JSON, assume it's just the username string
+        username = currentUserData;
+    }
+    
     const userProgressKey = `userProgress_${username}`;
     let userProgress = JSON.parse(localStorage.getItem(userProgressKey) || '{}');
     
@@ -623,7 +740,7 @@ async function toggleChecklistItem(moduleTitle, itemIndex) {
     }
     
     // Get module data to ensure we have the right checklist length
-    const moduleData = getModuleData(moduleTitle);
+    const moduleData = await getModuleData(moduleTitle);
     if (!moduleData || !moduleData.checklist[itemIndex]) {
         console.error('Module data not found for:', moduleTitle, 'item:', itemIndex);
         return;
@@ -642,13 +759,26 @@ async function toggleChecklistItem(moduleTitle, itemIndex) {
     try {
         const users = JSON.parse(localStorage.getItem('users') || '[]');
         const user = users.find(u => u.username === username);
-        const modules = JSON.parse(localStorage.getItem('globalModules') || '[]');
-        const module = modules.find(m => m.title === moduleTitle);
+        
+        // Get module from database instead of localStorage for consistency
+        let module = null;
+        if (window.dbService && window.dbService.isConfigured) {
+            const dbModules = await window.dbService.getModules();
+            module = dbModules.find(m => m.title === moduleTitle);
+        }
+        
+        // Fallback to localStorage if database fails
+        if (!module) {
+            const modules = JSON.parse(localStorage.getItem('globalModules') || '[]');
+            module = modules.find(m => m.title === moduleTitle);
+        }
         
         if (user && module) {
-            const completedCount = userProgress[moduleTitle].checklist.filter(task => task.completed).length;
+            const completedCount = userProgress[moduleTitle].checklist.filter(task => task === true).length;
             const totalCount = userProgress[moduleTitle].checklist.length;
             const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+            
+            console.log(`Saving progress for ${moduleTitle}: ${completedCount}/${totalCount} (${progressPercentage}%)`);
             
             await window.dbService.updateUserProgress(
                 user.id,
@@ -657,7 +787,6 @@ async function toggleChecklistItem(moduleTitle, itemIndex) {
                 totalCount,
                 progressPercentage
             );
-            console.log('Progress saved to database successfully');
         }
     } catch (error) {
         console.error('Failed to save progress to database:', error);
@@ -666,26 +795,37 @@ async function toggleChecklistItem(moduleTitle, itemIndex) {
     // Also save to localStorage for compatibility
     localStorage.setItem(userProgressKey, JSON.stringify(userProgress));
     
-    // Debug logging
-    console.log(`User ${username} toggled ${moduleTitle} item ${itemIndex} to ${isCompleted}`);
-    console.log('Updated progress:', userProgress[moduleTitle]);
     
     // Update modal display
-    updateModalProgress(moduleTitle);
+    await updateModalProgress(moduleTitle);
     
-    // Refresh main page data
-    loadProgressData();
+    // Refresh main page data with a small delay to ensure database is updated
+    setTimeout(async () => {
+        console.log('Refreshing progress data after toggle...');
+        await loadProgressData();
+    }, 500);
 }
 
-function updateModalProgress(moduleTitle) {
+async function updateModalProgress(moduleTitle) {
     const modalProgressPercentage = document.getElementById('modalProgressPercentage');
     const modalProgressFill = document.getElementById('modalProgressFill');
     const modalChecklist = document.getElementById('modalChecklist');
     
-    const moduleData = getModuleData(moduleTitle);
+    const moduleData = await getModuleData(moduleTitle);
     if (!moduleData) return;
     
-    const username = localStorage.getItem('username');
+    const currentUserData = localStorage.getItem('currentUser');
+    
+    // Parse the user data - it might be a JSON string or just a username
+    let username;
+    try {
+        const userObj = JSON.parse(currentUserData);
+        username = userObj.username;
+    } catch (e) {
+        // If it's not JSON, assume it's just the username string
+        username = currentUserData;
+    }
+    
     const userProgressKey = `userProgress_${username}`;
     const userProgress = JSON.parse(localStorage.getItem(userProgressKey) || '{}');
     const moduleProgress = userProgress[moduleTitle] || { checklist: [] };
@@ -729,66 +869,11 @@ function closeModuleModal() {
     }
 }
 
-async function canUserAccessModule(userRole, requiredRole, moduleTitle = null) {
-    // Define role hierarchy (higher number = higher authority)
-    const roleHierarchy = {
-        'Team Member': 1,
-        'Supervisor': 2,
-        'Director': 3,
-        'Admin': 4
-    };
-    
-    const userLevel = roleHierarchy[userRole] || 1;
-    const requiredLevel = roleHierarchy[requiredRole] || 1;
-    
-    // Check if user has role-based access
-    const hasRoleAccess = userLevel >= requiredLevel;
-    
-    // If no role access, return false
-    if (!hasRoleAccess) {
-        return false;
-    }
-    
-    // If moduleTitle is provided, check if this specific module has been unassigned
-    if (moduleTitle) {
-        const username = localStorage.getItem('username');
-        const users = getUsers();
-        const user = users.find(u => u.username === username);
-        
-        if (user) {
-            let wasUnassigned = false;
-            try {
-                if (window.dbService && window.dbService.isConfigured) {
-                    wasUnassigned = await window.dbService.isModuleUnassignedForUser(user.id || user.username, moduleTitle);
-                } else {
-                    // Fallback to localStorage if database is not available
-                    const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
-                    const unassignedKey = `${user.id || user.username}-${moduleTitle}`;
-                    wasUnassigned = unassignedRoleBased.includes(unassignedKey);
-                }
-            } catch (error) {
-                console.error('Failed to check unassigned role-based assignment:', error);
-                // Fallback to localStorage if database check fails
-                const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
-                const unassignedKey = `${user.id || user.username}-${moduleTitle}`;
-                wasUnassigned = unassignedRoleBased.includes(unassignedKey);
-            }
-            
-            if (wasUnassigned) {
-                console.log(`Module ${moduleTitle} has been unassigned for user ${username}`);
-                return false;
-            }
-        }
-    }
-    
-    return true;
-}
 
-function getModuleData(moduleTitle) {
+async function getModuleData(moduleTitle) {
     // Get modules from global storage
     const globalModules = localStorage.getItem('globalModules');
     if (!globalModules) {
-        console.log('No global modules found, using fallback data');
         return getFallbackModuleData(moduleTitle);
     }
     
@@ -796,8 +881,24 @@ function getModuleData(moduleTitle) {
     const module = modules.find(m => m.title === moduleTitle);
     
     if (!module) {
-        console.log(`Module "${moduleTitle}" not found in global storage - may have been deleted`);
         return null; // Return null for deleted modules
+    }
+    
+    // Load checklist items from database if available
+    let checklistItems = module.checklist || [];
+    if (window.dbService && window.dbService.isConfigured && module.id) {
+        try {
+            const dbChecklistItems = await window.dbService.getModuleChecklist(module.id);
+            if (dbChecklistItems && dbChecklistItems.length > 0) {
+                // Convert database checklist items to the format expected by the UI
+                checklistItems = dbChecklistItems.map(item => ({
+                    description: item.task_text,
+                    task: item.task_text
+                }));
+            }
+        } catch (error) {
+            console.warn('Failed to load checklist from database, using localStorage:', error);
+        }
     }
     
     // Convert admin format to user format
@@ -811,16 +912,16 @@ function getModuleData(moduleTitle) {
         author: module.author,
         version: module.version,
         tags: module.tags,
-        qualityUnsatisfactory: module.qualityUnsatisfactory,
-        qualityAverage: module.qualityAverage,
-        qualityExcellent: module.qualityExcellent,
-        speedUnsatisfactory: module.speedUnsatisfactory,
-        speedAverage: module.speedAverage,
-        speedExcellent: module.speedExcellent,
-        communicationUnsatisfactory: module.communicationUnsatisfactory,
-        communicationAverage: module.communicationAverage,
-        communicationExcellent: module.communicationExcellent,
-        checklist: module.checklist.map(task => {
+        qualityUnsatisfactory: module.qualityUnsatisfactory || module.quality_unsatisfactory,
+        qualityAverage: module.qualityAverage || module.quality_average,
+        qualityExcellent: module.qualityExcellent || module.quality_excellent,
+        speedUnsatisfactory: module.speedUnsatisfactory || module.speed_unsatisfactory,
+        speedAverage: module.speedAverage || module.speed_average,
+        speedExcellent: module.speedExcellent || module.speed_excellent,
+        communicationUnsatisfactory: module.communicationUnsatisfactory || module.communication_unsatisfactory,
+        communicationAverage: module.communicationAverage || module.communication_average,
+        communicationExcellent: module.communicationExcellent || module.communication_excellent,
+        checklist: checklistItems.map(task => {
             // Handle both old string format and new object format
             if (typeof task === 'string') {
                 return {
@@ -841,19 +942,12 @@ function getModuleData(moduleTitle) {
 
 // File Viewer Functions
 function openFileViewer(fileName, moduleTitle = null) {
-    console.log('openFileViewer called with:', fileName, moduleTitle);
     
     const modal = document.getElementById('fileViewerModal');
     const title = document.getElementById('fileViewerTitle');
     const content = document.getElementById('fileViewerContent');
     const downloadBtn = document.getElementById('fileViewerDownload');
     
-    console.log('Modal elements found:', {
-        modal: !!modal,
-        title: !!title,
-        content: !!content,
-        downloadBtn: !!downloadBtn
-    });
     
     if (!modal) {
         console.error('File viewer modal not found!');
@@ -968,15 +1062,12 @@ function getAllModules() {
 
 // Get actual file content from module data
 function getFileContent(fileName) {
-    console.log('getFileContent called with fileName:', fileName);
     
     // First, try to find the file in the current module's data
     const currentModule = document.getElementById('moduleModal')?.dataset.currentModule;
     const fileViewerModal = document.getElementById('fileViewerModal');
     const moduleFromFileViewer = fileViewerModal?.dataset.currentModule;
     
-    console.log('Current module from moduleModal:', currentModule);
-    console.log('Current module from fileViewerModal:', moduleFromFileViewer);
     
     const moduleTitle = currentModule || moduleFromFileViewer;
     
@@ -984,18 +1075,15 @@ function getFileContent(fileName) {
         const modules = getAllModules();
         const module = modules.find(m => m.title === moduleTitle);
         
-        console.log('Found module:', module);
         
         if (module && module.checklist) {
             for (const task of module.checklist) {
                 if (task.files) {
                     for (const file of task.files) {
                         if (typeof file === 'object' && file.name === fileName && file.content) {
-                            console.log('Found file content for:', fileName);
                             return file.content;
                         } else if (typeof file === 'string' && file === fileName) {
                             // Fallback to mock content for files without stored content
-                            console.log('Found file as string, using mock content for:', fileName);
                             return getMockFileContent(fileName);
                         }
                     }
@@ -1005,7 +1093,6 @@ function getFileContent(fileName) {
     }
     
     // Fallback to mock content if file not found
-    console.log('File not found, using mock content for:', fileName);
     return getMockFileContent(fileName);
 }
 
@@ -1117,21 +1204,31 @@ function getFallbackModuleData(moduleTitle) {
 
 // Utility function to get user's progress data from database first
 async function getUserProgress(username) {
+    // Initialize userProgress object
+    let userProgress = {};
+    
+    console.log('getUserProgress called with username:', username);
+    
     try {
         if (window.dbService && window.dbService.isConfigured) {
             // Get user ID
             const users = await window.dbService.getUsers();
+            console.log('All users from database:', users);
+            console.log('Looking for username:', username);
             const user = users.find(u => u.username === username);
+            console.log('Found user:', user);
             
             if (user) {
                 // Get progress from database
                 const dbProgress = await window.dbService.getUserProgress(user.id);
+                console.log('Database progress for user:', user.username, dbProgress);
                 
-                // Convert database format to localStorage format
-                const userProgress = {};
+                // Get modules from database instead of localStorage
+                const modules = await window.dbService.getModules();
+                console.log('Modules from database:', modules.length);
+                
                 dbProgress.forEach(p => {
                     // Find module title by ID
-                    const modules = JSON.parse(localStorage.getItem('globalModules') || '[]');
                     const module = modules.find(m => m.id === p.module_id);
                     if (module) {
                         userProgress[module.title] = {
@@ -1144,16 +1241,19 @@ async function getUserProgress(username) {
                 const userProgressKey = `userProgress_${username}`;
                 localStorage.setItem(userProgressKey, JSON.stringify(userProgress));
                 
-                return userProgress;
+                console.log('Final userProgress object:', userProgress);
+            } else {
+                console.log('User not found:', username);
             }
+        } else {
+            console.log('Database service not configured');
         }
     } catch (error) {
-        console.warn('Failed to load user progress from database, using localStorage:', error);
+        console.error('Failed to load user progress from database:', error);
+        showToast('error', 'Database Error', 'Failed to load user progress from database');
     }
     
-    // Fallback to localStorage
-    const userProgressKey = `userProgress_${username}`;
-    return JSON.parse(localStorage.getItem(userProgressKey) || '{}');
+    return userProgress;
 }
 
 // Utility function to save user's progress data
@@ -1172,8 +1272,16 @@ function getUserModuleProgress(username, moduleTitle) {
 async function calculateUserOverallProgress(username) {
     const userProgress = await getUserProgress(username);
     
-    // Get user's role
-    const users = getUsers();
+    // Get user's role from database
+    let users = [];
+    try {
+        if (window.dbService && window.dbService.isConfigured) {
+            users = await window.dbService.getUsers();
+        }
+    } catch (error) {
+        console.error('Failed to load users from database:', error);
+    }
+    
     const user = users.find(u => u.username === username);
     const userRole = user ? user.role : 'Team Member';
     
@@ -1196,8 +1304,8 @@ async function calculateUserOverallProgress(username) {
     }
     
     for (const moduleTitle of moduleTitles) {
-        const moduleData = getModuleData(moduleTitle);
-        if (moduleData && (await canUserAccessModule(userRole, moduleData.requiredRole, moduleTitle))) {
+        const moduleData = await getModuleData(moduleTitle);
+        if (moduleData) {
             totalTasks += moduleData.checklist.length;
             const moduleProgress = userProgress[moduleTitle] || { checklist: [] };
             completedTasks += moduleProgress.checklist.filter(item => item).length;
@@ -1234,7 +1342,6 @@ function toggleTheme() {
     // Save theme preference
     localStorage.setItem('theme', newTheme);
     
-    console.log('Theme switched to:', newTheme);
 }
 
 // Initialize theme on page load
@@ -1259,11 +1366,9 @@ function initializeTheme() {
 // Export functions for potential use in other scripts
 // Force refresh user progress data from database
 async function refreshUserProgressData() {
-    console.log('User Progress - Force refreshing data from database...');
     
     try {
         await loadProgressData();
-        console.log('User Progress - Data refreshed successfully');
     } catch (error) {
         console.error('User Progress - Failed to refresh data:', error);
     }

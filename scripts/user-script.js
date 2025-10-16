@@ -63,13 +63,14 @@ function updateUserInfo() {
             // Update avatar
             const avatar = document.getElementById('userAvatar');
             if (avatar) {
-                avatar.textContent = user.fullName.charAt(0).toUpperCase();
+                const fullName = user.full_name || user.fullName || user.username || 'U';
+                avatar.textContent = fullName.charAt(0).toUpperCase();
             }
             
             // Update name
             const userName = document.getElementById('userName');
             if (userName) {
-                userName.textContent = user.fullName;
+                userName.textContent = user.full_name || user.fullName || user.username || 'Unknown User';
             }
             
             // Update role
@@ -326,7 +327,7 @@ async function loadDashboardData() {
     
     leadershipPaths.forEach(path => {
         if (isPathUnlocked(path, user.role)) {
-            totalTasks += path.checklist.length;
+            totalTasks += (path.checklist || []).length;
             const pathProgress = userProgress[path.title];
             
             if (pathProgress && pathProgress.checklist) {

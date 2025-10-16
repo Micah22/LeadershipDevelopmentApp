@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick RLS Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .instructions {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .code {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .button {
+            background: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            display: block;
+            width: 100%;
+        }
+        .button:hover {
+            background: #2980b9;
+        }
+        .copy-btn {
+            background: #27ae60;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin: 5px 0;
+        }
+        .copy-btn:hover {
+            background: #229954;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Quick RLS Fix</h1>
+        
+        <div class="instructions">
+            <strong>📋 Instructions:</strong><br>
+            1. Go to your Supabase Dashboard<br>
+            2. Navigate to SQL Editor<br>
+            3. Copy and paste the SQL commands below<br>
+            4. Execute them to fix the RLS policies
+        </div>
+        
+        <h3>SQL Commands to Execute:</h3>
+        <div class="code" id="sqlCommands">
+-- Fix RLS policies for module assignments
+-- Drop existing restrictive policies
+DROP POLICY IF EXISTS "Users can view their own assignments" ON module_assignments;
+DROP POLICY IF EXISTS "Admins can manage all assignments" ON module_assignments;
+DROP POLICY IF EXISTS "Users can view their own unassigned assignments" ON unassigned_role_assignments;
+DROP POLICY IF EXISTS "Admins can manage all unassigned assignments" ON unassigned_role_assignments;
+
+-- Create permissive policies that work with anon key
+CREATE POLICY "Allow all operations on module_assignments" ON module_assignments FOR ALL USING (true);
+CREATE POLICY "Allow all operations on unassigned_role_assignments" ON unassigned_role_assignments FOR ALL USING (true);
+        </div>
+        
+        <button class="copy-btn" onclick="copyToClipboard()">📋 Copy SQL Commands</button>
+        
+        <h3>Alternative: Disable RLS Temporarily</h3>
+        <div class="code" id="disableRLS">
+-- Alternative: Disable RLS completely (less secure but works)
+ALTER TABLE module_assignments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE unassigned_role_assignments DISABLE ROW LEVEL SECURITY;
+        </div>
+        
+        <button class="copy-btn" onclick="copyDisableRLS()">📋 Copy Disable RLS Commands</button>
+        
+        <button class="button" onclick="openSupabase()">🚀 Open Supabase Dashboard</button>
+        
+        <div class="instructions">
+            <strong>✅ After executing the SQL:</strong><br>
+            • Module assignments should work without errors<br>
+            • You can assign modules to users successfully<br>
+            • The application will be fully functional
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard() {
+            const sqlCommands = document.getElementById('sqlCommands').textContent;
+            navigator.clipboard.writeText(sqlCommands).then(() => {
+                alert('SQL commands copied to clipboard!');
+            });
+        }
+
+        function copyDisableRLS() {
+            const disableRLS = document.getElementById('disableRLS').textContent;
+            navigator.clipboard.writeText(disableRLS).then(() => {
+                alert('Disable RLS commands copied to clipboard!');
+            });
+        }
+
+        function openSupabase() {
+            window.open('https://supabase.com/dashboard/project/yjiqgrudlbtpghopbusz/sql', '_blank');
+        }
+    </script>
+</body>
+</html>

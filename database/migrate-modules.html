@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migrate Modules to Database</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Migrate Modules to Database</h1>
+        
+        <div id="status" class="status info">
+            Ready to migrate modules from localStorage to database
+        </div>
+        
+        <div>
+            <button onclick="migrateModules()" id="migrateBtn">Migrate Modules</button>
+            <button onclick="checkDatabase()" id="checkBtn">Check Database</button>
+            <button onclick="clearLog()" id="clearBtn">Clear Log</button>
+        </div>
+        
+        <div id="log" class="log">
+            <div>Click "Migrate Modules" to add the default leadership development modules to the database.</div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        const defaultModules = [
+            {
+                title: 'Communication Skills',
+                description: 'Learn effective communication techniques for leaders. This module covers verbal and non-verbal communication, active listening, and how to deliver clear, impactful messages to your team.',
+                required_role: 'Team Member',
+                difficulty: 'Phase 1',
+                duration: 1,
+                prerequisites: 'None',
+                author: 'Training Team',
+                version: '1.0',
+                tags: 'communication, leadership, soft skills',
+                quality_unsatisfactory: 'Poor communication leads to misunderstandings and team conflicts',
+                quality_average: 'Adequate communication skills with room for improvement',
+                quality_excellent: 'Exceptional communication that inspires and motivates teams',
+                speed_unsatisfactory: 'Slow to respond to team needs and feedback',
+                speed_average: 'Timely responses to most communication needs',
+                speed_excellent: 'Quick, clear, and effective communication in all situations',
+                communication_unsatisfactory: 'Unclear messages, poor listening skills',
+                communication_average: 'Clear communication with occasional misunderstandings',
+                communication_excellent: 'Crystal clear communication that builds trust and understanding',
+                status: 'active'
+            },
+            {
+                title: 'Team Leadership',
+                description: 'Master the fundamentals of leading teams effectively. Learn about team dynamics, motivation techniques, and how to build a cohesive, high-performing team.',
+                required_role: 'Supervisor',
+                difficulty: 'Phase 2',
+                duration: 2,
+                prerequisites: 'Communication Skills',
+                author: 'Training Team',
+                version: '1.0',
+                tags: 'leadership, team management, motivation',
+                quality_unsatisfactory: 'Poor team leadership results in low morale and productivity',
+                quality_average: 'Basic leadership skills with some team success',
+                quality_excellent: 'Outstanding leadership that creates high-performing teams',
+                speed_unsatisfactory: 'Slow to address team issues and conflicts',
+                speed_average: 'Reasonable response time to team needs',
+                speed_excellent: 'Quick, decisive leadership that keeps teams moving forward',
+                communication_unsatisfactory: 'Poor team communication and feedback',
+                communication_average: 'Good team communication with room for improvement',
+                communication_excellent: 'Excellent team communication that builds strong relationships',
+                status: 'active'
+            },
+            {
+                title: 'Decision Making',
+                description: 'Develop critical thinking and decision-making skills for leaders. Learn to analyze situations, weigh options, and make informed decisions under pressure.',
+                required_role: 'Supervisor',
+                difficulty: 'Phase 2',
+                duration: 2,
+                prerequisites: 'Communication Skills',
+                author: 'Training Team',
+                version: '1.0',
+                tags: 'decision making, critical thinking, problem solving',
+                quality_unsatisfactory: 'Poor decisions lead to negative outcomes for the team',
+                quality_average: 'Mostly good decisions with occasional mistakes',
+                quality_excellent: 'Consistently excellent decisions that drive team success',
+                speed_unsatisfactory: 'Slow decision making delays team progress',
+                speed_average: 'Reasonable decision-making speed for most situations',
+                speed_excellent: 'Quick, confident decisions that keep teams moving',
+                communication_unsatisfactory: 'Poor communication of decisions and rationale',
+                communication_average: 'Clear communication of most decisions',
+                communication_excellent: 'Excellent communication that helps teams understand and support decisions',
+                status: 'active'
+            },
+            {
+                title: 'Conflict Resolution',
+                description: 'Learn to identify, address, and resolve conflicts in the workplace. Develop skills for mediating disputes and maintaining positive team relationships.',
+                required_role: 'Supervisor',
+                difficulty: 'Phase 2',
+                duration: 2,
+                prerequisites: 'Communication Skills, Team Leadership',
+                author: 'Training Team',
+                version: '1.0',
+                tags: 'conflict resolution, mediation, team dynamics',
+                quality_unsatisfactory: 'Poor conflict resolution leads to ongoing team issues',
+                quality_average: 'Adequate conflict resolution with some success',
+                quality_excellent: 'Exceptional conflict resolution that strengthens team bonds',
+                speed_unsatisfactory: 'Slow to address conflicts, allowing them to escalate',
+                speed_average: 'Reasonable response time to most conflicts',
+                speed_excellent: 'Quick, effective conflict resolution that prevents escalation',
+                communication_unsatisfactory: 'Poor communication during conflict resolution',
+                communication_average: 'Good communication in most conflict situations',
+                communication_excellent: 'Excellent communication that facilitates resolution and understanding',
+                status: 'active'
+            },
+            {
+                title: 'Strategic Planning',
+                description: 'Learn to develop and implement strategic plans for your team and organization. Master long-term thinking and goal-setting techniques.',
+                required_role: 'Director',
+                difficulty: 'Phase 3',
+                duration: 3,
+                prerequisites: 'Team Leadership, Decision Making',
+                author: 'Training Team',
+                version: '1.0',
+                tags: 'strategic planning, goal setting, long-term thinking',
+                quality_unsatisfactory: 'Poor strategic planning leads to unclear direction',
+                quality_average: 'Basic strategic planning with some success',
+                quality_excellent: 'Outstanding strategic planning that drives organizational success',
+                speed_unsatisfactory: 'Slow to develop and implement strategic plans',
+                speed_average: 'Reasonable pace for strategic planning activities',
+                speed_excellent: 'Quick, effective strategic planning that keeps organizations ahead',
+                communication_unsatisfactory: 'Poor communication of strategic plans and goals',
+                communication_average: 'Clear communication of most strategic elements',
+                communication_excellent: 'Excellent communication that aligns teams with strategic vision',
+                status: 'active'
+            },
+            {
+                title: 'Performance Management',
+                description: 'Learn to manage and improve team performance. Develop skills for setting expectations, providing feedback, and conducting performance reviews.',
+                required_role: 'Director',
+                difficulty: 'Phase 3',
+                duration: 3,
+                prerequisites: 'Team Leadership, Communication Skills',
+                author: 'Training Team',
+                version: '1.0',
+                tags: 'performance management, feedback, reviews',
+                quality_unsatisfactory: 'Poor performance management leads to low team productivity',
+                quality_average: 'Basic performance management with some improvement',
+                quality_excellent: 'Exceptional performance management that drives team excellence',
+                speed_unsatisfactory: 'Slow to address performance issues and provide feedback',
+                speed_average: 'Reasonable response time to performance needs',
+                speed_excellent: 'Quick, effective performance management that keeps teams improving',
+                communication_unsatisfactory: 'Poor communication during performance discussions',
+                communication_average: 'Good communication in most performance situations',
+                communication_excellent: 'Excellent communication that motivates and improves performance',
+                status: 'active'
+            }
+        ];
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            logDiv.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        async function checkDatabase() {
+            try {
+                updateStatus('Checking database connection...', 'info');
+                log('Checking database connection...');
+                
+                if (!window.dbService || !window.dbService.isConfigured) {
+                    throw new Error('Database service not configured');
+                }
+                
+                // Test connection by getting users
+                const users = await window.dbService.apiCall('users?select=count');
+                log(`✅ Database connection successful. Found ${users.length} users.`);
+                
+                // Check existing modules
+                const modules = await window.dbService.apiCall('modules?select=*');
+                log(`📚 Found ${modules.length} existing modules in database:`);
+                modules.forEach(module => {
+                    log(`  - ${module.title} (${module.required_role})`);
+                });
+                
+                updateStatus(`Database connected. Found ${modules.length} modules.`, 'success');
+                
+            } catch (error) {
+                log(`❌ Database check failed: ${error.message}`, 'error');
+                updateStatus('Database connection failed', 'error');
+            }
+        }
+
+        async function migrateModules() {
+            const migrateBtn = document.getElementById('migrateBtn');
+            migrateBtn.disabled = true;
+            
+            try {
+                updateStatus('Starting module migration...', 'info');
+                log('🚀 Starting module migration to database...');
+                
+                if (!window.dbService || !window.dbService.isConfigured) {
+                    throw new Error('Database service not configured');
+                }
+                
+                let successCount = 0;
+                let errorCount = 0;
+                
+                for (const module of defaultModules) {
+                    try {
+                        log(`📝 Migrating module: ${module.title}...`);
+                        
+                        // Check if module already exists
+                        const existingModules = await window.dbService.apiCall(`modules?title=eq.${encodeURIComponent(module.title)}&select=id`);
+                        
+                        if (existingModules && existingModules.length > 0) {
+                            log(`⚠️ Module "${module.title}" already exists, skipping...`);
+                            continue;
+                        }
+                        
+                        // Create the module
+                        const result = await window.dbService.apiCall('modules', 'POST', module);
+                        log(`✅ Successfully migrated: ${module.title}`);
+                        successCount++;
+                        
+                    } catch (error) {
+                        log(`❌ Failed to migrate "${module.title}": ${error.message}`, 'error');
+                        errorCount++;
+                    }
+                }
+                
+                log(`\n🎉 Migration completed!`);
+                log(`✅ Successfully migrated: ${successCount} modules`);
+                if (errorCount > 0) {
+                    log(`❌ Failed to migrate: ${errorCount} modules`, 'error');
+                }
+                
+                updateStatus(`Migration completed! ${successCount} modules migrated successfully.`, 'success');
+                
+                // Also update localStorage
+                localStorage.setItem('globalModules', JSON.stringify(defaultModules));
+                log('📱 Updated localStorage with migrated modules');
+                
+            } catch (error) {
+                log(`❌ Migration failed: ${error.message}`, 'error');
+                updateStatus('Migration failed', 'error');
+            } finally {
+                migrateBtn.disabled = false;
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '<div>Log cleared. Ready for new operations.</div>';
+        }
+
+        // Check database on page load
+        window.addEventListener('load', () => {
+            log('Page loaded. Ready to migrate modules.');
+            checkDatabase();
+        });
+    </script>
+</body>
+</html>

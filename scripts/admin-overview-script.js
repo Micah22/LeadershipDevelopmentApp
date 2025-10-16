@@ -1,10 +1,17 @@
 // Admin User Overview Script
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Admin User Overview page loaded');
-    
-    // Initialize the page
-    initializePage();
+// Admin Overview Script loaded
+
+// Test function to verify script is working
+window.testScript = function() {
+    return 'Script is functional';
+};
+
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        
+        // Initialize the page
+        await initializePage();
     
     // Set up event listeners
     setupEventListeners();
@@ -13,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupAssignmentEventListeners();
     
     // Load user data
-    loadUserData();
+    await loadUserData();
     
     // Initialize theme
     initializeTheme();
@@ -22,9 +29,13 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         showUserManagementContent();
     }, 100);
+    
+    } catch (error) {
+        console.error('❌ Error in DOMContentLoaded:', error);
+    }
 });
 
-function initializePage() {
+async function initializePage() {
     // Check if user is logged in and is admin
     const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -35,31 +46,31 @@ function initializePage() {
         return;
     }
     
-    console.log('Admin user authenticated:', currentUser);
     
     // Set up user info
-    updateUserInfo();
+    await updateUserInfo();
     
     // Set up navigation
-    updateNavigation();
+    await updateNavigation();
 }
 
-function updateUserInfo() {
+async function updateUserInfo() {
     const username = localStorage.getItem('username');
-    const users = getUsers();
+    const users = await getUsers();
     const user = users.find(u => u.username === username);
     
     if (user) {
         // Update avatar
         const avatar = document.getElementById('userAvatar');
         if (avatar) {
-            avatar.textContent = user.fullName.charAt(0).toUpperCase();
+            const fullName = user.full_name || user.fullName || user.username || 'U';
+            avatar.textContent = fullName.charAt(0).toUpperCase();
         }
         
         // Update name
         const userName = document.getElementById('userName');
         if (userName) {
-            userName.textContent = user.fullName;
+            userName.textContent = user.full_name || user.fullName || user.username || 'Unknown User';
         }
         
         // Update role
@@ -70,9 +81,9 @@ function updateUserInfo() {
     }
 }
 
-function updateNavigation() {
+async function updateNavigation() {
     const username = localStorage.getItem('username');
-    const users = getUsers();
+    const users = await getUsers();
     const user = users.find(u => u.username === username);
     const navLinks = document.getElementById('navLinks');
     
@@ -140,6 +151,8 @@ function setupEventListeners() {
         newUserBtn.addEventListener('click', function() {
             openNewUserModal();
         });
+    } else {
+        console.error('New User button not found!');
     }
     
     // Avatar dropdown functionality
@@ -189,11 +202,8 @@ function setupEventListeners() {
     
     // Navigation items
     const navItems = document.querySelectorAll('.nav-item');
-    console.log('Found navigation items:', navItems.length);
     navItems.forEach((item, index) => {
-        console.log(`Nav item ${index}:`, item.id, item);
         item.addEventListener('click', function(e) {
-            console.log('Navigation item clicked:', this.id);
             // Remove active class from all items
             navItems.forEach(nav => nav.classList.remove('active'));
             
@@ -254,16 +264,13 @@ function setupEventListeners() {
 }
 
 function handleNavigation(itemId, e) {
-    console.log('handleNavigation called with itemId:', itemId);
     e.preventDefault(); // Prevent default link behavior for all items
     
     switch(itemId) {
         case 'userManagement':
-            console.log('User Management selected');
             showUserManagementContent();
             break;
         case 'pathManagement':
-            console.log('Path Management selected');
             try {
                 showPathManagementContent();
             } catch (error) {
@@ -271,20 +278,16 @@ function handleNavigation(itemId, e) {
             }
             break;
         case 'reports':
-            console.log('Reports selected');
             // TODO: Show reports content
             break;
         case 'settings':
-            console.log('Settings selected');
             // TODO: Show settings content
             break;
         default:
-            console.log('Unknown navigation item:', itemId);
     }
 }
 
-function loadUserData() {
-    console.log('loadUserData called');
+async function loadUserData() {
     
     // Initialize default users if none exist
     initializeDefaultUsers();
@@ -292,29 +295,44 @@ function loadUserData() {
     // Initialize global modules if none exist
     initializeGlobalModules();
     
-    // Get users from localStorage
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    console.log('Loading user data:', users);
-    console.log('Number of users:', users.length);
+    // Get users from database
+    let users = [];
+    try {
+        if (window.dbService && window.dbService.isConfigured) {
+            users = await window.dbService.getUsers();
+        } else {
+            console.warn('Database service not configured, using localStorage fallback');
+            showToast('warning', 'Database Unavailable', 'Using offline mode - data may not be synchronized');
+        }
+    } catch (error) {
+        console.error('Failed to load users from database:', error);
+        showToast('error', 'Database Error', `Failed to load users: ${error.message || 'Unknown error'}`);
+        
+        // Fallback to localStorage if available
+        try {
+            const localUsers = JSON.parse(localStorage.getItem('users') || '[]');
+            if (localUsers.length > 0) {
+                users = localUsers;
+                showToast('info', 'Using Offline Data', 'Loaded users from local storage');
+            }
+        } catch (localError) {
+            console.error('Failed to load users from localStorage:', localError);
+        }
+    }
     
     // Debug: Check user progress data
-    users.forEach(user => {
+    for (const user of users) {
         const userProgress = getUserProgress(user.username);
-        console.log(`Progress for ${user.username}:`, userProgress);
-        const overallProgress = calculateUserOverallProgress(user.username);
-        console.log(`Overall progress for ${user.username}:`, overallProgress);
-    });
+        const overallProgress = await calculateUserOverallProgress(user.username);
+    }
     
     // Update summary cards
-    console.log('Updating summary cards');
     updateSummaryCards(users);
-    
+
     // Update role statistics
-    console.log('Updating role statistics');
     updateRoleStats(users);
-    
+
     // Update user progress table
-    console.log('Updating user progress table');
     updateUserProgressTable(users);
     
     // Load module assignments
@@ -322,22 +340,17 @@ function loadUserData() {
 }
 
 function updateSummaryCards(users) {
-    console.log('updateSummaryCards called with', users.length, 'users');
     const totalUsersElement = document.getElementById('totalUsers');
     
     if (totalUsersElement) {
         totalUsersElement.textContent = users.length;
-        console.log('Updated total users element to:', users.length);
     } else {
-        console.log('Total users element not found');
     }
 }
 
 function updateRoleStats(users) {
-    console.log('updateRoleStats called with', users.length, 'users');
     const roleStatsElement = document.getElementById('roleStats');
     if (!roleStatsElement) {
-        console.log('Role stats element not found');
         return;
     }
     
@@ -347,7 +360,6 @@ function updateRoleStats(users) {
         roleCounts[user.role] = (roleCounts[user.role] || 0) + 1;
     });
     
-    console.log('Role counts:', roleCounts);
     
     // Create role stat cards
     const roleStatsHTML = Object.entries(roleCounts).map(([role, count]) => `
@@ -358,21 +370,18 @@ function updateRoleStats(users) {
     `).join('');
     
     roleStatsElement.innerHTML = roleStatsHTML || '<p>No role data available</p>';
-    console.log('Updated role stats HTML');
 }
 
 function updateUserProgressTable(users) {
-    console.log('updateUserProgressTable called with', users.length, 'users');
     const tableBody = document.getElementById('userProgressTable');
     if (!tableBody) {
-        console.log('User progress table body not found');
         return;
     }
     
     if (users.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="7" style="text-align: center; padding: 2rem; color: var(--medium-gray);">
+                <td colspan="4" style="text-align: center; padding: 2rem; color: var(--medium-gray);">
                     No users found
                 </td>
             </tr>
@@ -382,11 +391,6 @@ function updateUserProgressTable(users) {
     
     // Generate table rows for each user
     const tableRows = users.map(user => {
-        // Get real progress data for this user
-        const userProgress = calculateUserOverallProgress(user.username);
-        const completed = userProgress.completedTasks;
-        const total = userProgress.totalTasks;
-        const progress = userProgress.percentage;
         const status = user.status || 'active';
         
         return `
@@ -406,29 +410,24 @@ function updateUserProgressTable(users) {
                     <span class="status-badge ${getStatusClass(user.role)}">${user.role}</span>
                 </td>
                 <td>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div class="progress-bar" style="width: 100px;">
-                            <div class="progress-fill" style="width: ${progress}%;"></div>
-                        </div>
-                        <span style="font-weight: 600;">${progress}%</span>
-                    </div>
-                </td>
-                <td style="font-weight: 600;">${completed}</td>
-                <td style="color: var(--medium-gray);">${total}</td>
-                <td>
                     <span class="status-badge status-${status}">${status}</span>
                 </td>
                 <td>
-                    <button class="action-btn" onclick="viewUserDetails('${user.username}')">
-                        View Details
-                    </button>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="viewUserDetails('${user.username}')">
+                            View Details
+                        </button>
+                        <button class="action-btn action-btn-danger" onclick="resetUserProgress('${user.username}')" title="Reset User Progress">
+                            <i class="fas fa-undo"></i>
+                            Reset Progress
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
-    }).join('');
+    });
     
-    tableBody.innerHTML = tableRows;
-    console.log('Updated user progress table with', users.length, 'rows');
+    tableBody.innerHTML = tableRows.join('');
 }
 
 function getStatusClass(role) {
@@ -444,16 +443,63 @@ function getStatusClass(role) {
     }
 }
 
+// Reset user progress function
+async function resetUserProgress(username) {
+    // Show confirmation dialog
+    const confirmed = confirm(
+        `Are you sure you want to reset the progress for user "${username}"?\n\n` +
+        `This will:\n` +
+        `• Clear all completed tasks for this user\n` +
+        `• Reset progress to 0% on all assigned modules\n` +
+        `• Remove all progress data from the database\n\n` +
+        `This action cannot be undone.`
+    );
+    
+    if (!confirmed) {
+        return;
+    }
+    
+    try {
+        // Get user ID
+        const users = await getAllUsers();
+        const user = users.find(u => u.username === username);
+        
+        if (!user) {
+            showToast('error', 'User Not Found', `User "${username}" not found`);
+            return;
+        }
+        
+        // Delete all user progress from database
+        if (window.dbService && window.dbService.isConfigured) {
+            await window.dbService.deleteUserProgress(user.id);
+            console.log(`Progress reset for user: ${username} (ID: ${user.id})`);
+        }
+        
+        // Clear from localStorage as well
+        const userProgressKey = `userProgress_${username}`;
+        localStorage.removeItem(userProgressKey);
+        
+        // Show success message
+        showToast('success', 'Progress Reset', `Progress has been reset for user "${username}"`);
+        
+        // Reload the user data to refresh the display
+        await loadUserData();
+        
+    } catch (error) {
+        console.error('Failed to reset user progress:', error);
+        showToast('error', 'Reset Failed', `Failed to reset progress for user "${username}": ${error.message || 'Unknown error'}`);
+    }
+}
+
 function viewUserDetails(username) {
-    console.log('Viewing details for user:', username);
     openUserModal(username);
 }
 
-function openUserModal(username) {
+async function openUserModal(username) {
     const modal = document.getElementById('userModal');
     const modalTitle = document.getElementById('modalTitle');
     const modalSave = document.getElementById('modalSave');
-    const users = getUsers();
+    const users = await getUsers();
     const user = users.find(u => u.username === username);
     
     if (!user) {
@@ -495,6 +541,12 @@ function openNewUserModal() {
     const modalTitle = document.getElementById('modalTitle');
     const modalSave = document.getElementById('modalSave');
     
+    
+    if (!modal) {
+        console.error('Modal not found!');
+        return;
+    }
+    
     // Update modal title
     modalTitle.textContent = 'Add New User';
     modalSave.textContent = 'Create User';
@@ -526,11 +578,63 @@ async function saveUserChanges() {
     
     // Validate required fields
     if (!formData.fullName || !formData.username || !formData.password || !formData.role) {
-        alert('Please fill in all required fields');
+        showToast('error', 'Validation Error', 'Please fill in all required fields');
         return;
     }
     
-    const users = getUsers();
+    // Validate field formats
+    const validationErrors = [];
+    
+    // Validate full name
+    if (formData.fullName.length < 2 || formData.fullName.length > 100) {
+        validationErrors.push('Full name must be between 2 and 100 characters');
+    }
+    
+    // Validate username
+    if (formData.username.length < 3 || formData.username.length > 50) {
+        validationErrors.push('Username must be between 3 and 50 characters');
+    }
+    if (!/^[a-zA-Z0-9._-]+$/.test(formData.username)) {
+        validationErrors.push('Username can only contain letters, numbers, dots, underscores, and hyphens');
+    }
+    
+    // Validate password
+    if (formData.password.length < 6) {
+        validationErrors.push('Password must be at least 6 characters long');
+    }
+    
+    // Validate email if provided
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        validationErrors.push('Please enter a valid email address');
+    }
+    
+    // Validate role
+    const validRoles = ['Admin', 'Director', 'Supervisor', 'Trainer', 'Assistant Supervisor', 'Team Member'];
+    if (!validRoles.includes(formData.role)) {
+        validationErrors.push('Please select a valid role');
+    }
+    
+    // Validate status
+    const validStatuses = ['active', 'inactive'];
+    if (formData.status && !validStatuses.includes(formData.status)) {
+        validationErrors.push('Please select a valid status');
+    }
+    
+    // Validate start date if provided
+    if (formData.startDate) {
+        const startDate = new Date(formData.startDate);
+        const today = new Date();
+        if (startDate > today) {
+            validationErrors.push('Start date cannot be in the future');
+        }
+    }
+    
+    if (validationErrors.length > 0) {
+        showToast('error', 'Validation Error', validationErrors.join('<br>'));
+        return;
+    }
+    
+    const users = await getUsers();
     
     if (!currentUsername) {
         // Creating new user
@@ -561,21 +665,18 @@ async function saveUserChanges() {
         // Add new user
         users.push(newUser);
         
-        // Save to localStorage first
-        localStorage.setItem('users', JSON.stringify(users));
-        
-        // Try to save new user to database
+        // Save new user to database
         try {
             await window.dbService.createUser(newUser);
-            console.log('New user saved to database successfully');
         } catch (error) {
             console.error('Failed to save new user to database:', error);
-            showToast('warning', 'Database Warning', 'User created locally but may not sync to database');
+            showToast('error', 'Database Error', 'Failed to create user in database');
+            return;
         }
         
         alert('New user created successfully!');
         closeUserModal();
-        loadUserData();
+        await loadUserData();
         return;
     }
     
@@ -603,20 +704,17 @@ async function saveUserChanges() {
         startDate: formData.startDate || users[userIndex].startDate
     };
     
-    // Save updated users to localStorage
-    localStorage.setItem('users', JSON.stringify(users));
-    
-    // Try to save updated user to database
+    // Save updated user to database
     try {
         await window.dbService.updateUser(users[userIndex].id, users[userIndex]);
-        console.log('User updated in database successfully');
     } catch (error) {
         console.error('Failed to update user in database:', error);
-        showToast('warning', 'Database Warning', 'User updated locally but may not sync to database');
+        showToast('error', 'Database Error', 'Failed to update user in database');
+        return;
     }
     
     // Refresh the table
-    loadUserData();
+    await loadUserData();
     
     // Close modal
     closeUserModal();
@@ -644,25 +742,41 @@ function formatDateTime(date) {
     });
 }
 
-// Utility function to get users from localStorage
-function getUsers() {
-    return JSON.parse(localStorage.getItem('users') || '[]');
+// Utility function to get users from database
+async function getUsers() {
+    try {
+        if (window.dbService && window.dbService.isConfigured) {
+            return await window.dbService.getUsers();
+        }
+        return [];
+    } catch (error) {
+        console.error('Failed to get users from database:', error);
+        return [];
+    }
 }
 
 // Utility function to get all users (alias for getUsers)
-function getAllUsers() {
-    return getUsers();
+async function getAllUsers() {
+    return await getUsers();
 }
 
 // Utility function to get all modules
-function getAllModules() {
-    return JSON.parse(localStorage.getItem('globalModules') || '[]');
+async function getAllModules() {
+    try {
+        if (window.dbService && window.dbService.isConfigured) {
+            return await window.dbService.getModules();
+        }
+        return [];
+    } catch (error) {
+        console.error('Failed to get modules from database:', error);
+        return [];
+    }
 }
 
-// Utility function to save users to localStorage
+// Utility function to save users to database
 async function saveUsers(users) {
     try {
-        // Save to database first
+        // Save to database
         for (const user of users) {
             if (user.id) {
                 // Update existing user
@@ -672,140 +786,161 @@ async function saveUsers(users) {
                 await window.dbService.createUser(user);
             }
         }
-        console.log('Users saved to database successfully');
     } catch (error) {
         console.error('Failed to save users to database:', error);
-        // Fallback to localStorage
-        localStorage.setItem('users', JSON.stringify(users));
         throw error;
     }
 }
 
 
 // Initialize default users if none exist
-function initializeDefaultUsers() {
-    const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    
-    if (existingUsers.length === 0) {
-        const defaultUsers = [
-            {
-                username: 'admin',
-                fullName: 'Admin User',
-                password: 'admin123',
-                role: 'Admin',
-                status: 'active',
-                email: 'admin@company.com',
-                startDate: '2024-01-01'
-            },
-            {
-                username: 'john.doe',
-                fullName: 'John Doe',
-                password: 'password123',
-                role: 'Director',
-                status: 'active',
-                email: 'john.doe@company.com',
-                startDate: '2024-01-15'
-            },
-            {
-                username: 'jane.smith',
-                fullName: 'Jane Smith',
-                password: 'password123',
-                role: 'Supervisor',
-                status: 'active',
-                email: 'jane.smith@company.com',
-                startDate: '2024-02-01'
-            },
-            {
-                username: 'mike.wilson',
-                fullName: 'Mike Wilson',
-                password: 'password123',
-                role: 'Team Member',
-                status: 'active',
-                email: 'mike.wilson@company.com',
-                startDate: '2024-02-15'
-            },
-            {
-                username: 'sarah.jones',
-                fullName: 'Sarah Jones',
-                password: 'password123',
-                role: 'Team Member',
-                status: 'active',
-                email: 'sarah.jones@company.com',
-                startDate: '2024-03-01'
-            }
-        ];
-        
-        localStorage.setItem('users', JSON.stringify(defaultUsers));
-        console.log('Initialized default users:', defaultUsers);
-    } else {
-        console.log('Existing users found, preserving data');
-    }
-}
-
-// Utility function to check if user can access a module based on role
-function canUserAccessModule(userRole, requiredRole) {
-    // Define role hierarchy (higher number = higher authority)
-    const roleHierarchy = {
-        'Team Member': 1,
-        'Supervisor': 2,
-        'Director': 3,
-        'Admin': 4
-    };
-    
-    const userLevel = roleHierarchy[userRole] || 1;
-    const requiredLevel = roleHierarchy[requiredRole] || 1;
-    
-    // User can access modules at their level or below
-    return userLevel >= requiredLevel;
-}
-
-// Utility function to calculate overall progress for a user
-function calculateUserOverallProgress(username) {
-    const userProgress = getUserProgress(username);
-    
-    // Get user's role
-    const users = getUsers();
-    const user = users.find(u => u.username === username);
-    const userRole = user ? user.role : 'Team Member';
-    
-    let totalTasks = 0;
-    let completedTasks = 0;
-    
-    // Get all module titles from global storage (for progress calculation, only count accessible modules)
-    const globalModules = localStorage.getItem('globalModules');
-    let moduleTitles = [];
-    
-    if (globalModules) {
-        const modules = JSON.parse(globalModules);
-        moduleTitles = modules.map(m => m.title);
-    } else {
-        // Fallback to default module titles
-        moduleTitles = [
-            'Communication Skills', 'Team Leadership', 'Decision Making',
-            'Conflict Resolution', 'Strategic Planning', 'Performance Management'
-        ];
-    }
-    
-    moduleTitles.forEach(moduleTitle => {
-        const moduleData = getModuleData(moduleTitle);
-        
-        if (moduleData && moduleData.checklist && canUserAccessModule(userRole, moduleData.requiredRole)) {
-            totalTasks += moduleData.checklist.length;
-            const moduleProgress = userProgress[moduleTitle];
+async function initializeDefaultUsers() {
+    try {
+        if (window.dbService && window.dbService.isConfigured) {
+            const existingUsers = await window.dbService.getUsers();
             
-            if (moduleProgress && moduleProgress.checklist) {
-                // Count completed tasks (true values in the checklist array)
-                const completedInModule = moduleProgress.checklist.filter(item => item === true).length;
-                completedTasks += completedInModule;
+            if (existingUsers.length === 0) {
+                const defaultUsers = [
+                    {
+                        username: 'admin',
+                        fullName: 'Admin User',
+                        password: 'admin123',
+                        role: 'Admin',
+                        status: 'active',
+                        email: 'admin@company.com',
+                        startDate: '2024-01-01'
+                    },
+                    {
+                        username: 'john.doe',
+                        fullName: 'John Doe',
+                        password: 'password123',
+                        role: 'Director',
+                        status: 'active',
+                        email: 'john.doe@company.com',
+                        startDate: '2024-01-15'
+                    },
+                    {
+                        username: 'jane.smith',
+                        fullName: 'Jane Smith',
+                        password: 'password123',
+                        role: 'Supervisor',
+                        status: 'active',
+                        email: 'jane.smith@company.com',
+                        startDate: '2024-02-01'
+                    },
+                    {
+                        username: 'mike.wilson',
+                        fullName: 'Mike Wilson',
+                        password: 'password123',
+                        role: 'Team Member',
+                        status: 'active',
+                        email: 'mike.wilson@company.com',
+                        startDate: '2024-02-15'
+                    },
+                    {
+                        username: 'sarah.jones',
+                        fullName: 'Sarah Jones',
+                        password: 'password123',
+                        role: 'Team Member',
+                        status: 'active',
+                        email: 'sarah.jones@company.com',
+                        startDate: '2024-03-01'
+                    }
+                ];
+                
+                // Create default users in database
+                for (const user of defaultUsers) {
+                    await window.dbService.createUser(user);
+                }
+            } else {
             }
         }
-    });
-    
-    return {
-        totalTasks,
-        completedTasks,
-        percentage: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
-    };
+    } catch (error) {
+        console.error('Failed to initialize default users:', error);
+    }
+}
+
+
+// Utility function to calculate overall progress for a user
+async function calculateUserOverallProgress(username) {
+    try {
+        const userProgress = await getUserProgress(username);
+        
+        // Get user's role from database or localStorage
+        let users = [];
+        try {
+            if (window.dbService && window.dbService.isConfigured) {
+                users = await window.dbService.getUsers();
+            } else {
+                users = JSON.parse(localStorage.getItem('users') || '[]');
+            }
+        } catch (error) {
+            console.error('Failed to load users for progress calculation:', error);
+            users = JSON.parse(localStorage.getItem('users') || '[]');
+        }
+        
+        const user = users.find(u => u.username === username);
+        const userRole = user ? user.role : 'Team Member';
+        
+        let totalTasks = 0;
+        let completedTasks = 0;
+        
+        // Get all module titles from database or localStorage
+        let moduleTitles = [];
+        try {
+            if (window.dbService && window.dbService.isConfigured) {
+                const dbModules = await window.dbService.getModules();
+                if (dbModules && dbModules.length > 0) {
+                    moduleTitles = dbModules.map(m => m.title);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load modules for progress calculation:', error);
+        }
+        
+        // Fallback to localStorage if no modules from database
+        if (moduleTitles.length === 0) {
+            const globalModules = localStorage.getItem('globalModules');
+            if (globalModules) {
+                const modules = JSON.parse(globalModules);
+                moduleTitles = modules.map(m => m.title);
+            } else {
+                // Fallback to default module titles
+                moduleTitles = [
+                    'Communication Skills', 'Team Leadership', 'Decision Making',
+                    'Conflict Resolution', 'Strategic Planning', 'Performance Management'
+                ];
+            }
+        }
+        
+        for (const moduleTitle of moduleTitles) {
+            const moduleData = getModuleData(moduleTitle);
+            
+            if (moduleData && moduleData.checklist) {
+                totalTasks += moduleData.checklist.length;
+                const moduleProgress = userProgress[moduleTitle];
+                
+                if (moduleProgress && moduleProgress.checklist) {
+                    // Count completed tasks (true values in the checklist array)
+                    const completedInModule = moduleProgress.checklist.filter(item => item === true).length;
+                    completedTasks += completedInModule;
+                }
+            }
+        }
+        
+        return {
+            totalTasks,
+            completedTasks,
+            percentage: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+        };
+    } catch (error) {
+        console.error('Error calculating user overall progress:', error);
+        return {
+            totalTasks: 0,
+            completedTasks: 0,
+            percentage: 0
+        };
+    }
 }
 
 // Utility function to get user's progress data
@@ -835,20 +970,17 @@ function getModuleData(moduleTitle) {
     return {
         title: module.title,
         description: module.description,
-        checklist: module.checklist,
-        requiredRole: module.requiredRole
+        checklist: module.checklist
     };
 }
 
 // Content switching functions
 function showUserManagementContent() {
-    console.log('Showing user management content');
     
     // Hide path management content
     const pathContent = document.getElementById('pathManagementContent');
     if (pathContent) {
         pathContent.style.display = 'none';
-        console.log('Hidden path management content');
     }
     
         // Show user management content (main content is already visible)
@@ -859,9 +991,7 @@ function showUserManagementContent() {
             mainContent.style.opacity = '1';
             mainContent.style.minHeight = '100vh';
             mainContent.style.width = '100%';
-            console.log('Showed main content');
         } else {
-            console.log('Main content element not found');
         }
         
         // Show user management sections
@@ -876,12 +1006,10 @@ function showUserManagementContent() {
             contentHeader.style.display = 'block';
         }
         
-        console.log('Showed user management sections');
 }
 
 async function showPathManagementContent() {
     try {
-        console.log('showPathManagementContent called');
         
         // Keep main content visible but hide user management sections
         const mainContent = document.querySelector('.main-content');
@@ -891,9 +1019,7 @@ async function showPathManagementContent() {
             mainContent.style.opacity = '1';
             mainContent.style.minHeight = '100vh';
             mainContent.style.width = '100%';
-            console.log('Main content made visible');
         } else {
-            console.log('Main content element not found');
         }
         
         // Hide user management sections
@@ -908,14 +1034,10 @@ async function showPathManagementContent() {
             contentHeader.style.display = 'none';
         }
         
-        console.log('Hidden user management sections');
         
         // Show path management content
-        console.log('About to get path management content element');
         const pathContent = document.getElementById('pathManagementContent');
-        console.log('Path content element:', pathContent);
         if (pathContent) {
-            console.log('Path content element found, setting display to block');
             pathContent.style.display = 'block';
             pathContent.style.visibility = 'visible';
             pathContent.style.opacity = '1';
@@ -924,39 +1046,236 @@ async function showPathManagementContent() {
             pathContent.style.backgroundColor = '#f0f0f0';
             pathContent.style.minHeight = '500px';
             pathContent.style.border = '2px solid red';
-            console.log('Showed path management content');
-            console.log('About to call loadModulesData');
         // Load modules data when showing path management
         try {
             await loadModulesData();
-            console.log('loadModulesData call completed');
         } catch (error) {
             console.error('Error in loadModulesData:', error);
         }
+        
+        // Setup search and filter functionality
+        setupSearchAndFilter();
         } else {
-            console.log('Path management content element not found');
         }
     } catch (error) {
         console.error('Error in showPathManagementContent:', error);
     }
 }
 
+// Global variables for search and filter
+let allModules = [];
+let filteredModules = [];
+
+// Function to setup search and filter functionality
+function setupSearchAndFilter() {
+    const searchInput = document.getElementById('moduleSearchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const statusFilter = document.getElementById('statusFilter');
+    const phaseFilter = document.getElementById('phaseFilter');
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    const searchResultsInfo = document.getElementById('searchResultsInfo');
+    const resultsCount = document.getElementById('resultsCount');
+
+    // Search functionality
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce(handleSearch, 300));
+    }
+
+    // Clear search button
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', clearSearch);
+    }
+
+    // Filter functionality
+    if (statusFilter) {
+        statusFilter.addEventListener('change', handleFilter);
+    }
+
+    if (phaseFilter) {
+        phaseFilter.addEventListener('change', handleFilter);
+    }
+
+    // Clear filters button
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', clearFilters);
+    }
+
+    // Debounce function for search
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Handle search
+    function handleSearch() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        
+        // Show/hide clear search button
+        if (searchTerm) {
+            clearSearchBtn.style.display = 'block';
+        } else {
+            clearSearchBtn.style.display = 'none';
+        }
+
+        applyFiltersAndSearch();
+    }
+
+    // Handle filter changes
+    function handleFilter() {
+        applyFiltersAndSearch();
+    }
+
+    // Apply both filters and search
+    function applyFiltersAndSearch() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const statusValue = statusFilter.value;
+        const phaseValue = phaseFilter.value;
+
+        filteredModules = allModules.filter(module => {
+            // Search filter
+            const matchesSearch = !searchTerm || 
+                module.title.toLowerCase().includes(searchTerm) ||
+                module.description.toLowerCase().includes(searchTerm);
+
+            // Status filter
+            const matchesStatus = !statusValue || module.status === statusValue;
+
+            // Phase filter
+            const matchesPhase = !phaseValue || module.phase === phaseValue;
+
+            return matchesSearch && matchesStatus && matchesPhase;
+        });
+
+        // Update results count
+        if (searchResultsInfo && resultsCount) {
+            if (searchTerm || statusValue || phaseValue) {
+                resultsCount.textContent = filteredModules.length;
+                searchResultsInfo.style.display = 'block';
+            } else {
+                searchResultsInfo.style.display = 'none';
+            }
+        }
+
+        // Re-render modules with filtered data
+        renderModulesGrid(filteredModules);
+    }
+
+    // Clear search
+    function clearSearch() {
+        searchInput.value = '';
+        clearSearchBtn.style.display = 'none';
+        applyFiltersAndSearch();
+    }
+
+    // Clear all filters
+    function clearFilters() {
+        searchInput.value = '';
+        statusFilter.value = '';
+        phaseFilter.value = '';
+        clearSearchBtn.style.display = 'none';
+        searchResultsInfo.style.display = 'none';
+        applyFiltersAndSearch();
+    }
+}
+
+// Function to render modules grid with provided modules
+function renderModulesGrid(modules) {
+    const modulesGrid = document.getElementById('modulesManagementGrid');
+    if (!modulesGrid) return;
+
+    if (modules.length === 0) {
+        modulesGrid.innerHTML = `
+            <div class="no-modules-message">
+                <i class="fas fa-search"></i>
+                <h3>No modules found</h3>
+                <p>Try adjusting your search terms or filters</p>
+            </div>
+        `;
+        return;
+    }
+
+    const modulesHTML = modules.map(module => {
+        // Count tasks with files - handle case where checklist might be undefined
+        const tasksWithFiles = (module.checklist || []).filter(task => {
+            if (typeof task === 'string') return false;
+            return task.file && task.file.trim() !== '';
+        }).length;
+        
+        return `
+            <div class="module-management-card">
+                <div class="module-management-header">
+                    <h3 class="module-management-title">${module.title}</h3>
+                    <div class="module-management-meta">
+                        <span class="module-management-phase">${module.phase || 'Phase 1'}</span>
+                        <span class="module-management-status ${module.status || 'active'}">${(module.status || 'active').replace('-', ' ')}</span>
+                    </div>
+                </div>
+                <div class="module-management-description">${module.description}</div>
+                <div class="module-management-stats">
+                    <div class="module-management-tasks">${(module.checklist || []).length} learning tasks</div>
+                    ${tasksWithFiles > 0 ? `<div class="module-management-files"><i class="fas fa-file"></i> ${tasksWithFiles} tasks with files</div>` : ''}
+                </div>
+                <div class="module-management-actions">
+                    <button class="btn btn-secondary" onclick="editModule('${module.title}')">
+                        <i class="fas fa-edit"></i>
+                        Edit
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteModule('${module.title}')">
+                        <i class="fas fa-trash"></i>
+                        Delete
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    modulesGrid.innerHTML = modulesHTML;
+}
+
 // Path Management Functions (copied from admin-path-management-script.js)
 async function loadModulesData() {
     try {
-        console.log('loadModulesData called');
+        console.log('🔄 Loading modules data...');
         
         // Try to load from database first
         let modules = [];
         try {
             if (window.dbService && window.dbService.isConfigured) {
+                console.log('📡 Fetching modules from database...');
                 const dbModules = await window.dbService.getModules();
+                console.log('📡 Database modules received:', dbModules);
                 if (dbModules && dbModules.length > 0) {
-                    console.log('Loading modules from database for admin:', dbModules.length);
+                    // Load checklist items for each module
+                    for (let module of dbModules) {
+                        try {
+                            const checklistItems = await window.dbService.getModuleChecklist(module.id);
+                            if (checklistItems && checklistItems.length > 0) {
+                                // Convert database checklist items to the format expected by the UI
+                                module.checklist = checklistItems.map(item => ({
+                                    description: item.task_text,
+                                    task: item.task_text
+                                }));
+                            } else {
+                                module.checklist = [];
+                            }
+                        } catch (error) {
+                            console.warn(`Failed to load checklist for module ${module.title}:`, error);
+                            module.checklist = [];
+                        }
+                    }
+                    
                     modules = dbModules;
                     
                     // Store in localStorage for compatibility
                     localStorage.setItem('globalModules', JSON.stringify(dbModules));
+                    console.log('💾 Modules with checklists stored in localStorage');
                 }
             }
         } catch (error) {
@@ -965,59 +1284,20 @@ async function loadModulesData() {
         
         // Fallback to localStorage if database failed
         if (modules.length === 0) {
+            console.log('📦 Using localStorage fallback...');
             // Initialize global modules if they don't exist
             initializeGlobalModules();
             modules = getAllModules();
+            console.log('📦 localStorage modules:', modules);
         }
         
-        console.log('Modules data:', modules);
+        // Store modules in global variables for search/filter
+        allModules = modules;
+        filteredModules = modules;
         
-        const modulesGrid = document.getElementById('modulesManagementGrid');
-        console.log('Modules grid element:', modulesGrid);
-        
-        if (!modulesGrid) {
-            console.log('Modules grid element not found');
-            return;
-        }
-        
-        const modulesHTML = modules.map(module => {
-            // Count tasks with files
-            const tasksWithFiles = module.checklist.filter(task => {
-                if (typeof task === 'string') return false;
-                return task.file && task.file.trim() !== '';
-            }).length;
-            
-            return `
-                <div class="module-management-card">
-                    <div class="module-management-header">
-                        <h3 class="module-management-title">${module.title}</h3>
-                        <span class="module-management-status ${module.status || 'active'}">${(module.status || 'active').replace('-', ' ')}</span>
-                    </div>
-                    <div class="module-management-description">${module.description}</div>
-                    <div class="module-management-stats">
-                        <div class="module-management-tasks">${module.checklist.length} learning tasks</div>
-                        ${tasksWithFiles > 0 ? `<div class="module-management-files"><i class="fas fa-file"></i> ${tasksWithFiles} tasks with files</div>` : ''}
-                    </div>
-                    <div class="module-management-role">
-                        <strong>Required Role:</strong> ${module.requiredRole || 'Team Member'}
-                    </div>
-                    <div class="module-management-actions">
-                        <button class="btn btn-secondary" onclick="editModule('${module.title}')">
-                            <i class="fas fa-edit"></i>
-                            Edit
-                        </button>
-                        <button class="btn btn-danger" onclick="deleteModule('${module.title}')">
-                            <i class="fas fa-trash"></i>
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-        
-        console.log('Modules HTML generated');
-        modulesGrid.innerHTML = modulesHTML;
-        console.log('Modules grid innerHTML set');
+        // Render modules using the new function
+        renderModulesGrid(modules);
+        console.log('📊 Total modules loaded:', modules.length);
     } catch (error) {
         console.error('Error in loadModulesData:', error);
     }
@@ -1033,7 +1313,6 @@ function initializeGlobalModules() {
                 title: 'Communication Skills',
                 description: 'Learn effective communication techniques for leaders. This module covers verbal and non-verbal communication, active listening, and how to deliver clear, impactful messages to your team.',
                 status: 'active',
-                requiredRole: 'Team Member',
                 checklist: [
                     'Complete communication fundamentals video',
                     'Read "The Art of Active Listening" article',
@@ -1046,7 +1325,6 @@ function initializeGlobalModules() {
                 title: 'Team Leadership',
                 description: 'Master the fundamentals of leading teams effectively. Learn about team dynamics, motivation techniques, and how to build a cohesive, high-performing team.',
                 status: 'active',
-                requiredRole: 'Supervisor',
                 checklist: [
                     'Watch team dynamics overview video',
                     'Complete team assessment questionnaire',
@@ -1059,7 +1337,6 @@ function initializeGlobalModules() {
                 title: 'Decision Making',
                 description: 'Develop critical thinking and decision-making skills. Learn frameworks for making sound decisions under pressure and how to involve your team in the decision-making process.',
                 status: 'active',
-                requiredRole: 'Supervisor',
                 checklist: [
                     'Complete decision-making framework training',
                     'Practice using decision matrix tool',
@@ -1071,7 +1348,6 @@ function initializeGlobalModules() {
                 title: 'Conflict Resolution',
                 description: 'Learn to handle and resolve workplace conflicts effectively. Develop skills for mediating disputes and creating a positive work environment.',
                 status: 'active',
-                requiredRole: 'Supervisor',
                 checklist: [
                     'Complete conflict resolution basics video',
                     'Read "Mediation Techniques" guide',
@@ -1083,7 +1359,6 @@ function initializeGlobalModules() {
                 title: 'Strategic Planning',
                 description: 'Understand how to create and execute strategic plans. Learn about goal setting, resource allocation, and measuring success.',
                 status: 'active',
-                requiredRole: 'Director',
                 checklist: [
                     'Complete strategic planning fundamentals',
                     'Learn about SMART goal setting',
@@ -1095,7 +1370,6 @@ function initializeGlobalModules() {
                 title: 'Performance Management',
                 description: 'Learn to manage and improve team performance. Develop skills for setting expectations, providing feedback, and conducting performance reviews.',
                 status: 'active',
-                requiredRole: 'Director',
                 checklist: [
                     'Complete performance management overview',
                     'Learn about feedback techniques',
@@ -1107,9 +1381,7 @@ function initializeGlobalModules() {
         
         // Save default modules to global storage
         localStorage.setItem('globalModules', JSON.stringify(defaultModules));
-        console.log('Initialized default global modules');
     } else {
-        console.log('Existing modules found, preserving data');
     }
 }
 
@@ -1131,28 +1403,39 @@ async function deleteModule(moduleTitle) {
         return;
     }
     
-    // Get modules from global storage
-    const modules = getAllModules();
-    const moduleIndex = modules.findIndex(m => m.title === moduleTitle);
-    
-    if (moduleIndex === -1) {
-        alert('Module not found');
-        return;
+    try {
+        // Delete from database first
+        if (window.dbService && window.dbService.isConfigured) {
+            // Get the module ID from the database
+            const modules = await window.dbService.getModules();
+            const module = modules.find(m => m.title === moduleTitle);
+            
+            if (module && module.id) {
+                await window.dbService.deleteModule(module.id);
+            } else {
+                console.warn(`Module "${moduleTitle}" not found in database`);
+            }
+        }
+        
+        // Also remove from localStorage for fallback
+        const modules = getAllModules();
+        const moduleIndex = modules.findIndex(m => m.title === moduleTitle);
+        
+        if (moduleIndex !== -1) {
+            modules.splice(moduleIndex, 1);
+            localStorage.setItem('globalModules', JSON.stringify(modules));
+        }
+        
+        // Reload modules data to refresh the UI
+        await loadModulesData();
+        
+        // Show success message
+        showToast('success', 'Module Deleted', `Module "${moduleTitle}" has been deleted successfully!`);
+        
+    } catch (error) {
+        console.error('Failed to delete module:', error);
+        showToast('error', 'Delete Failed', `Failed to delete module "${moduleTitle}": ${error.message || 'Unknown error'}`);
     }
-    
-    // Remove module from array
-    modules.splice(moduleIndex, 1);
-    
-    // Save updated modules to global storage
-    localStorage.setItem('globalModules', JSON.stringify(modules));
-    
-    console.log(`Module "${moduleTitle}" deleted successfully`);
-    
-    // Reload modules data
-    await loadModulesData();
-    
-    // Show success message
-    showToast('success', 'Module Deleted', `Module "${moduleTitle}" has been deleted successfully!`);
 }
 
 function openModuleModal(moduleTitle) {
@@ -1202,26 +1485,25 @@ function openModuleModal(moduleTitle) {
             if (titleInput) titleInput.value = module.title;
             if (descriptionInput) descriptionInput.value = module.description;
             if (statusSelect) statusSelect.value = module.status || 'active';
-            if (roleSelect) roleSelect.value = module.requiredRole || 'Team Member';
             document.getElementById('editModuleDifficulty').value = module.difficulty || 'Phase 1';
             document.getElementById('editModuleDuration').value = module.duration || '';
             document.getElementById('editModulePrerequisites').value = module.prerequisites || '';
             document.getElementById('editModuleTags').value = module.tags || '';
-            document.getElementById('editModuleQualityUnsatisfactory').value = module.qualityUnsatisfactory || '';
-            document.getElementById('editModuleQualityAverage').value = module.qualityAverage || '';
-            document.getElementById('editModuleQualityExcellent').value = module.qualityExcellent || '';
-            document.getElementById('editModuleSpeedUnsatisfactory').value = module.speedUnsatisfactory || '';
-            document.getElementById('editModuleSpeedAverage').value = module.speedAverage || '';
-            document.getElementById('editModuleSpeedExcellent').value = module.speedExcellent || '';
-            document.getElementById('editModuleCommunicationUnsatisfactory').value = module.communicationUnsatisfactory || '';
-            document.getElementById('editModuleCommunicationAverage').value = module.communicationAverage || '';
-            document.getElementById('editModuleCommunicationExcellent').value = module.communicationExcellent || '';
+            document.getElementById('editModuleQualityUnsatisfactory').value = module.qualityUnsatisfactory || module.quality_unsatisfactory || '';
+            document.getElementById('editModuleQualityAverage').value = module.qualityAverage || module.quality_average || '';
+            document.getElementById('editModuleQualityExcellent').value = module.qualityExcellent || module.quality_excellent || '';
+            document.getElementById('editModuleSpeedUnsatisfactory').value = module.speedUnsatisfactory || module.speed_unsatisfactory || '';
+            document.getElementById('editModuleSpeedAverage').value = module.speedAverage || module.speed_average || '';
+            document.getElementById('editModuleSpeedExcellent').value = module.speedExcellent || module.speed_excellent || '';
+            document.getElementById('editModuleCommunicationUnsatisfactory').value = module.communicationUnsatisfactory || module.communication_unsatisfactory || '';
+            document.getElementById('editModuleCommunicationAverage').value = module.communicationAverage || module.communication_average || '';
+            document.getElementById('editModuleCommunicationExcellent').value = module.communicationExcellent || module.communication_excellent || '';
             document.getElementById('editModuleAuthor').value = module.author || '';
             document.getElementById('editModuleVersion').value = module.version || '1.0';
             
             // Populate checklist
             if (checklistContainer) {
-                const checklistHTML = module.checklist.map((task, index) => {
+                const checklistHTML = (module.checklist || []).map((task, index) => {
                     // Handle both old string format and new object format
                     const taskDescription = typeof task === 'string' ? task : (task.description || '');
                     const taskFile = typeof task === 'object' ? (task.file || '') : '';
@@ -1231,6 +1513,7 @@ function openModuleModal(moduleTitle) {
                     
                     return `
                         <div class="checklist-item">
+                            <div class="task-number-header">Task ${index + 1}</div>
                             <input type="text" class="checklist-task-input" value="${taskDescription}" placeholder="Enter task description">
                             <button type="button" class="add-file-btn" onclick="toggleFileSection(this)">
                                 <i class="fas fa-plus"></i>
@@ -1258,7 +1541,6 @@ function openModuleModal(moduleTitle) {
                                 </div>
                             </div>
                             <div class="checklist-actions">
-                                <span class="task-number">Task ${index + 1}</span>
                                 <button type="button" class="checklist-remove-btn" onclick="removeChecklistItem(this)">
                                     <i class="fas fa-trash"></i> Remove
                                 </button>
@@ -1304,9 +1586,8 @@ async function saveModuleChanges() {
     const title = document.getElementById('editModuleTitle').value;
     const description = document.getElementById('editModuleDescription').value;
     const status = document.getElementById('editModuleStatus').value;
-    const requiredRole = document.getElementById('editModuleRole').value;
     const difficulty = document.getElementById('editModuleDifficulty').value;
-    const duration = document.getElementById('editModuleDuration').value;
+    const duration = document.getElementById('editModuleDuration').value || 1;
     const prerequisites = document.getElementById('editModulePrerequisites').value;
     const tags = document.getElementById('editModuleTags').value;
     const qualityUnsatisfactory = document.getElementById('editModuleQualityUnsatisfactory').value;
@@ -1320,6 +1601,19 @@ async function saveModuleChanges() {
     const communicationExcellent = document.getElementById('editModuleCommunicationExcellent').value;
     const author = document.getElementById('editModuleAuthor').value;
     const version = document.getElementById('editModuleVersion').value;
+    
+    // Debug rubric data
+    console.log('📊 Rubric data collected:', {
+        qualityUnsatisfactory,
+        qualityAverage,
+        qualityExcellent,
+        speedUnsatisfactory,
+        speedAverage,
+        speedExcellent,
+        communicationUnsatisfactory,
+        communicationAverage,
+        communicationExcellent
+    });
     
     // Get checklist data
     const checklistItems = document.querySelectorAll('.checklist-item');
@@ -1362,20 +1656,49 @@ async function saveModuleChanges() {
         .filter(task => task !== null);
 
     // Validate required fields
-    if (!title || !description || checklist.length === 0) {
-        alert('Please fill in all required fields and add at least one task');
-        return;
+    const validationErrors = [];
+    
+    if (!title || title.trim().length === 0) {
+        validationErrors.push('Module title is required');
+    } else if (title.length > 200) {
+        validationErrors.push('Module title must be 200 characters or less');
+    }
+    
+    if (!description || description.trim().length === 0) {
+        validationErrors.push('Module description is required');
+    } else if (description.length > 1000) {
+        validationErrors.push('Module description must be 1000 characters or less');
+    }
+    
+    if (checklist.length === 0) {
+        validationErrors.push('At least one task is required');
     }
     
     // Validate duration if provided
     if (duration && (isNaN(duration) || duration <= 0 || duration > 40)) {
-        alert('Duration must be a number between 0.5 and 40 hours');
-        return;
+        validationErrors.push('Duration must be a number between 0.5 and 40 hours');
     }
     
     // Validate version format
     if (version && !/^\d+\.\d+$/.test(version)) {
-        alert('Version must be in format X.Y (e.g., 1.0, 2.1)');
+        validationErrors.push('Version must be in format X.Y (e.g., 1.0, 2.1)');
+    }
+    
+    
+    // Validate status
+    const validStatuses = ['active', 'inactive'];
+    if (!validStatuses.includes(status)) {
+        validationErrors.push('Please select a valid status');
+    }
+    
+    // Validate difficulty
+    const validDifficulties = ['Phase 1', 'Phase 2', 'Phase 3', 'Advanced'];
+    if (difficulty && !validDifficulties.includes(difficulty)) {
+        validationErrors.push('Please select a valid difficulty level');
+    }
+    
+    if (validationErrors.length > 0) {
+        showToast('error', 'Validation Error', validationErrors.join('<br>'));
         return;
     }
 
@@ -1389,9 +1712,9 @@ async function saveModuleChanges() {
             title,
             description,
             status,
-            requiredRole,
+            requiredRole: 'Team Member', // Default role since we removed role-based functionality
             difficulty,
-            duration,
+            duration: parseInt(duration) || 1,
             prerequisites,
             tags,
             qualityUnsatisfactory,
@@ -1417,7 +1740,7 @@ async function saveModuleChanges() {
                 title,
                 description,
                 status,
-                requiredRole,
+                requiredRole: modules[moduleIndex].requiredRole || 'Team Member', // Preserve existing or default
                 difficulty,
                 duration,
                 prerequisites,
@@ -1444,52 +1767,180 @@ async function saveModuleChanges() {
         if (moduleIndex >= 0) {
             // Update existing module
             const updatedModule = modules[moduleIndex];
-            await window.dbService.updateModule(updatedModule.id || updatedModule.title, updatedModule);
-            console.log('Module updated in database successfully');
+            console.log('Updating module:', updatedModule.title, 'with ID:', updatedModule.id);
+            
+            // Update the module with form data including rubric fields
+            updatedModule.title = title;
+            updatedModule.description = description;
+            updatedModule.status = status;
+            updatedModule.difficulty = difficulty;
+            updatedModule.duration = parseInt(duration) || 1;
+            updatedModule.prerequisites = prerequisites;
+            updatedModule.tags = tags;
+            updatedModule.author = author;
+            updatedModule.version = version;
+            updatedModule.qualityUnsatisfactory = qualityUnsatisfactory;
+            updatedModule.qualityAverage = qualityAverage;
+            updatedModule.qualityExcellent = qualityExcellent;
+            updatedModule.speedUnsatisfactory = speedUnsatisfactory;
+            updatedModule.speedAverage = speedAverage;
+            updatedModule.speedExcellent = speedExcellent;
+            updatedModule.communicationUnsatisfactory = communicationUnsatisfactory;
+            updatedModule.communicationAverage = communicationAverage;
+            updatedModule.communicationExcellent = communicationExcellent;
+            updatedModule.checklist = checklist;
+            
+            // Remove checklist from database update - it's handled separately
+            const { checklist: _, ...moduleForDatabase } = updatedModule;
+            // Convert camelCase to snake_case for database
+            const dbModule = {
+                ...moduleForDatabase,
+                required_role: moduleForDatabase.requiredRole || 'Team Member',
+                quality_unsatisfactory: moduleForDatabase.qualityUnsatisfactory,
+                quality_average: moduleForDatabase.qualityAverage,
+                quality_excellent: moduleForDatabase.qualityExcellent,
+                speed_unsatisfactory: moduleForDatabase.speedUnsatisfactory,
+                speed_average: moduleForDatabase.speedAverage,
+                speed_excellent: moduleForDatabase.speedExcellent,
+                communication_unsatisfactory: moduleForDatabase.communicationUnsatisfactory,
+                communication_average: moduleForDatabase.communicationAverage,
+                communication_excellent: moduleForDatabase.communicationExcellent,
+                updated_at: new Date().toISOString()
+            };
+            // Remove camelCase versions
+            delete dbModule.requiredRole;
+            delete dbModule.qualityUnsatisfactory;
+            delete dbModule.qualityAverage;
+            delete dbModule.qualityExcellent;
+            delete dbModule.speedUnsatisfactory;
+            delete dbModule.speedAverage;
+            delete dbModule.speedExcellent;
+            delete dbModule.communicationUnsatisfactory;
+            delete dbModule.communicationAverage;
+            delete dbModule.communicationExcellent;
+            delete dbModule.lastUpdated;
+            delete dbModule.createdAt;
+            
+            console.log('Sending to database:', dbModule);
+            console.log('📊 Rubric fields in database object:', {
+                quality_unsatisfactory: dbModule.quality_unsatisfactory,
+                quality_average: dbModule.quality_average,
+                quality_excellent: dbModule.quality_excellent,
+                speed_unsatisfactory: dbModule.speed_unsatisfactory,
+                speed_average: dbModule.speed_average,
+                speed_excellent: dbModule.speed_excellent,
+                communication_unsatisfactory: dbModule.communication_unsatisfactory,
+                communication_average: dbModule.communication_average,
+                communication_excellent: dbModule.communication_excellent
+            });
+            const result = await window.dbService.updateModule(updatedModule.id || updatedModule.title, dbModule);
+            console.log('Database update result:', result);
+            
+            // Save checklist items to module_checklist table
+            if (checklist && checklist.length > 0) {
+                console.log('💾 Saving checklist items:', checklist);
+                try {
+                    // First, delete existing checklist items for this module
+                    await window.dbService.deleteModuleChecklist(updatedModule.id);
+                    
+                    // Then, add the new checklist items
+                    for (let i = 0; i < checklist.length; i++) {
+                        const task = checklist[i];
+                        const taskData = {
+                            module_id: updatedModule.id,
+                            order_index: i + 1,
+                            task_text: typeof task === 'string' ? task : (task.description || task.task || '')
+                        };
+                        await window.dbService.createModuleChecklistItem(taskData);
+                    }
+                    console.log('✅ Checklist items saved successfully');
+                } catch (error) {
+                    console.error('❌ Failed to save checklist items:', error);
+                }
+            }
         } else {
             // Create new module
             const newModule = modules[modules.length - 1];
-            await window.dbService.createModule(newModule);
-            console.log('Module created in database successfully');
+            console.log('Creating new module:', newModule.title);
+            
+            // Remove checklist from database creation - it's handled separately
+            const { checklist, ...moduleForDatabase } = newModule;
+            // Convert camelCase to snake_case for database
+            const dbModule = {
+                ...moduleForDatabase,
+                required_role: moduleForDatabase.requiredRole || 'Team Member',
+                quality_unsatisfactory: moduleForDatabase.qualityUnsatisfactory,
+                quality_average: moduleForDatabase.qualityAverage,
+                quality_excellent: moduleForDatabase.qualityExcellent,
+                speed_unsatisfactory: moduleForDatabase.speedUnsatisfactory,
+                speed_average: moduleForDatabase.speedAverage,
+                speed_excellent: moduleForDatabase.speedExcellent,
+                communication_unsatisfactory: moduleForDatabase.communicationUnsatisfactory,
+                communication_average: moduleForDatabase.communicationAverage,
+                communication_excellent: moduleForDatabase.communicationExcellent,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+            // Remove camelCase versions
+            delete dbModule.requiredRole;
+            delete dbModule.qualityUnsatisfactory;
+            delete dbModule.qualityAverage;
+            delete dbModule.qualityExcellent;
+            delete dbModule.speedUnsatisfactory;
+            delete dbModule.speedAverage;
+            delete dbModule.speedExcellent;
+            delete dbModule.communicationUnsatisfactory;
+            delete dbModule.communicationAverage;
+            delete dbModule.communicationExcellent;
+            delete dbModule.lastUpdated;
+            delete dbModule.createdAt;
+            
+            console.log('Sending to database:', dbModule);
+            const result = await window.dbService.createModule(dbModule);
+            console.log('Database create result:', result);
+            
+            // Save checklist items to module_checklist table
+            if (checklist && checklist.length > 0 && result && result.length > 0) {
+                const createdModule = result[0];
+                console.log('💾 Saving checklist items for new module:', checklist);
+                try {
+                    // Add the new checklist items
+                    for (let i = 0; i < checklist.length; i++) {
+                        const task = checklist[i];
+                        const taskData = {
+                            module_id: createdModule.id,
+                            order_index: i + 1,
+                            task_text: typeof task === 'string' ? task : (task.description || task.task || '')
+                        };
+                        await window.dbService.createModuleChecklistItem(taskData);
+                    }
+                    console.log('✅ Checklist items saved successfully for new module');
+                } catch (error) {
+                    console.error('❌ Failed to save checklist items for new module:', error);
+                }
+            }
         }
         
         // Sync to localStorage after successful database save
         localStorage.setItem('globalModules', JSON.stringify(modules));
-        console.log('Module synced to localStorage');
+        console.log('Module saved successfully to both database and localStorage');
     } catch (error) {
         console.error('Failed to save module to database:', error);
+        showToast('error', 'Save Failed', `Failed to save module: ${error.message || 'Unknown error'}`);
         // Fallback to localStorage only
         localStorage.setItem('globalModules', JSON.stringify(modules));
         console.log('Module saved to localStorage only (database unavailable)');
     }
 
-    console.log('Module saved:', {
-        title,
-        description,
-        status,
-        requiredRole,
-        difficulty,
-        duration,
-        prerequisites,
-        tags,
-        qualityUnsatisfactory,
-        qualityAverage,
-        qualityExcellent,
-        speedUnsatisfactory,
-        speedAverage,
-        speedExcellent,
-        communicationUnsatisfactory,
-        communicationAverage,
-        communicationExcellent,
-        author,
-        version,
-        checklist
-    });
 
     // Close modal
     closeModuleModal();
 
+    // Small delay to ensure database has processed the update
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     // Reload modules data
+    console.log('🔄 Reloading modules data after save...');
     await loadModulesData();
 
     // Show success message
@@ -1637,13 +2088,38 @@ function handleFileUpload(fileInput, taskIndex) {
         const checklistItem = fileInput.closest('.checklist-item');
         const filesList = checklistItem.querySelector('.checklist-files-list');
         
-        // Add each selected file to the files list
+        // Validate file types and sizes
+        const allowedTypes = ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png', '.mp4', '.mp3', '.pptx', '.xlsx'];
+        const maxFileSize = 10 * 1024 * 1024; // 10MB limit
+        
         Array.from(files).forEach(file => {
+            // Validate file type
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+            if (!allowedTypes.includes(fileExtension)) {
+                showToast('error', 'Invalid File Type', `File "${file.name}" has an unsupported format. Allowed types: ${allowedTypes.join(', ')}`);
+                return;
+            }
+            
+            // Validate file size
+            if (file.size > maxFileSize) {
+                showToast('error', 'File Too Large', `File "${file.name}" is too large. Maximum size is 10MB.`);
+                return;
+            }
+            
             // Read the file content as base64
             const reader = new FileReader();
             reader.onload = function(e) {
-                const base64Content = e.target.result.split(',')[1]; // Remove data:type;base64, prefix
-                addFileToList(filesList, file.name, file.size, base64Content);
+                try {
+                    const base64Content = e.target.result.split(',')[1]; // Remove data:type;base64, prefix
+                    addFileToList(filesList, file.name, file.size, base64Content);
+                    showToast('success', 'File Added', `Successfully added "${file.name}"`);
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                    showToast('error', 'File Processing Error', `Failed to process "${file.name}": ${error.message}`);
+                }
+            };
+            reader.onerror = function() {
+                showToast('error', 'File Read Error', `Failed to read "${file.name}"`);
             };
             reader.readAsDataURL(file);
         });
@@ -1863,13 +2339,33 @@ async function refreshDataFromDatabase() {
 // Make refresh function available globally
 window.refreshDataFromDatabase = refreshDataFromDatabase;
 
+// Test function for debugging modals
+window.testModal = function() {
+    console.log('Testing modal functionality...');
+    const modal = document.getElementById('userModal');
+    const newUserBtn = document.getElementById('newUserBtn');
+    
+    console.log('Modal found:', !!modal);
+    
+    if (modal) {
+        modal.classList.add('show');
+        console.log('Modal should now be visible');
+    }
+    
+    if (newUserBtn) {
+        console.log('New User button element:', newUserBtn);
+        console.log('Button onclick:', newUserBtn.onclick);
+        console.log('Button event listeners:', newUserBtn.addEventListener ? 'Has addEventListener' : 'No addEventListener');
+    }
+};
+
 // Module Assignment Functions
 let moduleAssignments = [];
 let currentAssignment = null;
 
 // Load existing assignments from user progress data
 async function loadExistingAssignmentsFromProgress() {
-    const users = getAllUsers();
+    const users = await getAllUsers();
     const modules = getAllModules();
     const existingAssignments = [];
     
@@ -1903,77 +2399,11 @@ async function loadExistingAssignmentsFromProgress() {
             });
         }
         
-        // Also check for modules that are assigned based on role requirements
-        modules.forEach(module => {
-            // Check if this module is assigned to this user based on role
-            if (module.requiredRole && user.role) {
-                const roleMatches = checkRoleMatch(user.role, module.requiredRole);
-                if (roleMatches) {
-                    // Check if this assignment doesn't already exist
-                    const existingAssignment = existingAssignments.find(a => 
-                        a.user_id === (user.id || user.username) && 
-                        a.module_id === (module.id || module.title)
-                    );
-                    
-                    // Check if this role-based assignment was previously unassigned
-                    let wasUnassigned = false;
-                    try {
-                        if (window.dbService && window.dbService.isConfigured) {
-                            wasUnassigned = await window.dbService.isModuleUnassignedForUser(user.id || user.username, module.id || module.title);
-                        } else {
-                            // Fallback to localStorage if database is not available
-                            const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
-                            const unassignedKey = `${user.id || user.username}-${module.id || module.title}`;
-                            wasUnassigned = unassignedRoleBased.includes(unassignedKey);
-                        }
-                    } catch (error) {
-                        console.error('Failed to check unassigned role-based assignment:', error);
-                        // Fallback to localStorage if database check fails
-                        const unassignedRoleBased = JSON.parse(localStorage.getItem('unassignedRoleBased') || '[]');
-                        const unassignedKey = `${user.id || user.username}-${module.id || module.title}`;
-                        wasUnassigned = unassignedRoleBased.includes(unassignedKey);
-                    }
-                    
-                    if (!existingAssignment && !wasUnassigned) {
-                        const assignment = {
-                            id: `role-based-${user.username}-${module.title}`.replace(/\s+/g, '-'),
-                            user_id: user.id || user.username,
-                            module_id: module.id || module.title,
-                            user_name: user.full_name || user.fullName || user.username,
-                            module_title: module.title,
-                            assigned_at: new Date().toISOString(),
-                            due_date: null,
-                            status: 'assigned',
-                            notes: 'Role-based assignment',
-                            is_existing: true
-                        };
-                        existingAssignments.push(assignment);
-                    }
-                }
-            }
-        });
     });
     
     return existingAssignments;
 }
 
-// Helper function to check if user role matches module requirement
-function checkRoleMatch(userRole, requiredRole) {
-    const roleHierarchy = {
-        'Team Member': 1,
-        'Assistant Supervisor': 2,
-        'Supervisor': 3,
-        'Trainer': 4,
-        'Director': 5,
-        'Admin': 6
-    };
-    
-    const userLevel = roleHierarchy[userRole] || 0;
-    const requiredLevel = roleHierarchy[requiredRole] || 0;
-    
-    // User can access modules for their role level and below
-    return userLevel >= requiredLevel;
-}
 
 // Load module assignments
 async function loadModuleAssignments() {
@@ -2006,30 +2436,61 @@ async function loadModuleAssignments() {
         moduleAssignments = uniqueAssignments;
         console.log('Total unique module assignments:', moduleAssignments.length);
         
-        updateAssignmentsTable();
-        updateAssignmentFilters();
+        await updateAssignmentsTable();
+        await updateAssignmentFilters();
     } catch (error) {
         console.error('Failed to load module assignments:', error);
         showToast('error', 'Database Error', 'Failed to load module assignments from database');
         moduleAssignments = [];
-        updateAssignmentsTable();
-        updateAssignmentFilters();
+        await updateAssignmentsTable();
+        await updateAssignmentFilters();
     }
 }
 
 // Update assignments table
-function updateAssignmentsTable() {
+async function updateAssignmentsTable() {
     const tbody = document.getElementById('assignmentsTableBody');
     if (!tbody) return;
 
     tbody.innerHTML = '';
 
     if (moduleAssignments.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: #666;">No module assignments found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem; color: #666;">No module assignments found</td></tr>';
         return;
     }
 
-    moduleAssignments.forEach(assignment => {
+    // Process each assignment and fetch progress data
+    for (const assignment of moduleAssignments) {
+        let progressInfo = 'No progress data';
+        
+        try {
+            // Get user progress for this module
+            if (window.dbService && window.dbService.isConfigured) {
+                const userProgress = await window.dbService.getUserProgress(assignment.user_id);
+                const moduleProgress = userProgress.find(p => p.module_id === assignment.module_id);
+                
+                if (moduleProgress) {
+                    const percentage = Math.round(moduleProgress.progress_percentage || 0);
+                    const completed = moduleProgress.completed_tasks || 0;
+                    const total = moduleProgress.total_tasks || 0;
+                    
+                    progressInfo = `
+                        <div class="progress-info">
+                            <div class="progress-bar-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${percentage}%"></div>
+                                </div>
+                                <span class="progress-text">${percentage}%</span>
+                            </div>
+                            <div class="progress-details">${completed}/${total} tasks</div>
+                        </div>
+                    `;
+                }
+            }
+        } catch (error) {
+            console.warn(`Failed to fetch progress for assignment ${assignment.id}:`, error);
+        }
+        
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><input type="checkbox" class="assignment-checkbox" data-assignment-id="${assignment.id}"></td>
@@ -2038,6 +2499,7 @@ function updateAssignmentsTable() {
             <td>${formatDate(assignment.assigned_at)}</td>
             <td>${assignment.due_date ? formatDate(assignment.due_date) : 'No due date'}</td>
             <td><span class="status-badge status-${assignment.status}">${assignment.status}</span></td>
+            <td>${progressInfo}</td>
             <td>${assignment.notes || '-'}</td>
             <td>
                 <div class="assignment-actions">
@@ -2054,7 +2516,7 @@ function updateAssignmentsTable() {
             </td>
         `;
         tbody.appendChild(row);
-    });
+    }
 
     // Add event listeners to individual checkboxes
     const assignmentCheckboxes = document.querySelectorAll('.assignment-checkbox');
@@ -2064,13 +2526,13 @@ function updateAssignmentsTable() {
 }
 
 // Update assignment filters
-function updateAssignmentFilters() {
+async function updateAssignmentFilters() {
     const userFilter = document.getElementById('assignmentUserFilter');
     const moduleFilter = document.getElementById('assignmentModuleFilter');
 
     if (userFilter) {
         // Populate user filter
-        const users = getAllUsers();
+        const users = await getAllUsers();
         userFilter.innerHTML = '<option value="">All Users</option>';
         users.forEach(user => {
             const option = document.createElement('option');
@@ -2094,7 +2556,7 @@ function updateAssignmentFilters() {
 }
 
 // Open assignment modal
-function openAssignmentModal(assignmentId = null) {
+async function openAssignmentModal(assignmentId = null) {
     const modal = document.getElementById('assignmentModal');
     const title = document.getElementById('assignmentModalTitle');
     
@@ -2106,42 +2568,70 @@ function openAssignmentModal(assignmentId = null) {
         title.textContent = 'Assign Module';
     }
 
-    populateAssignmentForm();
+    await populateAssignmentForm();
     modal.classList.add('show');
 }
 
 // Populate assignment form
-function populateAssignmentForm() {
-    const userSelect = document.getElementById('assignmentUser');
-    const moduleSelect = document.getElementById('assignmentModule');
+async function populateAssignmentForm() {
+    const userCheckboxes = document.getElementById('userCheckboxes');
+    const moduleCheckboxes = document.getElementById('moduleCheckboxes');
     const dueDateInput = document.getElementById('assignmentDueDate');
     const statusSelect = document.getElementById('assignmentStatus');
     const notesTextarea = document.getElementById('assignmentNotes');
 
-    // Populate user dropdown
-    const users = getAllUsers();
-    userSelect.innerHTML = '<option value="">Select a user...</option>';
+    // Populate user checkboxes
+    const users = await getAllUsers();
+    userCheckboxes.innerHTML = '';
     users.forEach(user => {
-        const option = document.createElement('option');
-        option.value = user.id || user.username;
-        option.textContent = user.full_name || user.fullName || user.username;
+        const checkboxItem = document.createElement('div');
+        checkboxItem.className = 'user-checkbox-item';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `user-${user.id || user.username}`;
+        checkbox.name = 'userIds';
+        checkbox.value = user.id || user.username;
+        
+        const label = document.createElement('label');
+        label.htmlFor = `user-${user.id || user.username}`;
+        label.textContent = user.full_name || user.fullName || user.username;
+        
+        // Check if this user is already assigned (for editing)
         if (currentAssignment && (user.id === currentAssignment.user_id || user.username === currentAssignment.user_id)) {
-            option.selected = true;
+            checkbox.checked = true;
         }
-        userSelect.appendChild(option);
+        
+        checkboxItem.appendChild(checkbox);
+        checkboxItem.appendChild(label);
+        userCheckboxes.appendChild(checkboxItem);
     });
 
-    // Populate module dropdown
+    // Populate module checkboxes
     const modules = getAllModules();
-    moduleSelect.innerHTML = '<option value="">Select modules...</option>';
+    moduleCheckboxes.innerHTML = '';
     modules.forEach(module => {
-        const option = document.createElement('option');
-        option.value = module.id || module.title;
-        option.textContent = module.title;
+        const checkboxItem = document.createElement('div');
+        checkboxItem.className = 'module-checkbox-item';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `module-${module.id || module.title}`;
+        checkbox.name = 'moduleIds';
+        checkbox.value = module.id || module.title;
+        
+        const label = document.createElement('label');
+        label.htmlFor = `module-${module.id || module.title}`;
+        label.textContent = module.title;
+        
+        // Check if this module is already assigned (for editing)
         if (currentAssignment && (module.id === currentAssignment.module_id || module.title === currentAssignment.module_id)) {
-            option.selected = true;
+            checkbox.checked = true;
         }
-        moduleSelect.appendChild(option);
+        
+        checkboxItem.appendChild(checkbox);
+        checkboxItem.appendChild(label);
+        moduleCheckboxes.appendChild(checkboxItem);
     });
 
     // Populate other fields
@@ -2161,19 +2651,25 @@ async function saveAssignment() {
     const form = document.getElementById('assignmentForm');
     const formData = new FormData(form);
     
-    const userId = formData.get('userId');
-    const moduleIds = formData.getAll('moduleId'); // Get all selected modules
+    const userIds = formData.getAll('userIds'); // Get all selected users from checkboxes
+    const moduleIds = formData.getAll('moduleIds'); // Get all selected modules from checkboxes
     const dueDate = formData.get('dueDate') || null;
     const status = formData.get('status');
     const notes = formData.get('notes') || null;
 
-    if (!userId || moduleIds.length === 0) {
-        showToast('error', 'Validation Error', 'Please select a user and at least one module');
+    if (userIds.length === 0 || moduleIds.length === 0) {
+        showToast('error', 'Validation Error', 'Please select at least one user and one module');
         return;
     }
 
     // Filter out empty values
+    const validUserIds = userIds.filter(id => id && id !== '');
     const validModuleIds = moduleIds.filter(id => id && id !== '');
+    
+    if (validUserIds.length === 0) {
+        showToast('error', 'Validation Error', 'Please select at least one user');
+        return;
+    }
     
     if (validModuleIds.length === 0) {
         showToast('error', 'Validation Error', 'Please select at least one module');
@@ -2184,7 +2680,7 @@ async function saveAssignment() {
         if (currentAssignment) {
             // Update existing assignment (single assignment editing)
             const assignmentData = {
-                user_id: userId,
+                user_id: validUserIds[0], // For editing, use first selected user
                 module_id: validModuleIds[0], // For editing, use first selected module
                 due_date: dueDate,
                 status: status,
@@ -2193,40 +2689,41 @@ async function saveAssignment() {
             await window.dbService.updateModuleAssignment(currentAssignment.id, assignmentData);
             showToast('success', 'Assignment Updated', 'Module assignment updated successfully');
         } else {
-            // Create multiple new assignments
-            const users = getAllUsers();
-            const modules = getAllModules();
-            const user = users.find(u => (u.id || u.username) === userId);
+            // Create multiple new assignments for all user-module combinations
+            const users = await getAllUsers();
+            const modules = await getAllModules();
             
             let successCount = 0;
             let errorCount = 0;
             
-            // Create assignments for each selected module
-            for (const moduleId of validModuleIds) {
-                try {
-                    const newAssignment = await window.dbService.assignModuleToUser(
-                        userId,
-                        moduleId,
-                        null, // assigned_by
-                        dueDate,
-                        notes
-                    );
-                    
-                    
-                    successCount++;
-                } catch (error) {
-                    console.error(`Failed to assign module ${moduleId}:`, error);
-                    errorCount++;
+            // Create assignments for each selected user and module combination
+            for (const userId of validUserIds) {
+                for (const moduleId of validModuleIds) {
+                    try {
+                        const newAssignment = await window.dbService.assignModuleToUser(
+                            userId,
+                            moduleId,
+                            null, // assigned_by
+                            dueDate,
+                            notes
+                        );
+                        
+                        successCount++;
+                    } catch (error) {
+                        console.error(`Failed to assign module ${moduleId} to user ${userId}:`, error);
+                        errorCount++;
+                    }
                 }
             }
             
             if (successCount > 0) {
+                const totalAssignments = validUserIds.length * validModuleIds.length;
                 const message = errorCount > 0 
-                    ? `${successCount} modules assigned successfully, ${errorCount} failed`
-                    : `${successCount} modules assigned successfully`;
-                showToast('success', 'Modules Assigned', message);
+                    ? `${successCount} assignments created successfully, ${errorCount} failed`
+                    : `${successCount} assignments created successfully`;
+                showToast('success', 'Assignments Created', message);
             } else {
-                showToast('error', 'Assignment Failed', 'No modules could be assigned');
+                showToast('error', 'Assignment Failed', 'No assignments could be created');
             }
         }
 
@@ -2402,14 +2899,14 @@ function setupAssignmentEventListeners() {
 }
 
 // Filter assignments
-function filterAssignments() {
+async function filterAssignments() {
     const userFilter = document.getElementById('assignmentUserFilter')?.value;
     const moduleFilter = document.getElementById('assignmentModuleFilter')?.value;
     const statusFilter = document.getElementById('assignmentStatusFilter')?.value;
 
     // This would filter the assignments based on the selected filters
     // For now, we'll just reload all assignments
-    updateAssignmentsTable();
+    await updateAssignmentsTable();
 }
 
 // Toggle select all assignments

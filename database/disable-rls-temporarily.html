@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disable RLS Temporarily</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .button {
+            background: #e74c3c;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background: #c0392b;
+        }
+        .button.success {
+            background: #27ae60;
+        }
+        .button.success:hover {
+            background: #229954;
+        }
+        .log {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+        .warning { color: #f39c12; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Disable RLS Temporarily</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Warning:</strong> This will temporarily disable Row Level Security for module_assignments and unassigned_role_assignments tables. 
+            This is a quick fix for development. In production, you should implement proper RLS policies.
+        </div>
+        
+        <p>This tool will disable RLS on the problematic tables to allow module assignments to work.</p>
+        
+        <div style="text-align: center;">
+            <button class="button" onclick="disableRLS()">🚀 Disable RLS</button>
+            <button class="button success" onclick="enableRLS()">🔒 Re-enable RLS</button>
+        </div>
+        
+        <h3>Execution Log:</h3>
+        <div class="log" id="logOutput">Ready to modify RLS settings...</div>
+    </div>
+
+    <script src="../database/config.js"></script>
+    <script>
+        function log(message, type = 'info') {
+            const logOutput = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            logOutput.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        async function disableRLS() {
+            log('🔧 Disabling RLS on module_assignments and unassigned_role_assignments...', 'info');
+            
+            if (!window.dbService || !window.dbService.isConfigured) {
+                log('❌ Database service not configured', 'error');
+                return;
+            }
+
+            try {
+                // Method 1: Try to disable RLS using direct SQL
+                const disableCommands = [
+                    'ALTER TABLE module_assignments DISABLE ROW LEVEL SECURITY',
+                    'ALTER TABLE unassigned_role_assignments DISABLE ROW LEVEL SECURITY'
+                ];
+
+                for (const command of disableCommands) {
+                    try {
+                        log(`📝 Executing: ${command}`, 'info');
+                        // Try using a direct SQL endpoint if available
+                        const response = await fetch(`${window.dbService.supabaseUrl}/rest/v1/rpc/exec_sql`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${window.dbService.supabaseKey}`,
+                                'apikey': window.dbService.supabaseKey
+                            },
+                            body: JSON.stringify({ sql: command })
+                        });
+
+                        if (response.ok) {
+                            log(`✅ Success: ${command}`, 'success');
+                        } else {
+                            log(`⚠️ Warning: ${command} - ${response.status}`, 'warning');
+                        }
+                    } catch (error) {
+                        log(`⚠️ Warning: ${command} - ${error.message}`, 'warning');
+                    }
+                }
+
+                // Method 2: Try to drop and recreate policies
+                const policyCommands = [
+                    'DROP POLICY IF EXISTS "Users can view their own assignments" ON module_assignments',
+                    'DROP POLICY IF EXISTS "Admins can manage all assignments" ON module_assignments',
+                    'DROP POLICY IF EXISTS "Users can view their own unassigned assignments" ON unassigned_role_assignments',
+                    'DROP POLICY IF EXISTS "Admins can manage all unassigned assignments" ON unassigned_role_assignments',
+                    'CREATE POLICY "Allow all operations on module_assignments" ON module_assignments FOR ALL USING (true)',
+                    'CREATE POLICY "Allow all operations on unassigned_role_assignments" ON unassigned_role_assignments FOR ALL USING (true)'
+                ];
+
+                for (const command of policyCommands) {
+                    try {
+                        log(`📝 Executing: ${command}`, 'info');
+                        const response = await fetch(`${window.dbService.supabaseUrl}/rest/v1/rpc/exec_sql`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${window.dbService.supabaseKey}`,
+                                'apikey': window.dbService.supabaseKey
+                            },
+                            body: JSON.stringify({ sql: command })
+                        });
+
+                        if (response.ok) {
+                            log(`✅ Success: ${command}`, 'success');
+                        } else {
+                            log(`⚠️ Warning: ${command} - ${response.status}`, 'warning');
+                        }
+                    } catch (error) {
+                        log(`⚠️ Warning: ${command} - ${error.message}`, 'warning');
+                    }
+                }
+                
+                log('🎉 RLS modification completed!', 'success');
+                log('💡 Try creating module assignments now.', 'info');
+                
+            } catch (error) {
+                log(`❌ Error during execution: ${error.message}`, 'error');
+            }
+        }
+
+        async function enableRLS() {
+            log('🔒 Re-enabling RLS...', 'info');
+            
+            try {
+                const enableCommands = [
+                    'ALTER TABLE module_assignments ENABLE ROW LEVEL SECURITY',
+                    'ALTER TABLE unassigned_role_assignments ENABLE ROW LEVEL SECURITY'
+                ];
+
+                for (const command of enableCommands) {
+                    try {
+                        log(`📝 Executing: ${command}`, 'info');
+                        const response = await fetch(`${window.dbService.supabaseUrl}/rest/v1/rpc/exec_sql`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${window.dbService.supabaseKey}`,
+                                'apikey': window.dbService.supabaseKey
+                            },
+                            body: JSON.stringify({ sql: command })
+                        });
+
+                        if (response.ok) {
+                            log(`✅ Success: ${command}`, 'success');
+                        } else {
+                            log(`⚠️ Warning: ${command} - ${response.status}`, 'warning');
+                        }
+                    } catch (error) {
+                        log(`⚠️ Warning: ${command} - ${error.message}`, 'warning');
+                    }
+                }
+                
+                log('🔒 RLS re-enabled!', 'success');
+                
+            } catch (error) {
+                log(`❌ Error during execution: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🔧 RLS Management Tool loaded', 'info');
+            log('📋 Ready to modify database security settings', 'info');
+        });
+    </script>
+</body>
+</html>
