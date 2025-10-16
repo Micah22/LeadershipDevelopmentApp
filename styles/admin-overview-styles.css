@@ -858,6 +858,126 @@ body {
     padding: 1rem 0;
 }
 
+/* Header Cards Layout */
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-cards {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.floating-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+    min-width: 120px;
+}
+
+.floating-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.floating-card .card-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--cfa-red);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.floating-card .card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.floating-card .card-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1;
+}
+
+.floating-card .card-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--medium-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Role-specific card styling */
+.role-card .card-icon {
+    background: var(--cfa-red);
+}
+
+.total-users-card .card-icon {
+    background: var(--navy);
+}
+
+/* Dark mode for floating cards */
+[data-theme="dark"] .floating-card {
+    background: var(--white);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .floating-card .card-number {
+    color: var(--navy);
+}
+
+[data-theme="dark"] .floating-card .card-label {
+    color: var(--medium-gray);
+}
+
+/* Responsive design for header cards */
+@media (max-width: 1200px) {
+    .header-top {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1.5rem;
+    }
+    
+    .header-cards {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-cards {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .floating-card {
+        min-width: auto;
+        width: 100%;
+    }
+}
+
 .nav-item {
     display: flex;
     align-items: center;

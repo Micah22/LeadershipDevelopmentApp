@@ -349,27 +349,28 @@ function updateSummaryCards(users) {
 }
 
 function updateRoleStats(users) {
-    const roleStatsElement = document.getElementById('roleStats');
-    if (!roleStatsElement) {
-        return;
-    }
-    
     // Count users by role
     const roleCounts = {};
     users.forEach(user => {
         roleCounts[user.role] = (roleCounts[user.role] || 0) + 1;
     });
     
+    // Update floating cards with role counts
+    const adminCountElement = document.getElementById('adminCount');
+    const directorCountElement = document.getElementById('directorCount');
+    const teamMemberCountElement = document.getElementById('teamMemberCount');
     
-    // Create role stat cards
-    const roleStatsHTML = Object.entries(roleCounts).map(([role, count]) => `
-        <div class="role-stat">
-            <div class="role-stat-number">${count}</div>
-            <div class="role-stat-label">${role}</div>
-        </div>
-    `).join('');
+    if (adminCountElement) {
+        adminCountElement.textContent = roleCounts['Admin'] || 0;
+    }
     
-    roleStatsElement.innerHTML = roleStatsHTML || '<p>No role data available</p>';
+    if (directorCountElement) {
+        directorCountElement.textContent = roleCounts['Director'] || 0;
+    }
+    
+    if (teamMemberCountElement) {
+        teamMemberCountElement.textContent = roleCounts['Team Member'] || 0;
+    }
 }
 
 function updateUserProgressTable(users) {
@@ -1258,10 +1259,26 @@ async function loadModulesData() {
                             const checklistItems = await window.dbService.getModuleChecklist(module.id);
                             if (checklistItems && checklistItems.length > 0) {
                                 // Convert database checklist items to the format expected by the UI
-                                module.checklist = checklistItems.map(item => ({
-                                    description: item.task_text,
-                                    task: item.task_text
-                                }));
+                                module.checklist = checklistItems.map((item, index) => {
+                                    const taskObj = {
+                                        description: item.task_text,
+                                        task: item.task_text
+                                    };
+                                    
+                                    // Restore file data from localStorage (backup storage)
+                                    const fileDataKey = `module_${module.id}_task_${index}_files`;
+                                    const storedFileData = localStorage.getItem(fileDataKey);
+                                    if (storedFileData) {
+                                        try {
+                                            taskObj.files = JSON.parse(storedFileData);
+                                            console.log(`📁 Restored file data from localStorage: ${fileDataKey}`);
+                                        } catch (error) {
+                                            console.warn('Failed to parse file data from localStorage:', error);
+                                        }
+                                    }
+                                    
+                                    return taskObj;
+                                });
                             } else {
                                 module.checklist = [];
                             }
@@ -1851,6 +1868,13 @@ async function saveModuleChanges() {
                             order_index: i + 1,
                             task_text: typeof task === 'string' ? task : (task.description || task.task || '')
                         };
+                        
+                        // Store file data in localStorage as backup (until we add file_data column to database)
+                        if (typeof task === 'object' && task.files && task.files.length > 0) {
+                            const fileDataKey = `module_${updatedModule.id}_task_${i}_files`;
+                            localStorage.setItem(fileDataKey, JSON.stringify(task.files));
+                            console.log(`💾 Stored file data in localStorage: ${fileDataKey}`);
+                        }
                         await window.dbService.createModuleChecklistItem(taskData);
                     }
                     console.log('✅ Checklist items saved successfully');
@@ -1912,6 +1936,13 @@ async function saveModuleChanges() {
                             order_index: i + 1,
                             task_text: typeof task === 'string' ? task : (task.description || task.task || '')
                         };
+                        
+                        // Store file data in localStorage as backup (until we add file_data column to database)
+                        if (typeof task === 'object' && task.files && task.files.length > 0) {
+                            const fileDataKey = `module_${createdModule.id}_task_${i}_files`;
+                            localStorage.setItem(fileDataKey, JSON.stringify(task.files));
+                            console.log(`💾 Stored file data in localStorage: ${fileDataKey}`);
+                        }
                         await window.dbService.createModuleChecklistItem(taskData);
                     }
                     console.log('✅ Checklist items saved successfully for new module');
@@ -1989,41 +2020,7 @@ function removeChecklistItem(button) {
     updateTaskNumbers();
 }
 
-function handleFileUpload(fileInput, taskIndex) {
-    const file = fileInput.files[0];
-    if (file) {
-        // Update the file input text field with the file name
-        const fileTextInput = fileInput.previousElementSibling;
-        fileTextInput.value = file.name;
-        
-        // Show file info
-        showFileInfo(fileInput, file);
-    }
-}
-
-function showFileInfo(fileInput, file) {
-    const checklistItem = fileInput.closest('.checklist-item');
-    let fileInfo = checklistItem.querySelector('.checklist-file-info');
-    
-    if (!fileInfo) {
-        fileInfo = document.createElement('div');
-        fileInfo.className = 'checklist-file-info';
-        fileInput.parentElement.parentElement.insertBefore(fileInfo, fileInput.parentElement.nextSibling);
-    }
-    
-    fileInfo.innerHTML = `
-        <i class="fas fa-file"></i>
-        <span>File: ${file.name} (${formatFileSize(file.size)})</span>
-    `;
-}
-
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
+// Removed duplicate handleFileUpload function - using the advanced version below
 
 function updateTaskNumbers() {
     const checklistItems = document.querySelectorAll('.checklist-item');

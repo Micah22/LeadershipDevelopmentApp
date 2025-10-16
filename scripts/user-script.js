@@ -13,10 +13,20 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    // Wait a bit for navbar and users data to load first
-    setTimeout(async () => {
-        // Ensure users data is available
-        await ensureUsersData();
+    // Show loading indicator
+    showLoadingIndicator();
+    
+    // Initialize page with parallel operations
+    initializeDashboard();
+});
+
+async function initializeDashboard() {
+    try {
+        // Run operations in parallel for faster loading
+        const [usersData, navbarReady] = await Promise.allSettled([
+            ensureUsersData(),
+            waitForNavbar()
+        ]);
         
         // Set up user info
         updateUserInfo();
@@ -27,23 +37,95 @@ document.addEventListener('DOMContentLoaded', function() {
             window.refreshNavbar();
         }
         
-        // Navigation is now handled by navbar.js
-        
         // Set up sign out functionality
         setupSignOut();
         
-        // Theme is now handled by navbar.js
-        
         // Load dashboard data
-        loadDashboardData();
-    }, 300);
+        await loadDashboardData();
+        
+        // Hide loading indicator and show content
+        hideLoadingIndicator();
+        
+        // Fallback: ensure content is visible after 3 seconds
+        setTimeout(() => {
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent && mainContent.style.display === 'none') {
+                console.log('User Script - Fallback: forcing main content to be visible');
+                mainContent.style.display = 'block';
+                mainContent.style.visibility = 'visible';
+                mainContent.style.opacity = '1';
+            }
+        }, 3000);
+        
+    } catch (error) {
+        console.error('Error initializing dashboard:', error);
+        hideLoadingIndicator();
+    }
+}
+
+function showLoadingIndicator() {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const mainContent = document.querySelector('.main-content');
     
-    // Set up storage event listener for real-time updates
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'userProgress' || e.key === 'leadershipPaths') {
-            loadDashboardData();
+    console.log('User Script - Showing loading indicator, hiding main content');
+    console.log('Loading indicator element:', loadingIndicator);
+    console.log('Main content element:', mainContent);
+    
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'flex';
+        console.log('Loading indicator shown');
+    }
+    if (mainContent) {
+        mainContent.style.display = 'none';
+        console.log('Main content hidden');
+    } else {
+        console.error('Main content element not found!');
+    }
+}
+
+function hideLoadingIndicator() {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const mainContent = document.querySelector('.main-content');
+    
+    console.log('User Script - Hiding loading indicator, showing main content');
+    console.log('Loading indicator element:', loadingIndicator);
+    console.log('Main content element:', mainContent);
+    
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'none';
+        console.log('Loading indicator hidden');
+    }
+    if (mainContent) {
+        mainContent.style.display = 'block';
+        mainContent.style.visibility = 'visible';
+        mainContent.style.opacity = '1';
+        console.log('Main content shown');
+    } else {
+        console.error('Main content element not found!');
+    }
+}
+
+function waitForNavbar() {
+    return new Promise((resolve) => {
+        if (typeof window.refreshNavbar === 'function') {
+            resolve(true);
+        } else {
+            // Wait for navbar to be ready
+            const checkNavbar = setInterval(() => {
+                if (typeof window.refreshNavbar === 'function') {
+                    clearInterval(checkNavbar);
+                    resolve(true);
+                }
+            }, 50);
         }
     });
+}
+
+// Set up storage event listener for real-time updates
+window.addEventListener('storage', function(e) {
+    if (e.key === 'userProgress' || e.key === 'leadershipPaths') {
+        loadDashboardData();
+    }
 });
 
 // Update user info in header
@@ -397,7 +479,4 @@ function explorePaths() {
 
 // Theme and dropdown functionality is now handled by navbar.js
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', async function() {
-    await loadDashboardData();
-});
+// Dashboard data loading is now handled by initializeDashboard() function

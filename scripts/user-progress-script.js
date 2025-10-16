@@ -891,10 +891,58 @@ async function getModuleData(moduleTitle) {
             const dbChecklistItems = await window.dbService.getModuleChecklist(module.id);
             if (dbChecklistItems && dbChecklistItems.length > 0) {
                 // Convert database checklist items to the format expected by the UI
-                checklistItems = dbChecklistItems.map(item => ({
-                    description: item.task_text,
-                    task: item.task_text
-                }));
+                checklistItems = dbChecklistItems.map((item, index) => {
+                    const taskObj = {
+                        description: item.task_text,
+                        task: item.task_text
+                    };
+                    
+                    // Restore file data from localStorage (backup storage)
+                    const fileDataKey = `module_${module.id}_task_${index}_files`;
+                    const storedFileData = localStorage.getItem(fileDataKey);
+                    if (storedFileData) {
+                        try {
+                            taskObj.files = JSON.parse(storedFileData);
+                            console.log(`📁 User Progress - Restored file data from localStorage: ${fileDataKey}`);
+                        } catch (error) {
+                            console.warn('Failed to parse file data from localStorage:', error);
+                        }
+                    }
+                    
+                    return taskObj;
+                });
+            } else {
+                // If no database checklist items, try to restore from localStorage
+                console.log(`📁 User Progress - No database checklist items, checking localStorage for module ${module.id}`);
+                const restoredItems = [];
+                let index = 0;
+                while (true) {
+                    const fileDataKey = `module_${module.id}_task_${index}_files`;
+                    const storedFileData = localStorage.getItem(fileDataKey);
+                    if (storedFileData) {
+                        try {
+                            const files = JSON.parse(storedFileData);
+                            // Try to get task text from the original module checklist
+                            const originalTask = module.checklist && module.checklist[index] ? module.checklist[index] : `Task ${index + 1}`;
+                            const taskText = typeof originalTask === 'string' ? originalTask : (originalTask.description || originalTask.task || `Task ${index + 1}`);
+                            
+                            restoredItems.push({
+                                description: taskText,
+                                task: taskText,
+                                files: files
+                            });
+                            console.log(`📁 User Progress - Restored task ${index} with files from localStorage`);
+                        } catch (error) {
+                            console.warn('Failed to parse file data from localStorage:', error);
+                        }
+                        index++;
+                    } else {
+                        break;
+                    }
+                }
+                if (restoredItems.length > 0) {
+                    checklistItems = restoredItems;
+                }
             }
         } catch (error) {
             console.warn('Failed to load checklist from database, using localStorage:', error);

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Progress Overview - CFA Leadership Development</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-    <link rel="stylesheet" href="../styles/admin-overview-styles.css?v=24">
+    <link rel="stylesheet" href="../styles/admin-overview-styles.css?v=26">
     <link rel="stylesheet" href="../styles/admin-path-management-styles.css?v=8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="../scripts/navbar.js?v=17"></script>
@@ -41,38 +41,63 @@
                     <span>Settings</span>
                 </a>
             </nav>
+
         </aside>
 
         <!-- Main Content -->
         <main class="main-content">
             <div class="content-header">
-                <h1 class="page-title">User Progress Overview</h1>
-                <p class="page-subtitle">Track and monitor all users' leadership development progress</p>
+                <div class="header-top">
+                    <div class="header-text">
+                        <h1 class="page-title">User Progress Overview</h1>
+                        <p class="page-subtitle">Track and monitor all users' leadership development progress</p>
+                    </div>
+                    
+                    <!-- Users by Role Floating Cards -->
+                    <div class="header-cards">
+                        <div class="floating-card total-users-card">
+                            <div class="card-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-number" id="totalUsers">0</div>
+                                <div class="card-label">TOTAL USERS</div>
+                            </div>
+                        </div>
+                        
+                        <div class="floating-card role-card" id="adminRoleCard">
+                            <div class="card-icon">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-number" id="adminCount">0</div>
+                                <div class="card-label">ADMIN</div>
+                            </div>
+                        </div>
+                        
+                        <div class="floating-card role-card" id="directorRoleCard">
+                            <div class="card-icon">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-number" id="directorCount">0</div>
+                                <div class="card-label">DIRECTOR</div>
+                            </div>
+                        </div>
+                        
+                        <div class="floating-card role-card" id="teamMemberRoleCard">
+                            <div class="card-icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-number" id="teamMemberCount">0</div>
+                                <div class="card-label">TEAM MEMBER</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Users by Role Section -->
-            <div class="section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h2 class="section-title">Users by Role</h2>
-                    <div class="total-users-card">
-                        <div class="card-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="card-content">
-                            <div class="card-number" id="totalUsers">0</div>
-                            <div class="card-label">TOTAL USERS</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="section-content">
-                    <div class="role-stats" id="roleStats">
-                        <!-- Role statistics will be populated here -->
-                    </div>
-                </div>
-            </div>
 
             <!-- Individual User Progress Section -->
             <div class="section">
@@ -461,7 +486,7 @@
     <script>
         console.log('🔍 HTML: About to load admin-overview-script.js');
     </script>
-    <script src="../scripts/admin-overview-script.js?v=72"></script>
+    <script src="../scripts/admin-overview-script.js?v=74"></script>
     <script>
         console.log('🔍 HTML: admin-overview-script.js should be loaded now');
         console.log('🔍 HTML: testScript available?', typeof window.testScript);
