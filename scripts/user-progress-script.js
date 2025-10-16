@@ -291,17 +291,9 @@ async function loadProgressData() {
         showToast('error', 'Database Error', `Failed to load modules: ${error.message || 'Unknown error'}`);
     }
     
-    // Fallback to localStorage if no modules loaded from database
+    // If no modules are assigned, show empty state (don't fallback to all modules)
     if (moduleTitles.length === 0) {
-        try {
-            const globalModules = localStorage.getItem('globalModules');
-            if (globalModules) {
-                const modules = JSON.parse(globalModules);
-                moduleTitles = modules.map(m => m.title);
-            }
-        } catch (localError) {
-            console.error('Failed to load modules from localStorage:', localError);
-        }
+        console.log('No modules assigned to user, showing empty state');
     }
     
     let achievements = 0;
@@ -423,6 +415,20 @@ function updateCurrentPath(data) {
 function updateModules(modules) {
     const modulesGrid = document.getElementById('modulesGrid');
     if (!modulesGrid) return;
+    
+    // Handle empty state when no modules are assigned
+    if (modules.length === 0) {
+        modulesGrid.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <h3>No Modules Assigned</h3>
+                <p>You don't have any learning modules assigned yet. Contact your administrator to get started with your leadership development journey.</p>
+            </div>
+        `;
+        return;
+    }
     
     const modulesHTML = modules.map(module => {
         const lockIcon = module.isLocked ? '<i class="fas fa-lock module-lock-icon"></i>' : '';
@@ -1336,19 +1342,21 @@ async function calculateUserOverallProgress(username) {
     let totalTasks = 0;
     let completedTasks = 0;
     
-    // Get all module titles from global storage (for progress calculation, only count accessible modules)
-    const globalModules = localStorage.getItem('globalModules');
+    // Get only assigned module titles for this user
     let moduleTitles = [];
     
-    if (globalModules) {
-        const modules = JSON.parse(globalModules);
-        moduleTitles = modules.map(m => m.title);
-    } else {
-        // Fallback to default module titles
-        moduleTitles = [
-            'Communication Skills', 'Team Leadership', 'Decision Making',
-            'Conflict Resolution', 'Strategic Planning', 'Performance Management'
-        ];
+    if (window.dbService && window.dbService.isConfigured && user && user.id) {
+        try {
+            // Get user's assigned modules
+            const userAssignments = await window.dbService.getModuleAssignments(user.id);
+            
+            if (userAssignments && userAssignments.length > 0) {
+                // Get the module titles from assignments
+                moduleTitles = userAssignments.map(assignment => assignment.module_title);
+            }
+        } catch (error) {
+            console.error('Failed to load assigned modules for progress calculation:', error);
+        }
     }
     
     for (const moduleTitle of moduleTitles) {

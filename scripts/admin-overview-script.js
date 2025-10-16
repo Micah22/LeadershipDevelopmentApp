@@ -653,8 +653,13 @@ async function saveUserChanges() {
             role: formData.role,
             status: formData.status || 'active',
             email: formData.email || '',
-            start_date: formData.startDate || new Date().toISOString().split('T')[0],
-            // Keep localStorage fields for compatibility
+            start_date: formData.startDate || new Date().toISOString().split('T')[0]
+        };
+        
+        // Create localStorage-compatible user object for local storage
+        const localStorageUser = {
+            ...newUser,
+            // Add localStorage compatibility fields
             fullName: formData.fullName,
             password: formData.password,
             startDate: formData.startDate || new Date().toISOString().split('T')[0],
@@ -663,8 +668,8 @@ async function saveUserChanges() {
             totalTasks: 0
         };
         
-        // Add new user
-        users.push(newUser);
+        // Add new user to localStorage (use localStorage-compatible object)
+        users.push(localStorageUser);
         
         // Save new user to database
         try {
