@@ -762,6 +762,25 @@ body {
     color: var(--cfa-navy);
 }
 
+.question-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.duplicate-question {
+    background: var(--info);
+    color: var(--white);
+    border: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.duplicate-question:hover {
+    background: #138496;
+}
+
 .remove-question {
     background: var(--danger);
     color: var(--white);
@@ -769,6 +788,11 @@ body {
     padding: 0.5rem;
     border-radius: 4px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.remove-question:hover {
+    background: #c82333;
 }
 
 .answer-options {

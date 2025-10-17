@@ -843,9 +843,14 @@ function addQuestion() {
         <div class="question-item" data-question="${questionCounter}">
             <div class="question-header">
                 <span class="question-number">Question ${questionCounter}</span>
-                <button type="button" class="remove-question" onclick="removeQuestion(${questionCounter})">
-                    <i class="fas fa-trash"></i>
-                </button>
+                <div class="question-actions">
+                    <button type="button" class="duplicate-question" onclick="duplicateQuestion(${questionCounter})" title="Duplicate Question">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button type="button" class="remove-question" onclick="removeQuestion(${questionCounter})" title="Remove Question">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </div>
             <div class="form-group">
                 <label>Question Type</label>
@@ -909,6 +914,80 @@ function removeQuestion(questionNum) {
     if (questionElement) {
         questionElement.remove();
     }
+}
+
+// Duplicate question
+function duplicateQuestion(questionNum) {
+    const questionElement = document.querySelector(`[data-question="${questionNum}"]`);
+    if (!questionElement) {
+        console.error('Question element not found');
+        return;
+    }
+    
+    // Clone the question element
+    const clonedQuestion = questionElement.cloneNode(true);
+    
+    // Increment question counter
+    questionCounter++;
+    
+    // Update the cloned question's data attribute and content
+    clonedQuestion.setAttribute('data-question', questionCounter);
+    
+    // Update question number display
+    const questionNumberSpan = clonedQuestion.querySelector('.question-number');
+    if (questionNumberSpan) {
+        questionNumberSpan.textContent = `Question ${questionCounter}`;
+    }
+    
+    // Update all form field names and IDs to use the new question number
+    const formElements = clonedQuestion.querySelectorAll('input, select, textarea');
+    formElements.forEach(element => {
+        if (element.name) {
+            element.name = element.name.replace(`_${questionNum}`, `_${questionCounter}`);
+        }
+        if (element.id) {
+            element.id = element.id.replace(`_${questionNum}`, `_${questionCounter}`);
+        }
+    });
+    
+    // Update onclick handlers for buttons
+    const buttons = clonedQuestion.querySelectorAll('button[onclick]');
+    buttons.forEach(button => {
+        const onclick = button.getAttribute('onclick');
+        if (onclick) {
+            button.setAttribute('onclick', onclick.replace(questionNum, questionCounter));
+        }
+    });
+    
+    // Copy the selected question type from the original to the clone
+    const originalQuestionTypeSelect = questionElement.querySelector('select[name^="questionType_"]');
+    if (originalQuestionTypeSelect) {
+        const originalType = originalQuestionTypeSelect.value;
+        const clonedQuestionTypeSelect = clonedQuestion.querySelector(`select[name="questionType_${questionCounter}"]`);
+        if (clonedQuestionTypeSelect) {
+            clonedQuestionTypeSelect.value = originalType;
+            console.log(`🔍 Copied question type: ${originalType} to question ${questionCounter}`);
+        }
+    }
+    
+    // Copy the checked state for correct answer inputs (radio/checkboxes)
+    questionElement.querySelectorAll('input[name^="correct_"]:checked').forEach(originalCorrectInput => {
+        const originalValue = originalCorrectInput.value;
+        const clonedCorrectInput = clonedQuestion.querySelector(`input[name^="correct_${questionCounter}"][value="${originalValue}"]`);
+        if (clonedCorrectInput) {
+            clonedCorrectInput.checked = true;
+            console.log(`🔍 Copied correct answer: ${originalValue} to question ${questionCounter}`);
+        }
+    });
+    
+    // Preserve the question text and options (don't clear them)
+    // The content will be duplicated as-is, allowing users to edit the copy
+    
+    // Insert the cloned question after the original
+    questionElement.insertAdjacentElement('afterend', clonedQuestion);
+    
+    // Show success message
+    showToast('success', 'Success', 'Question duplicated successfully!');
 }
 
 // Change question type
@@ -1065,12 +1144,23 @@ function saveQuiz(e) {
     
     // Extract questions
     const questionElements = document.querySelectorAll('.question-item');
+    console.log('🔍 Found question elements:', questionElements.length);
+    
     questionElements.forEach((element, index) => {
         const questionNum = element.dataset.question;
         const questionText = formData.get(`question_${questionNum}`);
         const questionType = formData.get(`questionType_${questionNum}`);
         
-        if (!questionText || !questionType) return;
+        console.log(`🔍 Question ${questionNum}:`, {
+            text: questionText,
+            type: questionType,
+            element: element
+        });
+        
+        if (!questionText || !questionType) {
+            console.log(`⚠️ Skipping question ${questionNum} - missing text or type`);
+            return;
+        }
         
         let questionData = {
             id: `q${index + 1}`,
@@ -1090,10 +1180,20 @@ function saveQuiz(e) {
                     optionIndex++;
                 }
                 
+                console.log(`🔍 Multiple Choice Question ${questionNum}:`, {
+                    correctAnswer,
+                    options,
+                    optionsLength: options.length,
+                    isValid: options.length >= 2 && !isNaN(correctAnswer) && correctAnswer >= 0 && correctAnswer < options.length
+                });
+                
                 if (options.length >= 2 && !isNaN(correctAnswer) && correctAnswer >= 0 && correctAnswer < options.length) {
                     questionData.options = options;
                     questionData.correct = correctAnswer;
                     quizData.questions.push(questionData);
+                    console.log(`✅ Added multiple choice question ${questionNum}`);
+                } else {
+                    console.log(`❌ Skipped multiple choice question ${questionNum} - validation failed`);
                 }
                 break;
                 
@@ -1108,10 +1208,20 @@ function saveQuiz(e) {
                     multiOptionIndex++;
                 }
                 
+                console.log(`🔍 Multiple Answer Question ${questionNum}:`, {
+                    correctAnswers,
+                    multiOptions,
+                    optionsLength: multiOptions.length,
+                    isValid: multiOptions.length >= 2 && correctAnswers.length > 0 && correctAnswers.every(val => val >= 0 && val < multiOptions.length)
+                });
+                
                 if (multiOptions.length >= 2 && correctAnswers.length > 0 && correctAnswers.every(val => val >= 0 && val < multiOptions.length)) {
                     questionData.options = multiOptions;
                     questionData.correct = correctAnswers;
                     quizData.questions.push(questionData);
+                    console.log(`✅ Added multiple answer question ${questionNum}`);
+                } else {
+                    console.log(`❌ Skipped multiple answer question ${questionNum} - validation failed`);
                 }
                 break;
                 
@@ -1132,6 +1242,9 @@ function saveQuiz(e) {
                 break;
         }
     });
+    
+    console.log('🔍 Final quiz data questions:', quizData.questions.length);
+    console.log('🔍 Questions data:', quizData.questions);
     
     if (quizData.questions.length === 0) {
         showToast('error', 'Error', 'Please add at least one question.');
@@ -1268,7 +1381,7 @@ function removeAnswerOption(questionNum, button) {
     
     // Don't allow removing if we only have 2 options
     if (uniqueOptions.length <= 2) {
-        showToast('You must have at least 2 answer options', 'warning');
+        showToast('warning', 'Warning', 'You must have at least 2 answer options');
         return;
     }
     
