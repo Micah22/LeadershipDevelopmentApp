@@ -1121,7 +1121,17 @@ async function saveUserChanges() {
     
     // Save updated user to database
     try {
-        await window.dbService.updateUser(users[userIndex].id, users[userIndex]);
+        // Create database-compatible user object (only include fields that exist in database schema)
+        const dbUserData = {
+            full_name: formData.fullName,
+            username: formData.username,
+            password_hash: btoa(formData.password),
+            role: formData.role,
+            email: formData.email || '',
+            start_date: formData.startDate || users[userIndex].start_date
+        };
+        
+        await window.dbService.updateUser(users[userIndex].id, dbUserData);
     } catch (error) {
         console.error('Failed to update user in database:', error);
         showToast('error', 'Database Error', 'Failed to update user in database');
@@ -1194,11 +1204,27 @@ async function saveUsers(users) {
         // Save to database
         for (const user of users) {
             if (user.id) {
-                // Update existing user
-                await window.dbService.updateUser(user.id, user);
+                // Update existing user - create database-compatible object
+                const dbUserData = {
+                    full_name: user.full_name || user.fullName,
+                    username: user.username,
+                    password_hash: user.password_hash || btoa(user.password || ''),
+                    role: user.role,
+                    email: user.email || '',
+                    start_date: user.start_date || user.startDate
+                };
+                await window.dbService.updateUser(user.id, dbUserData);
             } else {
-                // Create new user
-                await window.dbService.createUser(user);
+                // Create new user - create database-compatible object
+                const dbUserData = {
+                    full_name: user.full_name || user.fullName,
+                    username: user.username,
+                    password_hash: user.password_hash || btoa(user.password || ''),
+                    role: user.role,
+                    email: user.email || '',
+                    start_date: user.start_date || user.startDate
+                };
+                await window.dbService.createUser(dbUserData);
             }
         }
     } catch (error) {
