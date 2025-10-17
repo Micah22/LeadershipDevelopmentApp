@@ -836,11 +836,6 @@ async function openUserDetailsModal(username) {
             <div class="user-details-content">
                 <div class="user-stats">
                     <div class="stat-item">
-                        <i class="fas fa-user"></i>
-                        <span class="stat-label">Role</span>
-                        <span class="stat-value">${user.role}</span>
-                    </div>
-                    <div class="stat-item">
                         <i class="fas fa-calendar"></i>
                         <span class="stat-label">Joined</span>
                         <span class="stat-value">${new Date(user.created_at || user.createdAt || Date.now()).toLocaleDateString()}</span>
