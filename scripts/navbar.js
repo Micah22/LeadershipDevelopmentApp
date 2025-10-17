@@ -211,6 +211,12 @@ function signOut() {
     // Update navigation based on user role
     function updateNavigation() {
         try {
+            // Check if admin navigation has already been set
+            if (window.adminNavigationSet) {
+                console.log('🔍 Navbar - Admin navigation already set, skipping override');
+                return;
+            }
+            
             const username = localStorage.getItem('username');
             const users = getUsers();
             const user = users.find(u => u.username === username);
@@ -238,7 +244,6 @@ function signOut() {
                 <a href="user-progress.html" class="nav-link ${currentPage === 'user-progress.html' ? 'active' : ''}">My Progress</a>
                 <a href="quizzes.html" class="nav-link ${currentPage === 'quizzes.html' ? 'active' : ''}">Quizzes</a>
                 <a href="admin-user-overview.html" class="nav-link ${currentPage === 'admin-user-overview.html' ? 'active' : ''}">User Overview</a>
-                <a href="admin-role-management.html" class="nav-link ${currentPage === 'admin-role-management.html' ? 'active' : ''}">Role Management</a>
                 <a href="#" class="nav-link">Resources</a>
             `;
         } else if (user.role === 'Director') {

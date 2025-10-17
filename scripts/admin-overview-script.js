@@ -99,14 +99,15 @@ async function updateNavigation() {
     let navigationHTML = '';
     
     if (user.role === 'Admin') {
-        navigationHTML = '<a href="user-dashboard.html" class="nav-link">Dashboard</a><a href="user-progress.html" class="nav-link">My Progress</a><a href="admin-user-overview.html" class="nav-link active">User Overview</a><a href="#" class="nav-link">Resources</a>';
+        navigationHTML = '<a href="user-dashboard.html" class="nav-link">Dashboard</a><a href="user-progress.html" class="nav-link">My Progress</a><a href="quizzes.html" class="nav-link">Quizzes</a><a href="admin-user-overview.html" class="nav-link active">User Overview</a><a href="#" class="nav-link">Resources</a>';
     } else if (user.role === 'Director' || user.role === 'Supervisor') {
-        navigationHTML = '<a href="user-dashboard.html" class="nav-link">Dashboard</a><a href="user-progress.html" class="nav-link">My Progress</a><a href="admin-user-overview.html" class="nav-link active">User Overview</a><a href="#" class="nav-link">Resources</a>';
+        navigationHTML = '<a href="user-dashboard.html" class="nav-link">Dashboard</a><a href="user-progress.html" class="nav-link">My Progress</a><a href="quizzes.html" class="nav-link">Quizzes</a><a href="admin-user-overview.html" class="nav-link active">User Overview</a><a href="#" class="nav-link">Resources</a>';
     } else {
-        navigationHTML = '<a href="user-dashboard.html" class="nav-link">Dashboard</a><a href="user-progress.html" class="nav-link">My Progress</a><a href="#" class="nav-link">Resources</a>';
+        navigationHTML = '<a href="user-dashboard.html" class="nav-link">Dashboard</a><a href="user-progress.html" class="nav-link">My Progress</a><a href="quizzes.html" class="nav-link">Quizzes</a><a href="#" class="nav-link">Resources</a>';
     }
     
     navLinks.innerHTML = navigationHTML;
+   
 }
 
 function setupEventListeners() {

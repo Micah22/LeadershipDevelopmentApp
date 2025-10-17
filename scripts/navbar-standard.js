@@ -9,6 +9,7 @@ function getStandardNavbarHTML(user, activePage = '') {
         navigationHTML = `
             <a href="user-dashboard.html" class="nav-link ${activePage === 'dashboard' ? 'active' : ''}">Dashboard</a>
             <a href="user-progress.html" class="nav-link ${activePage === 'progress' ? 'active' : ''}">My Progress</a>
+            <a href="quizzes.html" class="nav-link ${activePage === 'quizzes' ? 'active' : ''}">Quizzes</a>
             <a href="admin-progress.html" class="nav-link ${activePage === 'overview' ? 'active' : ''}">Progress Overview</a>
             <a href="#" class="nav-link ${activePage === 'resources' ? 'active' : ''}">Resources</a>
         `;
@@ -16,6 +17,7 @@ function getStandardNavbarHTML(user, activePage = '') {
         navigationHTML = `
             <a href="user-dashboard.html" class="nav-link ${activePage === 'dashboard' ? 'active' : ''}">Dashboard</a>
             <a href="user-progress.html" class="nav-link ${activePage === 'progress' ? 'active' : ''}">My Progress</a>
+            <a href="quizzes.html" class="nav-link ${activePage === 'quizzes' ? 'active' : ''}">Quizzes</a>
             <a href="admin-progress.html" class="nav-link ${activePage === 'overview' ? 'active' : ''}">Progress Overview</a>
             <a href="#" class="nav-link ${activePage === 'resources' ? 'active' : ''}">Resources</a>
         `;
@@ -23,6 +25,7 @@ function getStandardNavbarHTML(user, activePage = '') {
         navigationHTML = `
             <a href="user-dashboard.html" class="nav-link ${activePage === 'dashboard' ? 'active' : ''}">Dashboard</a>
             <a href="user-progress.html" class="nav-link ${activePage === 'progress' ? 'active' : ''}">My Progress</a>
+            <a href="quizzes.html" class="nav-link ${activePage === 'quizzes' ? 'active' : ''}">Quizzes</a>
             <a href="#" class="nav-link ${activePage === 'resources' ? 'active' : ''}">Resources</a>
         `;
     }
@@ -121,6 +124,8 @@ const STANDARD_HEADER_CSS = `
     display: flex;
     gap: 2rem;
     align-items: center;
+    flex-wrap: nowrap;
+    overflow-x: auto;
 }
 
 .nav-link {
@@ -130,6 +135,8 @@ const STANDARD_HEADER_CSS = `
     padding: 0.5rem 1rem;
     border-radius: 6px;
     transition: all 0.3s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .nav-link:hover {

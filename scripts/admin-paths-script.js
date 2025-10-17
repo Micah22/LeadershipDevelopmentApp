@@ -68,7 +68,7 @@ function updateNavigation() {
     let navigationHTML = '';
     
     if (user.role === 'Admin') {
-        navigationHTML = '<a href="user-dashboard.html" class="nav-link">Dashboard</a><a href="user-progress.html" class="nav-link">My Progress</a><a href="admin-paths.html" class="nav-link active">Manage Paths</a><a ';
+        navigationHTML = '<a href="user-dashboard.html" class="nav-link">Dashboard</a><a href="user-progress.html" class="nav-link">My Progress</a><a href="quizzes.html" class="nav-link">Quizzes</a><a href="admin-paths.html" class="nav-link active">Manage Paths</a><a href="#" class="nav-link">Resources</a>';
     } else {
         navLinks.innerHTML = '<a href="index.html" class="nav-link">Login</a>';
         return;
