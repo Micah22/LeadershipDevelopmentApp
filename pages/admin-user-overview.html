@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Progress Overview - CFA Leadership Development</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-    <link rel="stylesheet" href="../styles/admin-overview-styles.css?v=33">
+    <link rel="stylesheet" href="../styles/admin-overview-styles.css?v=34">
     <link rel="stylesheet" href="../styles/admin-path-management-styles.css?v=8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="../scripts/navbar.js?v=19"></script>
@@ -13,6 +13,12 @@
 </head>
 <body>
     <!-- Navbar will be loaded by navbar.js -->
+
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Loading user data...</p>
+    </div>
 
     <div class="main-container">
         <!-- Sidebar -->
@@ -605,7 +611,7 @@
     <script>
         console.log('🔍 HTML: About to load admin-overview-script.js');
     </script>
-    <script src="../scripts/admin-overview-script.js?v=89"></script>
+    <script src="../scripts/admin-overview-script.js?v=90"></script>
     <script>
         console.log('🔍 HTML: admin-overview-script.js should be loaded now');
         console.log('🔍 HTML: testScript available?', typeof window.testScript);

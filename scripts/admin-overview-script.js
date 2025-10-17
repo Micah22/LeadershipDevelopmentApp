@@ -296,6 +296,8 @@ function handleNavigation(itemId, e) {
 }
 
 async function loadUserData() {
+    // Show loading indicator
+    showLoadingIndicator();
     
     // Initialize default users if none exist
     initializeDefaultUsers();
@@ -328,11 +330,24 @@ async function loadUserData() {
         }
     }
     
-    // Debug: Check user progress data
-    for (const user of users) {
-        const userProgress = await getUserProgress(user.username);
-        const overallProgress = await calculateUserOverallProgress(user.username);
-    }
+    // Cache users data to avoid redundant queries
+    window.cachedUsers = users;
+    
+    // Load user progress data in parallel for better performance
+    const userProgressPromises = users.map(async (user) => {
+        try {
+            const userProgress = await getUserProgress(user.username);
+            const overallProgress = await calculateUserOverallProgress(user.username);
+            return { user, userProgress, overallProgress };
+        } catch (error) {
+            console.error(`Failed to load progress for user ${user.username}:`, error);
+            return { user, userProgress: {}, overallProgress: 0 };
+        }
+    });
+    
+    // Wait for all user progress data to load in parallel
+    const userProgressData = await Promise.all(userProgressPromises);
+    console.log('Admin Overview - Loaded progress data for all users:', userProgressData.length);
     
     // Update summary cards
     updateSummaryCards(users);
@@ -345,6 +360,9 @@ async function loadUserData() {
     
     // Load module assignments
     loadModuleAssignments();
+    
+    // Hide loading indicator
+    hideLoadingIndicator();
 }
 
 function updateSummaryCards(users) {
@@ -1263,17 +1281,20 @@ async function calculateUserOverallProgress(username) {
     try {
         const userProgress = await getUserProgress(username);
         
-        // Get user's role from database or localStorage
-        let users = [];
-        try {
-            if (window.dbService && window.dbService.isConfigured) {
-                users = await window.dbService.getUsers();
-            } else {
-                users = JSON.parse(localStorage.getItem('users') || '[]');
+        // Get user's role from cached data or database
+        let users = window.cachedUsers;
+        if (!users) {
+            try {
+                if (window.dbService && window.dbService.isConfigured) {
+                    users = await window.dbService.getUsers();
+                    window.cachedUsers = users;
+                } else {
+                    users = JSON.parse(localStorage.getItem('users') || '[]');
+                }
+            } catch (error) {
+                console.error('Failed to get users for progress calculation:', error);
+                users = [];
             }
-        } catch (error) {
-            console.error('Failed to load users for progress calculation:', error);
-            users = JSON.parse(localStorage.getItem('users') || '[]');
         }
         
     const user = users.find(u => u.username === username);
@@ -1349,8 +1370,12 @@ async function getUserProgress(username) {
     
     try {
         if (window.dbService && window.dbService.isConfigured) {
-            // Get user ID
-            const users = await window.dbService.getUsers();
+            // Use cached users data if available, otherwise fetch from database
+            let users = window.cachedUsers;
+            if (!users) {
+                users = await window.dbService.getUsers();
+                window.cachedUsers = users;
+            }
             const user = users.find(u => u.username === username);
             
             if (user) {
@@ -3899,6 +3924,24 @@ function deleteRole(roleId) {
         renderPermissionMatrix();
         
         showToast('success', 'Success', 'Role deleted successfully');
+    }
+}
+
+// Loading indicator functions
+function showLoadingIndicator() {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'flex';
+    }
+    
+    // Also show a toast notification
+    showToast('info', 'Loading', 'Loading user data...');
+}
+
+function hideLoadingIndicator() {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'none';
     }
 }
 
