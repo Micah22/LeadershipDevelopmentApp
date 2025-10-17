@@ -273,10 +273,11 @@ async function loadProgressData() {
 
     // Load modules from database - only assigned modules for this user
     let moduleTitles = [];
+    let userAssignments = [];
     try {
         if (window.dbService && window.dbService.isConfigured && user && user.id) {
             // Get user's assigned modules
-            const userAssignments = await window.dbService.getModuleAssignments(user.id);
+            userAssignments = await window.dbService.getModuleAssignments(user.id);
             
             if (userAssignments && userAssignments.length > 0) {
                 // Get the module titles from assignments
@@ -356,7 +357,7 @@ async function loadProgressData() {
     
     
     // Update modules
-    updateModules(progressData.modules);
+    updateModules(progressData.modules, userAssignments);
     
 }
 
@@ -412,7 +413,7 @@ function updateCurrentPath(data) {
 }
 
 
-function updateModules(modules) {
+function updateModules(modules, assignments = []) {
     const modulesGrid = document.getElementById('modulesGrid');
     if (!modulesGrid) return;
     
@@ -435,6 +436,34 @@ function updateModules(modules) {
         const clickHandler = module.isLocked ? '' : `onclick="openModule('${module.title}')"`;
         const cardClass = module.isLocked ? 'module-card locked' : 'module-card';
         
+        // Find assignment data for this module
+        const assignment = assignments.find(a => a.module_title === module.title);
+        const dueDate = assignment ? assignment.due_date : null;
+        
+        // Format due date for display
+        let dueDateDisplay = '';
+        if (dueDate) {
+            const dueDateObj = new Date(dueDate);
+            const today = new Date();
+            const timeDiff = dueDateObj.getTime() - today.getTime();
+            const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            
+            let dueDateClass = 'due-date';
+            if (daysDiff < 0) {
+                dueDateClass += ' overdue';
+            } else if (daysDiff <= 3) {
+                dueDateClass += ' due-soon';
+            }
+            
+            dueDateDisplay = `
+                <div class="${dueDateClass}">
+                    <i class="fas fa-calendar-alt"></i>
+                    Due: ${dueDateObj.toLocaleDateString()}
+                    ${daysDiff < 0 ? ' (Overdue)' : daysDiff <= 3 ? ' (Due Soon)' : ''}
+                </div>
+            `;
+        }
+        
         return `
         <div class="${cardClass}" ${clickHandler}>
             <div class="module-header">
@@ -443,6 +472,7 @@ function updateModules(modules) {
                         ${lockIcon}
                         ${module.title}
                     </div>
+                    ${dueDateDisplay}
                 </div>
                 <div class="module-status ${module.status}">${module.status.replace('-', ' ')}</div>
             </div>

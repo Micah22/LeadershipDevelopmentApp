@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role Management - CFA Leadership Development</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+    <link rel="stylesheet" href="../styles/admin-role-management-styles.css?v=1">
+    <link rel="stylesheet" href="../styles/admin-overview-styles.css?v=29">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="../scripts/navbar.js?v=18"></script>
+    <script src="../database/config.js"></script>
+</head>
+<body>
+    <!-- Navbar will be loaded by navbar.js -->
+
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>ADMIN TOOLS</h2>
+                <button class="refresh-btn" onclick="refreshDataFromDatabase()" title="Refresh data from database">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="admin-user-overview.html" class="nav-item" id="userManagement">
+                    <i class="fas fa-users"></i>
+                    <span>User Management</span>
+                </a>
+                <a href="#" class="nav-item" id="pathManagement">
+                    <i class="fas fa-cogs"></i>
+                    <span>Path Management</span>
+                </a>
+                <a href="admin-role-management.html" class="nav-item active" id="roleManagement">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Role Management</span>
+                </a>
+                <a href="#" class="nav-item" id="reports">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="#" class="nav-item" id="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Role Management</h1>
+            <p>Manage user roles and permission levels across the system</p>
+        </div>
+        
+        <div class="role-management-container">
+            <!-- Role Overview Cards -->
+            <div class="role-overview-cards">
+                <div class="overview-card">
+                    <div class="card-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-number" id="totalRoles">6</div>
+                        <div class="card-label">Total Roles</div>
+                    </div>
+                </div>
+                <div class="overview-card">
+                    <div class="card-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-number" id="activeRoles">6</div>
+                        <div class="card-label">Active Roles</div>
+                    </div>
+                </div>
+                <div class="overview-card">
+                    <div class="card-icon">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-number" id="permissionLevels">4</div>
+                        <div class="card-label">Permission Levels</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role Management Section -->
+            <div class="role-management-section">
+                <div class="section-header">
+                    <h2>Role Definitions</h2>
+                    <button class="btn btn-primary" onclick="openRoleModal()">
+                        <i class="fas fa-plus"></i>
+                        Add New Role
+                    </button>
+                </div>
+                
+                <div class="roles-grid" id="rolesGrid">
+                    <!-- Roles will be populated here -->
+                </div>
+            </div>
+
+            <!-- Permission Matrix Section -->
+            <div class="permission-matrix-section">
+                <div class="section-header">
+                    <h2>Permission Matrix</h2>
+                    <p>Define what each role can access and modify</p>
+                </div>
+                
+                <div class="permission-matrix" id="permissionMatrix">
+                    <!-- Permission matrix will be populated here -->
+                </div>
+            </div>
+        </div>
+        </main>
+    </div>
+
+    <!-- Role Modal -->
+    <div class="modal-overlay" id="roleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="roleModalTitle">Add New Role</h2>
+                <button class="modal-close" id="roleModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="roleForm">
+                    <div class="form-group">
+                        <label for="roleName">Role Name</label>
+                        <input type="text" id="roleName" name="roleName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="roleDescription">Description</label>
+                        <textarea id="roleDescription" name="roleDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="roleLevel">Permission Level</label>
+                        <select id="roleLevel" name="roleLevel" required>
+                            <option value="">Select Level</option>
+                            <option value="1">Level 1 - Basic Access</option>
+                            <option value="2">Level 2 - Standard Access</option>
+                            <option value="3">Level 3 - Advanced Access</option>
+                            <option value="4">Level 4 - Full Access</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Permissions</label>
+                        <div class="permissions-grid">
+                            <div class="permission-category">
+                                <h4>User Management</h4>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="view_users">
+                                    <span>View Users</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="create_users">
+                                    <span>Create Users</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="edit_users">
+                                    <span>Edit Users</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="delete_users">
+                                    <span>Delete Users</span>
+                                </label>
+                            </div>
+                            <div class="permission-category">
+                                <h4>Module Management</h4>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="view_modules">
+                                    <span>View Modules</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="create_modules">
+                                    <span>Create Modules</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="edit_modules">
+                                    <span>Edit Modules</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="delete_modules">
+                                    <span>Delete Modules</span>
+                                </label>
+                            </div>
+                            <div class="permission-category">
+                                <h4>Assignment Management</h4>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="view_assignments">
+                                    <span>View Assignments</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="create_assignments">
+                                    <span>Create Assignments</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="edit_assignments">
+                                    <span>Edit Assignments</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="delete_assignments">
+                                    <span>Delete Assignments</span>
+                                </label>
+                            </div>
+                            <div class="permission-category">
+                                <h4>System Administration</h4>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="view_reports">
+                                    <span>View Reports</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="manage_roles">
+                                    <span>Manage Roles</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="system_settings">
+                                    <span>System Settings</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="permissions" value="backup_restore">
+                                    <span>Backup & Restore</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="roleModalCancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="roleModalSave">Save Role</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../scripts/admin-role-management-script.js?v=1"></script>
+</body>
+</html>

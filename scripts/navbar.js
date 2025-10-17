@@ -29,7 +29,7 @@ async function loadNavbar() {
             try {
                 updateNavigation();
             } catch (error) {
-                console.error('Navbar v14 - Error in updateNavigation():', error);
+                console.error('Navbar v16 - Error in updateNavigation():', error);
             }
         }, 100);
         
@@ -233,29 +233,36 @@ function signOut() {
         
         if (user.role === 'Admin') {
             navigationHTML = `
+                <a href="apps-list.html" class="nav-link ${currentPage === 'apps-list.html' ? 'active' : ''}">Apps</a>
                 <a href="user-dashboard.html" class="nav-link ${currentPage === 'user-dashboard.html' ? 'active' : ''}">Dashboard</a>
                 <a href="user-progress.html" class="nav-link ${currentPage === 'user-progress.html' ? 'active' : ''}">My Progress</a>
+                <a href="quizzes.html" class="nav-link ${currentPage === 'quizzes.html' ? 'active' : ''}">Quizzes</a>
                 <a href="admin-user-overview.html" class="nav-link ${currentPage === 'admin-user-overview.html' ? 'active' : ''}">User Overview</a>
+                <a href="admin-role-management.html" class="nav-link ${currentPage === 'admin-role-management.html' ? 'active' : ''}">Role Management</a>
                 <a href="#" class="nav-link">Resources</a>
             `;
         } else if (user.role === 'Director') {
             navigationHTML = `
+                <a href="apps-list.html" class="nav-link ${currentPage === 'apps-list.html' ? 'active' : ''}">Apps</a>
                 <a href="user-dashboard.html" class="nav-link ${currentPage === 'user-dashboard.html' ? 'active' : ''}">Dashboard</a>
                 <a href="user-progress.html" class="nav-link ${currentPage === 'user-progress.html' ? 'active' : ''}">My Progress</a>
+                <a href="quizzes.html" class="nav-link ${currentPage === 'quizzes.html' ? 'active' : ''}">Quizzes</a>
                 <a href="admin-user-overview.html" class="nav-link ${currentPage === 'admin-user-overview.html' ? 'active' : ''}">User Overview</a>
                 <a href="#" class="nav-link">Resources</a>
             `;
         } else {
             navigationHTML = `
+                <a href="apps-list.html" class="nav-link ${currentPage === 'apps-list.html' ? 'active' : ''}">Apps</a>
                 <a href="user-dashboard.html" class="nav-link ${currentPage === 'user-dashboard.html' ? 'active' : ''}">Dashboard</a>
                 <a href="user-progress.html" class="nav-link ${currentPage === 'user-progress.html' ? 'active' : ''}">My Progress</a>
+                <a href="quizzes.html" class="nav-link ${currentPage === 'quizzes.html' ? 'active' : ''}">Quizzes</a>
                 <a href="#" class="nav-link">Resources</a>
             `;
         }
         
         navLinks.innerHTML = navigationHTML;
         } catch (error) {
-            console.error('Navbar v14 - Error in updateNavigation():', error);
+            console.error('Navbar v16 - Error in updateNavigation():', error);
         }
     }
 

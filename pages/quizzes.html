@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quizzes & Tests - CFA Leadership Development</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+    <link rel="stylesheet" href="../styles/quiz-styles.css?v=7">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="../scripts/navbar.js?v=18"></script>
+    <script src="../database/config.js"></script>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h3>Quiz Center</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#available" class="nav-item active" id="availableQuizzes">
+                    <i class="fas fa-list"></i>
+                    <span>Available Quizzes</span>
+                </a>
+                <a href="#results" class="nav-item" id="quizResults">
+                    <i class="fas fa-chart-line"></i>
+                    <span>My Results</span>
+                </a>
+                <a href="#create" class="nav-item" id="createQuiz">
+                    <i class="fas fa-plus"></i>
+                    <span>Create Quiz</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Available Quizzes Section -->
+            <div id="availableQuizzesContent" class="content-section active">
+                <div class="content-header">
+                    <h1>Available Quizzes</h1>
+                    <p>Test your knowledge with our leadership development quizzes</p>
+                </div>
+
+                <div class="quiz-filters">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="quizSearch" placeholder="Search quizzes...">
+                    </div>
+                    <div class="filter-dropdown">
+                        <select id="categoryFilter">
+                            <option value="">All Categories</option>
+                            <option value="leadership">Leadership</option>
+                            <option value="communication">Communication</option>
+                            <option value="management">Management</option>
+                            <option value="teamwork">Teamwork</option>
+                        </select>
+                    </div>
+                    <div class="filter-dropdown">
+                        <select id="difficultyFilter">
+                            <option value="">All Levels</option>
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="quizzes-grid" id="quizzesGrid">
+                    <!-- Quiz cards will be populated here -->
+                </div>
+            </div>
+
+            <!-- Quiz Results Section -->
+            <div id="quizResultsContent" class="content-section">
+                <div class="content-header">
+                    <h1>My Quiz Results</h1>
+                    <p>Track your progress and performance across all quizzes</p>
+                </div>
+
+                <div class="results-summary">
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="summary-content">
+                            <h3 id="totalQuizzes">0</h3>
+                            <p>Quizzes Completed</p>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="summary-content">
+                            <h3 id="averageScore">0%</h3>
+                            <p>Average Score</p>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="summary-content">
+                            <h3 id="bestScore">0%</h3>
+                            <p>Best Score</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="results-table-container">
+                    <table class="results-table" id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th>Quiz Name</th>
+                                <th>Category</th>
+                                <th>Score</th>
+                                <th>Date Taken</th>
+                                <th>Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                            <!-- Results will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Create Quiz Section -->
+            <div id="createQuizContent" class="content-section">
+                <div class="content-header">
+                    <h1>Create New Quiz</h1>
+                    <p>Build custom quizzes for your team or organization</p>
+                </div>
+
+                <div class="create-quiz-form">
+                    <form id="quizForm">
+                        <div class="form-section">
+                            <h3>Quiz Information</h3>
+                            <div class="form-group">
+                                <label for="quizTitle">Quiz Title</label>
+                                <input type="text" id="quizTitle" name="quizTitle" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="quizDescription">Description</label>
+                                <textarea id="quizDescription" name="quizDescription" rows="3"></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="quizCategory">Category</label>
+                                    <select id="quizCategory" name="quizCategory" required>
+                                        <option value="">Select Category</option>
+                                        <option value="leadership">Leadership</option>
+                                        <option value="communication">Communication</option>
+                                        <option value="management">Management</option>
+                                        <option value="teamwork">Teamwork</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="quizDifficulty">Difficulty</label>
+                                    <select id="quizDifficulty" name="quizDifficulty" required>
+                                        <option value="">Select Difficulty</option>
+                                        <option value="beginner">Beginner</option>
+                                        <option value="intermediate">Intermediate</option>
+                                        <option value="advanced">Advanced</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Questions</h3>
+                            <div id="questionsContainer">
+                                <!-- Questions will be added here -->
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="addQuestion">
+                                <i class="fas fa-plus"></i>
+                                Add Question
+                            </button>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="previewQuiz">Preview Quiz</button>
+                            <button type="submit" class="btn btn-primary">Save Quiz</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Taking Modal -->
+    <div class="modal-overlay" id="quizModal">
+        <div class="modal-content quiz-modal">
+            <div class="modal-header">
+                <h2 id="quizModalTitle">Quiz Title</h2>
+                <div class="quiz-progress">
+                    <span id="currentQuestion">1</span> of <span id="totalQuestions">10</span>
+                </div>
+                <button class="modal-close" id="quizModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="quiz-question" id="quizQuestion">
+                    <!-- Question content will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="prevQuestion" disabled>Previous</button>
+                <button class="btn btn-primary" id="nextQuestion">Next</button>
+                <button class="btn btn-success" id="submitQuiz" style="display: none;">Submit Quiz</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Results Modal -->
+    <div class="modal-overlay" id="quizResultsModal">
+        <div class="modal-content results-modal">
+            <div class="modal-header">
+                <h2>Quiz Results</h2>
+                <button class="modal-close" id="resultsModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="results-content" id="resultsContent">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="closeResults">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="../scripts/quiz-script.js?v=9"></script>
+    <script>
+        // Initialize navbar when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof loadNavbar === 'function') {
+                loadNavbar();
+            }
+        });
+    </script>
+</body>
+</html>

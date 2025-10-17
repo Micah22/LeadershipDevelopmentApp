@@ -821,6 +821,38 @@ body {
     color: var(--white);
 }
 
+/* Due Date Styles */
+.due-date {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--medium-gray);
+    margin-top: 0.25rem;
+}
+
+.due-date i {
+    font-size: 0.8rem;
+    color: var(--cfa-red);
+}
+
+.due-date.due-soon {
+    color: var(--warning-orange);
+}
+
+.due-date.due-soon i {
+    color: var(--warning-orange);
+}
+
+.due-date.overdue {
+    color: var(--cfa-red);
+    font-weight: 600;
+}
+
+.due-date.overdue i {
+    color: var(--cfa-red);
+}
+
 .module-description {
     color: var(--medium-gray);
     font-size: 0.9rem;

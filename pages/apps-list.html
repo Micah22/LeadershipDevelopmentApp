@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apps - CFA Leadership Development</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+    <link rel="stylesheet" href="../styles/apps-list-styles.css?v=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="../scripts/navbar.js?v=18"></script>
+    <script src="../database/config.js"></script>
+</head>
+<body>
+    <!-- Navbar will be loaded by navbar.js -->
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Available Apps</h1>
+            <p>Choose an application to get started with your work</p>
+        </div>
+        
+        <div class="apps-container">
+            <!-- Apps Grid -->
+            <div class="apps-grid">
+                <!-- Leadership Development App -->
+                <div class="app-card" onclick="openApp('leadership-development')">
+                    <div class="app-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="app-content">
+                        <h3 class="app-title">Leadership Development</h3>
+                        <p class="app-description">Track your leadership journey, complete training modules, and monitor your progress through various development phases.</p>
+                        <div class="app-features">
+                            <span class="feature-tag">Training Modules</span>
+                            <span class="feature-tag">Progress Tracking</span>
+                            <span class="feature-tag">Performance Reviews</span>
+                        </div>
+                    </div>
+                    <div class="app-status">
+                        <span class="status-badge available">Available</span>
+                    </div>
+                </div>
+
+                <!-- Coming Soon App 1 -->
+                <div class="app-card coming-soon">
+                    <div class="app-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="app-content">
+                        <h3 class="app-title">Performance Analytics</h3>
+                        <p class="app-description">Comprehensive analytics and reporting tools to track team performance, identify trends, and make data-driven decisions.</p>
+                        <div class="app-features">
+                            <span class="feature-tag">Analytics Dashboard</span>
+                            <span class="feature-tag">Performance Reports</span>
+                            <span class="feature-tag">Trend Analysis</span>
+                        </div>
+                    </div>
+                    <div class="app-status">
+                        <span class="status-badge coming-soon">Coming Soon</span>
+                    </div>
+                </div>
+
+                <!-- Coming Soon App 2 -->
+                <div class="app-card coming-soon">
+                    <div class="app-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="app-content">
+                        <h3 class="app-title">Team Management</h3>
+                        <p class="app-description">Advanced team management tools for scheduling, communication, task assignment, and collaboration across teams.</p>
+                        <div class="app-features">
+                            <span class="feature-tag">Scheduling</span>
+                            <span class="feature-tag">Communication</span>
+                            <span class="feature-tag">Task Management</span>
+                        </div>
+                    </div>
+                    <div class="app-status">
+                        <span class="status-badge coming-soon">Coming Soon</span>
+                    </div>
+                </div>
+
+                <!-- Coming Soon App 3 -->
+                <div class="app-card coming-soon">
+                    <div class="app-icon">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <div class="app-content">
+                        <h3 class="app-title">Quality Assurance</h3>
+                        <p class="app-description">Quality control and assurance tools to maintain high standards, conduct inspections, and ensure compliance.</p>
+                        <div class="app-features">
+                            <span class="feature-tag">Quality Control</span>
+                            <span class="feature-tag">Inspections</span>
+                            <span class="feature-tag">Compliance</span>
+                        </div>
+                    </div>
+                    <div class="app-status">
+                        <span class="status-badge coming-soon">Coming Soon</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../scripts/apps-list-script.js?v=1"></script>
+</body>
+</html>

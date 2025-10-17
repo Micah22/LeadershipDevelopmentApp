@@ -162,12 +162,8 @@
                         
                         console.log('Redirecting...');
                         
-                        // Redirect based on role
-                        if (user.role === 'Admin') {
-                            window.location.href = 'user-dashboard.html';
-                        } else {
-                            window.location.href = 'user-dashboard.html';
-                        }
+                        // Redirect to apps list for all users
+                        window.location.href = 'apps-list.html';
                     } else {
                         console.log('No matching user found');
                         alert('Invalid username or password');

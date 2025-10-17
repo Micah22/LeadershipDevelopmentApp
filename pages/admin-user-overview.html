@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Progress Overview - CFA Leadership Development</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-    <link rel="stylesheet" href="../styles/admin-overview-styles.css?v=26">
+    <link rel="stylesheet" href="../styles/admin-overview-styles.css?v=33">
     <link rel="stylesheet" href="../styles/admin-path-management-styles.css?v=8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="../scripts/navbar.js?v=17"></script>
@@ -31,6 +31,10 @@
                 <a href="#" class="nav-item" id="pathManagement">
                     <i class="fas fa-cogs"></i>
                     <span>Path Management</span>
+                </a>
+                <a href="#" class="nav-item" id="roleManagement">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Role Management</span>
                 </a>
                 <a href="#" class="nav-item" id="reports">
                     <i class="fas fa-chart-bar"></i>
@@ -243,6 +247,77 @@
                 <!-- Modules Management Grid -->
                 <div class="modules-management-grid" id="modulesManagementGrid">
                     <!-- Modules will be populated here -->
+                </div>
+            </div>
+
+            <!-- Role Management Content (Hidden by default) -->
+            <div id="roleManagementContent" class="content-section" style="display: none;">
+                <div class="content-header">
+                    <h1 class="page-title">Role Management</h1>
+                    <p class="page-subtitle">Manage user roles and permission levels across the system</p>
+                </div>
+
+                <!-- Role Overview Cards -->
+                <div class="role-overview-cards">
+                    <div class="overview-card">
+                        <div class="card-icon"><i class="fas fa-users-cog"></i></div>
+                        <div class="card-content">
+                            <div class="card-number" id="totalRoles">0</div>
+                            <div class="card-label">Total Roles</div>
+                        </div>
+                    </div>
+                    <div class="overview-card">
+                        <div class="card-icon"><i class="fas fa-user-check"></i></div>
+                        <div class="card-content">
+                            <div class="card-number" id="activeRoles">0</div>
+                            <div class="card-label">Active Roles</div>
+                        </div>
+                    </div>
+                    <div class="overview-card">
+                        <div class="card-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div class="card-content">
+                            <div class="card-number" id="permissionLevels">0</div>
+                            <div class="card-label">Permission Levels</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Role Definitions Section -->
+                <div class="section">
+                    <div class="section-header">
+                        <h2>Role Definitions</h2>
+                        <button class="btn btn-primary" id="addRoleBtn">
+                            <i class="fas fa-plus"></i> Add New Role
+                        </button>
+                    </div>
+                    <div class="section-content">
+                        <div class="roles-grid" id="rolesGrid">
+                            <!-- Role cards will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page Access Matrix Section -->
+                <div class="section">
+                    <div class="section-header">
+                        <h2>Page Access Matrix</h2>
+                        <p class="section-description">View and adjust page access for each role.</p>
+                    </div>
+                    <div class="section-content">
+                        <div class="permission-matrix-container">
+                            <table class="permission-matrix" id="permissionMatrix">
+                                <thead>
+                                    <tr>
+                                        <th>Permission</th>
+                                        <!-- Role headers will be populated by JS -->
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Permission rows will be populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -480,13 +555,57 @@
         </div>
     </div>
 
+    <!-- Role Management Modal -->
+    <div class="modal-overlay" id="roleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="roleModalTitle">Add New Role</h2>
+                <button class="modal-close" id="roleModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="roleForm">
+                    <input type="hidden" id="roleId">
+                    <div class="form-group">
+                        <label for="roleName">Role Name</label>
+                        <input type="text" id="roleName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="roleDescription">Description</label>
+                        <textarea id="roleDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="roleLevel">Permission Level</label>
+                        <select id="roleLevel">
+                            <option value="1">Level 1 (Basic)</option>
+                            <option value="2">Level 2 (Standard)</option>
+                            <option value="3">Level 3 (Advanced)</option>
+                            <option value="4">Level 4 (Full Access)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Page Access</label>
+                        <div class="permissions-grid" id="rolePermissionsGrid">
+                            <!-- Page access checkboxes will be populated here -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="roleModalCancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="roleModalSave">Save Role</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
         console.log('🔍 HTML: About to load admin-overview-script.js');
     </script>
-    <script src="../scripts/admin-overview-script.js?v=75"></script>
+    <script src="../scripts/admin-overview-script.js?v=86"></script>
     <script>
         console.log('🔍 HTML: admin-overview-script.js should be loaded now');
         console.log('🔍 HTML: testScript available?', typeof window.testScript);

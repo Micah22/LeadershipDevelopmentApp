@@ -9,8 +9,8 @@ window.testScript = function() {
 
 document.addEventListener('DOMContentLoaded', async function() {
     try {
-        
-        // Initialize the page
+    
+    // Initialize the page
         await initializePage();
     
     // Set up event listeners
@@ -277,6 +277,13 @@ function handleNavigation(itemId, e) {
                 console.error('Error in showPathManagementContent:', error);
             }
             break;
+        case 'roleManagement':
+            try {
+                showRoleManagementContent();
+            } catch (error) {
+                console.error('Error in showRoleManagementContent:', error);
+            }
+            break;
         case 'reports':
             // TODO: Show reports content
             break;
@@ -322,16 +329,16 @@ async function loadUserData() {
     
     // Debug: Check user progress data
     for (const user of users) {
-        const userProgress = getUserProgress(user.username);
+        const userProgress = await getUserProgress(user.username);
         const overallProgress = await calculateUserOverallProgress(user.username);
     }
     
     // Update summary cards
     updateSummaryCards(users);
-
+    
     // Update role statistics
     updateRoleStats(users);
-
+    
     // Update user progress table
     updateUserProgressTable(users);
     
@@ -415,8 +422,13 @@ function updateUserProgressTable(users) {
                 </td>
                 <td>
                     <div class="action-buttons">
-                        <button class="action-btn" onclick="viewUserDetails('${user.username}')">
-                            View Details
+                        <button class="action-btn" onclick="editUser('${user.username}')">
+                            <i class="fas fa-edit"></i>
+                            Edit User
+                        </button>
+                        <button class="action-btn action-btn-info" onclick="viewUserDetails('${user.username}')">
+                            <i class="fas fa-info-circle"></i>
+                            Details
                         </button>
                         <button class="action-btn action-btn-danger" onclick="resetUserProgress('${user.username}')" title="Reset User Progress">
                             <i class="fas fa-undo"></i>
@@ -492,8 +504,386 @@ async function resetUserProgress(username) {
     }
 }
 
-function viewUserDetails(username) {
+function editUser(username) {
     openUserModal(username);
+}
+
+function viewUserDetails(username) {
+    openUserDetailsModal(username);
+}
+
+async function openUserDetailsModal(username) {
+    const users = await getUsers();
+    const user = users.find(u => u.username === username);
+    
+    if (!user) {
+        showToast('error', 'Error', 'User not found');
+        return;
+    }
+    
+    // Get user's full name safely
+    const userFullName = user.full_name || user.fullName || user.username || 'Unknown User';
+    const userDisplayName = userFullName.charAt(0).toUpperCase();
+    
+    // Get quiz results for this user
+    let quizResults = JSON.parse(localStorage.getItem('quizResults') || '[]');
+    
+    // Add some test quiz data for admin user if none exists
+    if (username === 'admin' && quizResults.length === 0) {
+        const testQuizResults = [
+            {
+                id: 'test_result_1',
+                quizId: 'quiz_1',
+                quizTitle: 'Leadership Fundamentals',
+                username: 'admin',
+                score: 85,
+                correctAnswers: 17,
+                totalQuestions: 20,
+                passed: true,
+                dateTaken: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+                completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+                answers: [],
+                timeSpent: 0
+            },
+            {
+                id: 'test_result_2',
+                quizId: 'quiz_2',
+                quizTitle: 'Team Management',
+                username: 'admin',
+                score: 92,
+                correctAnswers: 23,
+                totalQuestions: 25,
+                passed: true,
+                dateTaken: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+                completedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+                answers: [],
+                timeSpent: 0
+            },
+            {
+                id: 'test_result_3',
+                quizId: 'quiz_3',
+                quizTitle: 'Communication Skills',
+                username: 'admin',
+                score: 78,
+                correctAnswers: 15,
+                totalQuestions: 20,
+                passed: false,
+                dateTaken: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+                completedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+                answers: [],
+                timeSpent: 0
+            }
+        ];
+        quizResults = testQuizResults;
+        localStorage.setItem('quizResults', JSON.stringify(quizResults));
+    }
+    
+    const userQuizResults = quizResults.filter(result => {
+        // Handle both old format (no username) and new format (with username)
+        // For old results without username, assume they belong to the current user if they're the only results
+        if (result.username) {
+            return result.username === username;
+        } else {
+            // For backward compatibility, if there are no results with usernames,
+            // and this is the admin user, show all results
+            return username === 'admin' && quizResults.every(r => !r.username);
+        }
+    });
+    
+    // Get all quizzes to match with results
+    const allQuizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
+    
+    // Get user's module progress (use async version from user-progress-script.js)
+    let userProgress = await getUserProgress(username);
+    const allModules = await getAllModules();
+    
+    // Add some test module progress data for admin user if none exists
+    if (username === 'admin' && Object.keys(userProgress).length === 0) {
+        const testModuleProgress = {
+            'Fries': {
+                completedTasks: 3,
+                totalTasks: 5,
+                progressPercentage: 60,
+                checklist: [true, true, true, false, false]
+            },
+            'Nuggets': {
+                completedTasks: 1,
+                totalTasks: 4,
+                progressPercentage: 25,
+                checklist: [true, false, false, false]
+            }
+        };
+        
+        // Save test data to localStorage
+        const userProgressKey = `userProgress_${username}`;
+        localStorage.setItem(userProgressKey, JSON.stringify(testModuleProgress));
+        userProgress = testModuleProgress;
+        
+        console.log('Added test module progress for admin user:', testModuleProgress);
+    }
+    
+    // Calculate module progress statistics
+    let moduleProgressStats = {
+        totalAssigned: 0,
+        completed: 0,
+        inProgress: 0,
+        notStarted: 0,
+        overallPercentage: 0
+    };
+    
+    // Get module assignments for this user
+    let moduleAssignments = [];
+    try {
+        if (window.dbService && window.dbService.isConfigured) {
+            const userId = user.id || user.user_id;
+            if (userId) {
+                moduleAssignments = await window.dbService.getModuleAssignments(userId);
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load module assignments:', error);
+    }
+    
+    // Process module progress
+    const moduleProgressList = [];
+    if (moduleAssignments.length > 0) {
+        for (const assignment of moduleAssignments) {
+            const module = allModules.find(m => m.id === assignment.module_id);
+            if (module) {
+                const progress = userProgress[module.title] || { completedTasks: 0, totalTasks: 0 };
+                const progressPercentage = progress.totalTasks > 0 ? Math.round((progress.completedTasks / progress.totalTasks) * 100) : 0;
+                
+                moduleProgressList.push({
+                    title: module.title,
+                    progress: progressPercentage,
+                    completedTasks: progress.completedTasks,
+                    totalTasks: progress.totalTasks,
+                    status: assignment.status,
+                    dueDate: assignment.due_date
+                });
+                
+                moduleProgressStats.totalAssigned++;
+                if (progressPercentage === 100) {
+                    moduleProgressStats.completed++;
+                } else if (progressPercentage > 0) {
+                    moduleProgressStats.inProgress++;
+                } else {
+                    moduleProgressStats.notStarted++;
+                }
+            }
+        }
+    } else {
+        // Fallback: check localStorage progress data
+        Object.keys(userProgress).forEach(moduleTitle => {
+            const progress = userProgress[moduleTitle];
+            if (progress && progress.totalTasks > 0) {
+                const progressPercentage = Math.round((progress.completedTasks / progress.totalTasks) * 100);
+                moduleProgressList.push({
+                    title: moduleTitle,
+                    progress: progressPercentage,
+                    completedTasks: progress.completedTasks,
+                    totalTasks: progress.totalTasks,
+                    status: progressPercentage === 100 ? 'completed' : progressPercentage > 0 ? 'in_progress' : 'assigned'
+                });
+                
+                moduleProgressStats.totalAssigned++;
+                if (progressPercentage === 100) {
+                    moduleProgressStats.completed++;
+                } else if (progressPercentage > 0) {
+                    moduleProgressStats.inProgress++;
+                } else {
+                    moduleProgressStats.notStarted++;
+                }
+            }
+        });
+    }
+    
+    // Calculate overall progress percentage
+    if (moduleProgressStats.totalAssigned > 0) {
+        moduleProgressStats.overallPercentage = Math.round((moduleProgressStats.completed / moduleProgressStats.totalAssigned) * 100);
+    }
+    
+    // Create quiz scores HTML
+    let quizScoresHtml = '';
+    if (userQuizResults.length > 0) {
+        const averageScore = Math.round(userQuizResults.reduce((sum, result) => sum + result.score, 0) / userQuizResults.length);
+        const passedCount = userQuizResults.filter(result => result.passed).length;
+        
+        quizScoresHtml = `
+            <div class="quiz-scores-section">
+                <div class="section-header">
+                    <h4><i class="fas fa-chart-line"></i> Quiz Performance</h4>
+                    <div class="quiz-summary">
+                        <span class="average-score">Average: ${averageScore}%</span>
+                        <span class="passed-count">${passedCount}/${userQuizResults.length} Passed</span>
+                    </div>
+                </div>
+                <div class="quiz-scores-list">
+                    ${userQuizResults.map(result => {
+                        const quiz = allQuizzes.find(q => q.id === result.quizId);
+                        const quizTitle = quiz ? quiz.title : 'Unknown Quiz';
+                        const passedClass = result.passed ? 'passed' : 'failed';
+                        const passedText = result.passed ? 'Passed' : 'Failed';
+                        
+                        return `
+                            <div class="quiz-score-item ${passedClass}">
+                                <div class="quiz-score-info">
+                                    <span class="quiz-title">${quizTitle}</span>
+                                    <span class="quiz-date">${new Date(result.completedAt || result.dateTaken).toLocaleDateString()}</span>
+                                </div>
+                                <div class="quiz-score-details">
+                                    <span class="score">${result.score}%</span>
+                                    <span class="status ${passedClass}">${passedText}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    } else {
+        quizScoresHtml = `
+            <div class="quiz-scores-section">
+                <h4><i class="fas fa-chart-line"></i> Quiz Performance</h4>
+                <div class="no-quiz-results">
+                    <i class="fas fa-info-circle"></i>
+                    <p>No quiz results found for this user.</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Create module progress HTML
+    let moduleProgressHtml = '';
+    if (moduleProgressList.length > 0) {
+        moduleProgressHtml = `
+            <div class="module-progress-section">
+                <div class="section-header">
+                    <h4><i class="fas fa-tasks"></i> Module Progress</h4>
+                    <div class="progress-summary">
+                        <span class="overall-progress">${moduleProgressStats.overallPercentage}% Complete</span>
+                        <span class="module-count">${moduleProgressStats.completed}/${moduleProgressStats.totalAssigned} Modules</span>
+                    </div>
+                </div>
+                <div class="module-progress-list">
+                    ${moduleProgressList.map(module => {
+                        const statusClass = module.progress === 100 ? 'completed' : module.progress > 0 ? 'in-progress' : 'not-started';
+                        const statusText = module.progress === 100 ? 'Completed' : module.progress > 0 ? 'In Progress' : 'Not Started';
+                        
+                        return `
+                            <div class="module-progress-item ${statusClass}">
+                                <div class="module-info">
+                                    <span class="module-title">${module.title}</span>
+                                    <span class="module-status">${statusText}</span>
+                                </div>
+                                <div class="module-progress-details">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: ${module.progress}%"></div>
+                                    </div>
+                                    <span class="progress-text">${module.completedTasks}/${module.totalTasks} tasks</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    } else {
+        moduleProgressHtml = `
+            <div class="module-progress-section">
+                <h4><i class="fas fa-tasks"></i> Module Progress</h4>
+                <div class="no-module-progress">
+                    <i class="fas fa-info-circle"></i>
+                    <p>No module assignments found for this user.</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Create user details modal content
+    const modalContent = `
+        <div class="user-details-modal">
+            <div class="user-details-header">
+                <div class="user-avatar">
+                    <span>${userDisplayName}</span>
+                </div>
+                <div class="user-info">
+                    <h3>${userFullName}</h3>
+                    <p class="username">@${user.username}</p>
+                    <span class="role-badge role-${user.role.toLowerCase().replace(' ', '-')}">${user.role}</span>
+                </div>
+            </div>
+            
+            <div class="user-details-content">
+                <div class="user-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-user"></i>
+                        <span class="stat-label">Role</span>
+                        <span class="stat-value">${user.role}</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-calendar"></i>
+                        <span class="stat-label">Joined</span>
+                        <span class="stat-value">${new Date(user.created_at || user.createdAt || Date.now()).toLocaleDateString()}</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-chart-bar"></i>
+                        <span class="stat-label">Quizzes Taken</span>
+                        <span class="stat-value">${userQuizResults.length}</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-trophy"></i>
+                        <span class="stat-label">Modules Assigned</span>
+                        <span class="stat-value">${moduleProgressStats.totalAssigned}</span>
+                    </div>
+                </div>
+                
+                ${moduleProgressHtml}
+                ${quizScoresHtml}
+            </div>
+        </div>
+    `;
+    
+    // Create and show modal
+    showDetailsModal(modalContent, `${userFullName} - Details`);
+}
+
+function showDetailsModal(content, title) {
+    // Remove existing details modal if any
+    const existingModal = document.getElementById('userDetailsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create modal HTML
+    const modalHtml = `
+        <div class="modal-overlay show" id="userDetailsModal">
+            <div class="modal-content details-modal">
+                <div class="modal-header">
+                    <h2>${title}</h2>
+                    <button class="modal-close" onclick="closeDetailsModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    ${content}
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeDetailsModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeDetailsModal() {
+    const modal = document.getElementById('userDetailsModal');
+    if (modal) {
+        modal.remove();
+    }
 }
 
 async function openUserModal(username) {
@@ -513,13 +903,13 @@ async function openUserModal(username) {
     modalSave.textContent = 'Save Changes';
     
     // Populate form with user data
-    document.getElementById('editFullName').value = user.fullName || '';
+    document.getElementById('editFullName').value = user.full_name || user.fullName || '';
     document.getElementById('editUsername').value = user.username || '';
-    document.getElementById('editPassword').value = user.password || '';
+    document.getElementById('editPassword').value = user.password || (user.password_hash ? atob(user.password_hash) : '');
     document.getElementById('editRole').value = user.role || 'Team Member';
     document.getElementById('editStatus').value = user.status || 'active';
     document.getElementById('editEmail').value = user.email || '';
-    document.getElementById('editStartDate').value = user.startDate || '';
+    document.getElementById('editStartDate').value = user.start_date || user.startDate || '';
     
     // Store current username for updates
     modal.dataset.currentUsername = username;
@@ -885,14 +1275,14 @@ async function calculateUserOverallProgress(username) {
             users = JSON.parse(localStorage.getItem('users') || '[]');
         }
         
-        const user = users.find(u => u.username === username);
-        const userRole = user ? user.role : 'Team Member';
-        
-        let totalTasks = 0;
-        let completedTasks = 0;
-        
+    const user = users.find(u => u.username === username);
+    const userRole = user ? user.role : 'Team Member';
+    
+    let totalTasks = 0;
+    let completedTasks = 0;
+    
         // Get all module titles from database or localStorage
-        let moduleTitles = [];
+    let moduleTitles = [];
         try {
             if (window.dbService && window.dbService.isConfigured) {
                 const dbModules = await window.dbService.getModules();
@@ -907,38 +1297,38 @@ async function calculateUserOverallProgress(username) {
         // Fallback to localStorage if no modules from database
         if (moduleTitles.length === 0) {
             const globalModules = localStorage.getItem('globalModules');
-            if (globalModules) {
-                const modules = JSON.parse(globalModules);
-                moduleTitles = modules.map(m => m.title);
-            } else {
-                // Fallback to default module titles
-                moduleTitles = [
-                    'Communication Skills', 'Team Leadership', 'Decision Making',
-                    'Conflict Resolution', 'Strategic Planning', 'Performance Management'
-                ];
+    if (globalModules) {
+        const modules = JSON.parse(globalModules);
+        moduleTitles = modules.map(m => m.title);
+    } else {
+        // Fallback to default module titles
+        moduleTitles = [
+            'Communication Skills', 'Team Leadership', 'Decision Making',
+            'Conflict Resolution', 'Strategic Planning', 'Performance Management'
+        ];
             }
-        }
-        
+    }
+    
         for (const moduleTitle of moduleTitles) {
-            const moduleData = getModuleData(moduleTitle);
-            
+        const moduleData = getModuleData(moduleTitle);
+        
             if (moduleData && moduleData.checklist) {
-                totalTasks += moduleData.checklist.length;
-                const moduleProgress = userProgress[moduleTitle];
-                
-                if (moduleProgress && moduleProgress.checklist) {
-                    // Count completed tasks (true values in the checklist array)
-                    const completedInModule = moduleProgress.checklist.filter(item => item === true).length;
-                    completedTasks += completedInModule;
-                }
+            totalTasks += moduleData.checklist.length;
+            const moduleProgress = userProgress[moduleTitle];
+            
+            if (moduleProgress && moduleProgress.checklist) {
+                // Count completed tasks (true values in the checklist array)
+                const completedInModule = moduleProgress.checklist.filter(item => item === true).length;
+                completedTasks += completedInModule;
             }
         }
-        
-        return {
-            totalTasks,
-            completedTasks,
-            percentage: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
-        };
+        }
+    
+    return {
+        totalTasks,
+        completedTasks,
+        percentage: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+    };
     } catch (error) {
         console.error('Error calculating user overall progress:', error);
         return {
@@ -949,10 +1339,65 @@ async function calculateUserOverallProgress(username) {
     }
 }
 
-// Utility function to get user's progress data
-function getUserProgress(username) {
-    const userProgressKey = `userProgress_${username}`;
-    return JSON.parse(localStorage.getItem(userProgressKey) || '{}');
+// Utility function to get user's progress data (async version that syncs with database)
+async function getUserProgress(username) {
+    // Initialize userProgress object
+    let userProgress = {};
+    
+    console.log('Admin Overview - getUserProgress called with username:', username);
+    
+    try {
+        if (window.dbService && window.dbService.isConfigured) {
+            // Get user ID
+            const users = await window.dbService.getUsers();
+            const user = users.find(u => u.username === username);
+            
+            if (user) {
+                // Get progress from database
+                const dbProgress = await window.dbService.getUserProgress(user.id);
+                console.log('Admin Overview - Database progress for user:', user.username, dbProgress);
+                
+                // Get modules from database
+                const modules = await window.dbService.getModules();
+                
+                dbProgress.forEach(p => {
+                    // Find module title by ID
+                    const module = modules.find(m => m.id === p.module_id);
+                    if (module) {
+                        userProgress[module.title] = {
+                            completedTasks: p.completed_tasks || 0,
+                            totalTasks: p.total_tasks || 0,
+                            progressPercentage: p.progress_percentage || 0,
+                            checklist: Array(p.total_tasks || 0).fill(false).map((_, i) => i < (p.completed_tasks || 0))
+                        };
+                    }
+                });
+                
+                // Store in localStorage for compatibility
+                const userProgressKey = `userProgress_${username}`;
+                localStorage.setItem(userProgressKey, JSON.stringify(userProgress));
+                
+                console.log('Admin Overview - Final userProgress object:', userProgress);
+            }
+        } else {
+            // Fallback to localStorage
+            const userProgressKey = `userProgress_${username}`;
+            const storedProgress = localStorage.getItem(userProgressKey);
+            if (storedProgress) {
+                userProgress = JSON.parse(storedProgress);
+            }
+        }
+    } catch (error) {
+        console.error('Admin Overview - Failed to get user progress:', error);
+        // Fallback to localStorage
+        const userProgressKey = `userProgress_${username}`;
+        const storedProgress = localStorage.getItem(userProgressKey);
+        if (storedProgress) {
+            userProgress = JSON.parse(storedProgress);
+        }
+    }
+    
+    return userProgress;
 }
 
 // Utility function to get module data (simplified version for admin overview)
@@ -987,6 +1432,12 @@ function showUserManagementContent() {
     const pathContent = document.getElementById('pathManagementContent');
     if (pathContent) {
         pathContent.style.display = 'none';
+    }
+    
+    // Hide role management content
+    const roleContent = document.getElementById('roleManagementContent');
+    if (roleContent) {
+        roleContent.style.display = 'none';
     }
     
         // Show user management content (main content is already visible)
@@ -1040,6 +1491,11 @@ async function showPathManagementContent() {
             contentHeader.style.display = 'none';
         }
         
+        // Hide role management content
+        const roleContent = document.getElementById('roleManagementContent');
+        if (roleContent) {
+            roleContent.style.display = 'none';
+        }
         
         // Show path management content
         const pathContent = document.getElementById('pathManagementContent');
@@ -1065,6 +1521,61 @@ async function showPathManagementContent() {
         }
     } catch (error) {
         console.error('Error in showPathManagementContent:', error);
+    }
+}
+
+async function showRoleManagementContent() {
+    try {
+        // Keep main content visible but hide user management sections
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.style.display = 'block';
+            mainContent.style.visibility = 'visible';
+            mainContent.style.opacity = '1';
+            mainContent.style.minHeight = '100vh';
+            mainContent.style.width = '100%';
+        }
+        
+        // Hide user management sections (but not role management sections)
+        const userManagementSections = document.querySelectorAll('.section:not(#roleManagementContent .section)');
+        userManagementSections.forEach(section => {
+            section.style.display = 'none';
+        });
+        
+        // Also hide the content header (but not role management header)
+        const contentHeader = document.querySelector('.content-header:not(#roleManagementContent .content-header)');
+        if (contentHeader) {
+            contentHeader.style.display = 'none';
+        }
+        
+        // Hide path management content
+        const pathContent = document.getElementById('pathManagementContent');
+        if (pathContent) {
+            pathContent.style.display = 'none';
+        }
+        
+        // Show role management content
+        const roleContent = document.getElementById('roleManagementContent');
+        if (roleContent) {
+            console.log('🔍 Showing role management content...');
+            roleContent.style.display = 'block';
+            roleContent.style.visibility = 'visible';
+            roleContent.style.opacity = '1';
+            roleContent.style.position = 'relative';
+            roleContent.style.zIndex = '999';
+            roleContent.style.backgroundColor = 'transparent';
+            roleContent.style.minHeight = 'auto';
+            roleContent.style.border = 'none';
+            
+            // Load role management data
+            try {
+                await loadRoleManagementData();
+        } catch (error) {
+                console.error('Error in loadRoleManagementData:', error);
+            }
+        }
+    } catch (error) {
+        console.error('Error in showRoleManagementContent:', error);
     }
 }
 
@@ -1193,7 +1704,7 @@ function setupSearchAndFilter() {
 
 // Function to render modules grid with provided modules
 function renderModulesGrid(modules) {
-    const modulesGrid = document.getElementById('modulesManagementGrid');
+        const modulesGrid = document.getElementById('modulesManagementGrid');
     if (!modulesGrid) return;
 
     if (modules.length === 0) {
@@ -1204,45 +1715,44 @@ function renderModulesGrid(modules) {
                 <p>Try adjusting your search terms or filters</p>
             </div>
         `;
-        return;
-    }
-
-    const modulesHTML = modules.map(module => {
+            return;
+        }
+        
+        const modulesHTML = modules.map(module => {
         // Count tasks with files - handle case where checklist might be undefined
         const tasksWithFiles = (module.checklist || []).filter(task => {
-            if (typeof task === 'string') return false;
-            return task.file && task.file.trim() !== '';
-        }).length;
-        
-        return `
-            <div class="module-management-card">
-                <div class="module-management-header">
-                    <h3 class="module-management-title">${module.title}</h3>
+                if (typeof task === 'string') return false;
+                return task.file && task.file.trim() !== '';
+            }).length;
+            
+            return `
+                <div class="module-management-card">
+                    <div class="module-management-header">
+                        <h3 class="module-management-title">${module.title}</h3>
                     <div class="module-management-meta">
-                        <span class="module-management-phase">${module.phase || 'Phase 1'}</span>
+                        <span class="module-management-phase">${module.phase || module.difficulty || 'Phase 1'}</span>
                         <span class="module-management-status ${module.status || 'active'}">${(module.status || 'active').replace('-', ' ')}</span>
                     </div>
                 </div>
-                <div class="module-management-description">${module.description}</div>
-                <div class="module-management-stats">
+                    <div class="module-management-stats">
                     <div class="module-management-tasks">${(module.checklist || []).length} learning tasks</div>
-                    ${tasksWithFiles > 0 ? `<div class="module-management-files"><i class="fas fa-file"></i> ${tasksWithFiles} tasks with files</div>` : ''}
+                        ${tasksWithFiles > 0 ? `<div class="module-management-files"><i class="fas fa-file"></i> ${tasksWithFiles} tasks with files</div>` : ''}
+                    </div>
+                    <div class="module-management-actions">
+                        <button class="btn btn-secondary" onclick="editModule('${module.title}')">
+                            <i class="fas fa-edit"></i>
+                            Edit
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteModule('${module.title}')">
+                            <i class="fas fa-trash"></i>
+                            Delete
+                        </button>
+                    </div>
                 </div>
-                <div class="module-management-actions">
-                    <button class="btn btn-secondary" onclick="editModule('${module.title}')">
-                        <i class="fas fa-edit"></i>
-                        Edit
-                    </button>
-                    <button class="btn btn-danger" onclick="deleteModule('${module.title}')">
-                        <i class="fas fa-trash"></i>
-                        Delete
-                    </button>
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    modulesGrid.innerHTML = modulesHTML;
+            `;
+        }).join('');
+        
+        modulesGrid.innerHTML = modulesHTML;
 }
 
 // Path Management Functions (copied from admin-path-management-script.js)
@@ -1445,14 +1955,14 @@ async function deleteModule(moduleTitle) {
         
         if (moduleIndex !== -1) {
             modules.splice(moduleIndex, 1);
-            localStorage.setItem('globalModules', JSON.stringify(modules));
+    localStorage.setItem('globalModules', JSON.stringify(modules));
         }
-        
+    
         // Reload modules data to refresh the UI
-        await loadModulesData();
-        
-        // Show success message
-        showToast('success', 'Module Deleted', `Module "${moduleTitle}" has been deleted successfully!`);
+    await loadModulesData();
+    
+    // Show success message
+    showToast('success', 'Module Deleted', `Module "${moduleTitle}" has been deleted successfully!`);
         
     } catch (error) {
         console.error('Failed to delete module:', error);
@@ -1594,6 +2104,7 @@ function closeModuleModal() {
         modal.dataset.currentModule = '';
     }
 }
+
 
 async function saveModuleChanges() {
     const modal = document.getElementById('moduleModal');
@@ -2112,8 +2623,8 @@ function handleFileUpload(fileInput, taskIndex) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    const base64Content = e.target.result.split(',')[1]; // Remove data:type;base64, prefix
-                    addFileToList(filesList, file.name, file.size, base64Content);
+                const base64Content = e.target.result.split(',')[1]; // Remove data:type;base64, prefix
+                addFileToList(filesList, file.name, file.size, base64Content);
                     showToast('success', 'File Added', `Successfully added "${file.name}"`);
                 } catch (error) {
                     console.error('Error processing file:', error);
@@ -2256,6 +2767,8 @@ window.adminOverview = {
     updateRoleStats,
     updateUserProgressTable,
     viewUserDetails,
+    editUser,
+    openUserDetailsModal,
     showUserManagementContent,
     showPathManagementContent,
     loadModulesData
@@ -2371,8 +2884,8 @@ async function loadExistingAssignmentsFromProgress() {
     const modules = getAllModules();
     const existingAssignments = [];
     
-    users.forEach(user => {
-        const userProgress = getUserProgress(user.username);
+    users.forEach(async user => {
+        const userProgress = await getUserProgress(user.username);
         
         // Check if user has progress on any modules
         if (userProgress && typeof userProgress === 'object') {
@@ -2700,20 +3213,20 @@ async function saveAssignment() {
             
             // Create assignments for each selected user and module combination
             for (const userId of validUserIds) {
-                for (const moduleId of validModuleIds) {
-                    try {
-                        const newAssignment = await window.dbService.assignModuleToUser(
-                            userId,
-                            moduleId,
-                            null, // assigned_by
-                            dueDate,
-                            notes
-                        );
-                        
-                        successCount++;
-                    } catch (error) {
+            for (const moduleId of validModuleIds) {
+                try {
+                    const newAssignment = await window.dbService.assignModuleToUser(
+                        userId,
+                        moduleId,
+                        null, // assigned_by
+                        dueDate,
+                        notes
+                    );
+                    
+                    successCount++;
+                } catch (error) {
                         console.error(`Failed to assign module ${moduleId} to user ${userId}:`, error);
-                        errorCount++;
+                    errorCount++;
                     }
                 }
             }
@@ -3015,4 +3528,404 @@ async function bulkUnassignModules() {
     
     showToast('success', 'Bulk Unassign Complete', message);
     await loadModuleAssignments();
+}
+
+// ===== ROLE MANAGEMENT FUNCTIONALITY =====
+
+// Global variables for role management
+let roles = [];
+const pagePermissions = {
+    'User Management': {
+        id: 'userManagement',
+        name: 'User Management',
+        description: 'Manage users, view progress, assign modules',
+        icon: 'fas fa-users'
+    },
+    'Path Management': {
+        id: 'pathManagement',
+        name: 'Path Management',
+        description: 'Create and manage learning modules',
+        icon: 'fas fa-cogs'
+    },
+    'Role Management': {
+        id: 'roleManagement',
+        name: 'Role Management',
+        description: 'Configure roles and page access permissions',
+        icon: 'fas fa-user-shield'
+    },
+    'Reports': {
+        id: 'reports',
+        name: 'Reports',
+        description: 'View analytics and system reports',
+        icon: 'fas fa-chart-bar'
+    },
+    'Settings': {
+        id: 'settings',
+        name: 'Settings',
+        description: 'System configuration and preferences',
+        icon: 'fas fa-cog'
+    }
+};
+
+// Default page access based on role level
+const pageAccessLevels = {
+    1: ['userManagement'], // Team Member - can only view user management (their own progress)
+    2: ['userManagement', 'pathManagement'], // Supervisor - can manage users and modules
+    3: ['userManagement', 'pathManagement', 'reports'], // Director - can access reports
+    4: ['userManagement', 'pathManagement', 'roleManagement', 'reports', 'settings'] // Admin - full access
+};
+
+// Load role management data
+async function loadRoleManagementData() {
+    try {
+        console.log('🔍 Loading role management data...');
+        
+        // Load roles from localStorage (in a real app, this would come from the database)
+        const storedRoles = localStorage.getItem('roles');
+        if (storedRoles) {
+            roles = JSON.parse(storedRoles);
+            console.log('🔍 Loaded roles from localStorage:', roles);
+        } else {
+            // Default roles if none exist
+            roles = [
+                { id: 'admin', name: 'Admin', description: 'Full system access', level: 4, pageAccess: pageAccessLevels[4] },
+                { id: 'director', name: 'Director', description: 'High-level management', level: 3, pageAccess: pageAccessLevels[3] },
+                { id: 'supervisor', name: 'Supervisor', description: 'Team supervision', level: 2, pageAccess: pageAccessLevels[2] },
+                { id: 'team-member', name: 'Team Member', description: 'Basic access', level: 1, pageAccess: pageAccessLevels[1] }
+            ];
+            localStorage.setItem('roles', JSON.stringify(roles));
+            console.log('🔍 Created default roles:', roles);
+        }
+        
+        // Render role management content
+        console.log('🔍 Rendering role overview cards...');
+        renderRoleOverviewCards();
+        
+        console.log('🔍 Rendering roles grid...');
+        renderRolesGrid();
+        
+        console.log('🔍 Rendering permission matrix...');
+        renderPermissionMatrix();
+        
+        console.log('🔍 Setting up event listeners...');
+        setupRoleManagementEventListeners();
+        
+        console.log('🔍 Role management data loaded successfully!');
+        
+    } catch (error) {
+        console.error('❌ Error loading role management data:', error);
+        showToast('error', 'Error', 'Failed to load role management data');
+    }
+}
+
+// Render role overview cards
+function renderRoleOverviewCards() {
+    const totalRoles = document.getElementById('totalRoles');
+    const activeRoles = document.getElementById('activeRoles');
+    const permissionLevelsElement = document.getElementById('permissionLevels');
+    
+    if (totalRoles) totalRoles.textContent = roles.length;
+    if (activeRoles) activeRoles.textContent = roles.length; // All roles are considered active for now
+    if (permissionLevelsElement) permissionLevelsElement.textContent = Object.keys(pageAccessLevels).length;
+}
+
+// Render roles grid
+function renderRolesGrid() {
+    const rolesGrid = document.getElementById('rolesGrid');
+    console.log('🔍 renderRolesGrid - rolesGrid element:', rolesGrid);
+    if (!rolesGrid) {
+        console.error('❌ rolesGrid element not found!');
+        return;
+    }
+    
+    const rolesHTML = roles.map(role => {
+        const pageAccess = role.pageAccess || [];
+        const accessiblePages = pageAccess.map(pageId => {
+            const page = Object.values(pagePermissions).find(p => p.id === pageId);
+            return page ? page.name : pageId;
+        }).join(', ');
+        
+        return `
+        <div class="role-card">
+            <h3>${role.name}</h3>
+            <p>${role.description}</p>
+            <div class="role-level">Level ${role.level}</div>
+            <div class="page-access">
+                <strong>Can Access:</strong><br>
+                <span class="accessible-pages">${accessiblePages || 'No pages assigned'}</span>
+            </div>
+            <div class="role-actions">
+                <button class="btn btn-edit" onclick="editRole('${role.id}')">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-delete" onclick="deleteRole('${role.id}')">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+    `;
+    }).join('');
+    
+    rolesGrid.innerHTML = rolesHTML;
+}
+
+// Render permission matrix
+function renderPermissionMatrix() {
+    const permissionMatrix = document.getElementById('permissionMatrix');
+    console.log('🔍 renderPermissionMatrix - permissionMatrix element:', permissionMatrix);
+    if (!permissionMatrix) {
+        console.error('❌ permissionMatrix element not found!');
+        return;
+    }
+    
+    // Create header row
+    const headerRow = permissionMatrix.querySelector('thead tr');
+    headerRow.innerHTML = '<th>Page Access</th>' + roles.map(role => `<th>${role.name}</th>`).join('');
+    
+    // Create permission rows
+    const tbody = permissionMatrix.querySelector('tbody');
+    tbody.innerHTML = '';
+    
+    Object.entries(pagePermissions).forEach(([pageName, pageInfo]) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <div class="page-info">
+                    <i class="${pageInfo.icon}"></i>
+                    <div>
+                        <strong>${pageInfo.name}</strong><br>
+                        <small>${pageInfo.description}</small>
+                    </div>
+                </div>
+            </td>
+            ${roles.map(role => `
+                <td class="permission-checkbox">
+                    <input type="checkbox" 
+                           ${(role.pageAccess || []).includes(pageInfo.id) ? 'checked' : ''}
+                           onchange="updateRolePageAccess('${role.id}', '${pageInfo.id}', this.checked)">
+                </td>
+            `).join('')}
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Setup role management event listeners
+function setupRoleManagementEventListeners() {
+    // Add role button
+    const addRoleBtn = document.getElementById('addRoleBtn');
+    if (addRoleBtn) {
+        addRoleBtn.addEventListener('click', openRoleModal);
+    }
+    
+    // Role modal event listeners
+    const roleModal = document.getElementById('roleModal');
+    const roleModalClose = document.getElementById('roleModalClose');
+    const roleModalCancel = document.getElementById('roleModalCancel');
+    const roleForm = document.getElementById('roleForm');
+    const roleLevelSelect = document.getElementById('roleLevel');
+    
+    if (roleModalClose) {
+        roleModalClose.addEventListener('click', closeRoleModal);
+    }
+    
+    if (roleModalCancel) {
+        roleModalCancel.addEventListener('click', closeRoleModal);
+    }
+    
+    if (roleForm) {
+        roleForm.addEventListener('submit', saveRole);
+    }
+    
+    if (roleLevelSelect) {
+        roleLevelSelect.addEventListener('change', applyPermissionLevel);
+    }
+    
+    // Close modal when clicking outside
+    if (roleModal) {
+        roleModal.addEventListener('click', function(e) {
+            if (e.target === roleModal) {
+                closeRoleModal();
+            }
+        });
+    }
+}
+
+// Open role modal
+function openRoleModal(roleId = null) {
+    const roleModal = document.getElementById('roleModal');
+    const roleModalTitle = document.getElementById('roleModalTitle');
+    const roleIdInput = document.getElementById('roleId');
+    const roleNameInput = document.getElementById('roleName');
+    const roleDescriptionInput = document.getElementById('roleDescription');
+    const roleLevelSelect = document.getElementById('roleLevel');
+    
+    if (roleId) {
+        // Edit mode
+        const role = roles.find(r => r.id === roleId);
+        if (role) {
+            roleModalTitle.textContent = 'Edit Role';
+            roleIdInput.value = role.id;
+            roleNameInput.value = role.name;
+            roleDescriptionInput.value = role.description;
+            roleLevelSelect.value = role.level;
+            populateRolePageAccess(role.pageAccess || []);
+        }
+    } else {
+        // Add mode
+        roleModalTitle.textContent = 'Add New Role';
+        roleIdInput.value = '';
+        roleNameInput.value = '';
+        roleDescriptionInput.value = '';
+        roleLevelSelect.value = '1';
+        populateRolePageAccess([]);
+    }
+    
+    roleModal.classList.add('show');
+}
+
+// Close role modal
+function closeRoleModal() {
+    const roleModal = document.getElementById('roleModal');
+    if (roleModal) {
+        roleModal.classList.remove('show');
+    }
+}
+
+// Populate role page access
+function populateRolePageAccess(selectedPageAccess) {
+    const rolePermissionsGrid = document.getElementById('rolePermissionsGrid');
+    if (!rolePermissionsGrid) return;
+    
+    const permissionsHTML = Object.entries(pagePermissions).map(([pageName, pageInfo]) => `
+        <div class="permission-item">
+            <input type="checkbox" 
+                   id="page_${pageInfo.id}" 
+                   value="${pageInfo.id}"
+                   ${selectedPageAccess.includes(pageInfo.id) ? 'checked' : ''}>
+            <label for="page_${pageInfo.id}">
+                <i class="${pageInfo.icon}"></i>
+                <div>
+                    <strong>${pageInfo.name}</strong><br>
+                    <small>${pageInfo.description}</small>
+                </div>
+            </label>
+        </div>
+    `).join('');
+    
+    rolePermissionsGrid.innerHTML = permissionsHTML;
+}
+
+// Apply permission level
+function applyPermissionLevel() {
+    const roleLevelSelect = document.getElementById('roleLevel');
+    const level = parseInt(roleLevelSelect.value);
+    
+    if (pageAccessLevels[level]) {
+        populateRolePageAccess(pageAccessLevels[level]);
+    }
+}
+
+// Save role
+function saveRole(e) {
+    e.preventDefault();
+    
+    const roleIdInput = document.getElementById('roleId');
+    const roleNameInput = document.getElementById('roleName');
+    const roleDescriptionInput = document.getElementById('roleDescription');
+    const roleLevelSelect = document.getElementById('roleLevel');
+    
+    const roleData = {
+        id: roleIdInput.value || generateRoleId(),
+        name: roleNameInput.value,
+        description: roleDescriptionInput.value,
+        level: parseInt(roleLevelSelect.value),
+        pageAccess: getSelectedPageAccess()
+    };
+    
+    if (roleIdInput.value) {
+        // Update existing role
+        const index = roles.findIndex(r => r.id === roleIdInput.value);
+        if (index !== -1) {
+            roles[index] = roleData;
+        }
+    } else {
+        // Add new role
+        roles.push(roleData);
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('roles', JSON.stringify(roles));
+    
+    // Refresh displays
+    renderRoleOverviewCards();
+    renderRolesGrid();
+    renderPermissionMatrix();
+    
+    closeRoleModal();
+    showToast('success', 'Success', `Role ${roleIdInput.value ? 'updated' : 'created'} successfully`);
+}
+
+// Get selected page access
+function getSelectedPageAccess() {
+    const checkboxes = document.querySelectorAll('#rolePermissionsGrid input[type="checkbox"]:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+// Generate role ID
+function generateRoleId() {
+    return 'role_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// Edit role
+function editRole(roleId) {
+    console.log('🔍 editRole called with ID:', roleId);
+    openRoleModal(roleId);
+}
+
+// Delete role
+function deleteRole(roleId) {
+    console.log('🔍 deleteRole called with ID:', roleId);
+    const role = roles.find(r => r.id === roleId);
+    if (!role) return;
+    
+    if (confirm(`Are you sure you want to delete the "${role.name}" role?`)) {
+        roles = roles.filter(r => r.id !== roleId);
+        localStorage.setItem('roles', JSON.stringify(roles));
+        
+        renderRoleOverviewCards();
+        renderRolesGrid();
+        renderPermissionMatrix();
+        
+        showToast('success', 'Success', 'Role deleted successfully');
+    }
+}
+
+// Make functions globally accessible
+window.editRole = editRole;
+window.deleteRole = deleteRole;
+window.updateRolePageAccess = updateRolePageAccess;
+window.closeRoleModal = closeRoleModal;
+
+// Update role page access
+function updateRolePageAccess(roleId, pageId, hasAccess) {
+    const role = roles.find(r => r.id === roleId);
+    if (!role) return;
+    
+    if (!role.pageAccess) {
+        role.pageAccess = [];
+    }
+    
+    if (hasAccess) {
+        if (!role.pageAccess.includes(pageId)) {
+            role.pageAccess.push(pageId);
+        }
+    } else {
+        role.pageAccess = role.pageAccess.filter(p => p !== pageId);
+    }
+    
+    localStorage.setItem('roles', JSON.stringify(roles));
+    
+    // Refresh the roles grid to show updated page access
+    renderRolesGrid();
 }

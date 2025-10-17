@@ -130,11 +130,11 @@ function setupLoginForm() {
                 localStorage.setItem('isLoggedIn', 'true');
                 localStorage.setItem('username', user.username);
                 
-                showNotification('Login successful! Redirecting to dashboard...', 'success');
+                showNotification('Login successful! Redirecting to apps...', 'success');
                 
-                // Redirect ALL users to their dashboard page
+                // Redirect ALL users to the apps list page
                 setTimeout(() => {
-                    window.location.href = 'user-dashboard.html';
+                    window.location.href = 'apps-list.html';
                 }, 1000);
             } else {
                 showNotification('Invalid email or password', 'error');
