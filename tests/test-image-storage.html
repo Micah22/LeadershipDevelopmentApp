@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Image Storage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        input[type="file"] { margin: 10px 0; }
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Database Image Storage Test</h1>
+    
+    <div class="test-section">
+        <h2>Database Connection Test</h2>
+        <button onclick="testConnection()">Test Database Connection</button>
+        <div id="connectionResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Image Upload Test</h2>
+        <input type="file" id="imageInput" accept="image/*">
+        <button onclick="testImageUpload()">Upload Test Image</button>
+        <div id="uploadResult"></div>
+        <div id="imagePreview"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Image Delete Test</h2>
+        <input type="text" id="imagePathInput" placeholder="Image path to delete">
+        <button onclick="testImageDelete()">Delete Image</button>
+        <div id="deleteResult"></div>
+    </div>
+
+    <!-- Include database config -->
+    <script src="../database/config.js"></script>
+    
+    <script>
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="test-result ${type}">${message}</div>`;
+        }
+        
+        async function testConnection() {
+            showResult('connectionResult', 'Testing database connection...', 'info');
+            
+            try {
+                const result = await window.dbService.testConnection();
+                if (result.success) {
+                    showResult('connectionResult', '✅ Database connection successful!', 'success');
+                } else {
+                    showResult('connectionResult', `❌ Database connection failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showResult('connectionResult', `❌ Database connection error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testImageUpload() {
+            const fileInput = document.getElementById('imageInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showResult('uploadResult', '❌ Please select an image file first', 'error');
+                return;
+            }
+            
+            showResult('uploadResult', 'Uploading image...', 'info');
+            
+            try {
+                // Generate a test path
+                const testPath = `test-images/test-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.jpg`;
+                
+                const result = await window.dbService.uploadImage(file, testPath);
+                
+                if (result.success) {
+                    showResult('uploadResult', `✅ Image uploaded successfully!<br>URL: ${result.url}`, 'success');
+                    
+                    // Show image preview
+                    const preview = document.getElementById('imagePreview');
+                    preview.innerHTML = `<img src="${result.url}" alt="Uploaded image" class="image-preview">`;
+                    
+                    // Store the path for delete test
+                    document.getElementById('imagePathInput').value = testPath;
+                } else {
+                    showResult('uploadResult', `❌ Upload failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showResult('uploadResult', `❌ Upload error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testImageDelete() {
+            const pathInput = document.getElementById('imagePathInput');
+            const path = pathInput.value.trim();
+            
+            if (!path) {
+                showResult('deleteResult', '❌ Please enter an image path to delete', 'error');
+                return;
+            }
+            
+            showResult('deleteResult', 'Deleting image...', 'info');
+            
+            try {
+                const result = await window.dbService.deleteImage(path);
+                
+                if (result.success) {
+                    showResult('deleteResult', '✅ Image deleted successfully!', 'success');
+                    pathInput.value = '';
+                } else {
+                    showResult('deleteResult', `❌ Delete failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showResult('deleteResult', `❌ Delete error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-test connection on page load
+        window.addEventListener('load', () => {
+            testConnection();
+        });
+    </script>
+</body>
+</html>

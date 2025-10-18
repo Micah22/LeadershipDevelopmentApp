@@ -480,6 +480,80 @@ class DatabaseService {
             return { success: false, error: error.message };
         }
     }
+
+    // Upload image to Supabase Storage
+    async uploadImage(file, path) {
+        try {
+            if (!this.isConfigured) {
+                throw new Error('Database not configured');
+            }
+
+            // Create FormData for file upload
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Upload to Supabase Storage using service key to bypass RLS
+            const response = await fetch(`${this.supabaseUrl}/storage/v1/object/quiz-images/${path}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.serviceKey}`,
+                    'apikey': this.serviceKey
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`Upload failed: ${errorData.message || response.statusText}`);
+            }
+
+            // Return the public URL
+            const publicUrl = `${this.supabaseUrl}/storage/v1/object/public/quiz-images/${path}`;
+            console.log('✅ Image uploaded successfully:', publicUrl);
+            return { success: true, url: publicUrl };
+        } catch (error) {
+            console.error('❌ Image upload failed:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Delete image from Supabase Storage
+    async deleteImage(path) {
+        try {
+            if (!this.isConfigured) {
+                throw new Error('Database not configured');
+            }
+
+            const response = await fetch(`${this.supabaseUrl}/storage/v1/object/quiz-images/${path}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${this.serviceKey}`,
+                    'apikey': this.serviceKey
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`Delete failed: ${errorData.message || response.statusText}`);
+            }
+
+            console.log('✅ Image deleted successfully:', path);
+            return { success: true };
+        } catch (error) {
+            console.error('❌ Image delete failed:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Generate unique filename for image
+    generateImagePath(quizId, questionId, optionIndex = null) {
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(2, 8);
+        const filename = optionIndex !== null 
+            ? `quiz-${quizId}/question-${questionId}/option-${optionIndex}-${timestamp}-${random}.jpg`
+            : `quiz-${quizId}/question-${questionId}/question-${timestamp}-${random}.jpg`;
+        return filename;
+    }
 }
 
 // Create global database service instance

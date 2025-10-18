@@ -201,7 +201,28 @@ function loadQuizData() {
 
 // Save quiz data
 function saveQuizData() {
-    localStorage.setItem('quizzes', JSON.stringify(currentQuizzes));
+    try {
+        localStorage.setItem('quizzes', JSON.stringify(currentQuizzes));
+        console.log('✅ Quiz data saved successfully');
+    } catch (error) {
+        console.error('❌ Failed to save quiz data:', error);
+        if (error.name === 'QuotaExceededError') {
+            // Clear old quiz results to free up space
+            localStorage.removeItem('quizResults');
+            console.log('🧹 Cleared old quiz results to free up space');
+            
+            try {
+                localStorage.setItem('quizzes', JSON.stringify(currentQuizzes));
+                console.log('✅ Quiz data saved after clearing old data');
+                showToast('warning', 'Storage Cleared', 'Old quiz results were cleared to make space. Quiz saved successfully.');
+            } catch (retryError) {
+                console.error('❌ Still failed to save after clearing:', retryError);
+                showToast('error', 'Storage Full', 'Quiz data is too large. Please clear browser data or contact support.');
+            }
+        } else {
+            showToast('error', 'Save Error', 'Failed to save quiz. Please try again.');
+        }
+    }
 }
 
 // Load quiz results
@@ -212,6 +233,20 @@ function loadQuizResults() {
         console.log('📊 Loaded quiz results:', quizResults.length);
     } else {
         quizResults = [];
+    }
+}
+
+// Clear all data function (for storage issues)
+function clearAllData() {
+    if (confirm('This will delete all quizzes and results. Are you sure?')) {
+        localStorage.removeItem('quizzes');
+        localStorage.removeItem('quizResults');
+        currentQuizzes = [...sampleQuizzes];
+        quizResults = [];
+        saveQuizData();
+        renderAvailableQuizzes();
+        renderQuizResults();
+        showToast('success', 'Data Cleared', 'All data has been cleared and reset to defaults.');
     }
 }
 
@@ -404,7 +439,24 @@ function renderCurrentQuestion() {
     const question = currentQuiz.questions[currentQuestionIndex];
     currentQuestion.textContent = currentQuestionIndex + 1;
     
+    console.log(`🔍 Rendering question ${currentQuestionIndex + 1}:`, {
+        question: question.question,
+        type: question.type,
+        hasImage: !!question.image,
+        image: question.image ? question.image.substring(0, 50) + '...' : null,
+        options: question.options.map(opt => ({
+            text: typeof opt === 'string' ? opt : opt.text,
+            hasImage: typeof opt === 'object' && !!opt.image,
+            image: typeof opt === 'object' && opt.image ? opt.image.substring(0, 50) + '...' : null
+        }))
+    });
+    
     let questionHtml = `<div class="question-text">${question.question}</div>`;
+    
+    // Add question image if it exists
+    if (question.image) {
+        questionHtml += `<div class="question-image"><img src="${question.image}" alt="Question Image" class="question-image-display" onclick="openImageModal('${question.image}')"></div>`;
+    }
     
     // Handle different question types
     switch(question.type || 'multiple_choice') {
@@ -414,7 +466,10 @@ function renderCurrentQuestion() {
                     ${question.options.map((option, index) => `
                         <div class="quiz-option" onclick="selectAnswer(${index})">
                             <input type="radio" name="answer" value="${index}" id="option_${index}">
-                            <label for="option_${index}">${option}</label>
+                            <label for="option_${index}">
+                                ${typeof option === 'string' ? option : option.text}
+                                ${typeof option === 'object' && option.image ? `<img src="${option.image}" alt="Option Image" class="option-image" onclick="openImageModal('${option.image}')">` : ''}
+                            </label>
                         </div>
                     `).join('')}
                 </div>
@@ -427,7 +482,10 @@ function renderCurrentQuestion() {
                     ${question.options.map((option, index) => `
                         <div class="quiz-option" onclick="selectMultipleAnswer(${index})">
                             <input type="checkbox" name="answer" value="${index}" id="option_${index}">
-                            <label for="option_${index}">${option}</label>
+                            <label for="option_${index}">
+                                ${typeof option === 'string' ? option : option.text}
+                                ${typeof option === 'object' && option.image ? `<img src="${option.image}" alt="Option Image" class="option-image" onclick="openImageModal('${option.image}')">` : ''}
+                            </label>
                         </div>
                     `).join('')}
                 </div>
@@ -737,13 +795,8 @@ function setupModalEvents() {
         closeResults.addEventListener('click', closeResultsModal);
     }
     
-    // Close modals when clicking outside
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('modal-overlay')) {
-            closeQuizModal();
-            closeResultsModal();
-        }
-    });
+    // Note: Removed outside click functionality
+    // Modals can only be closed with their respective X buttons
 }
 
 // Render quiz results
@@ -864,34 +917,106 @@ function addQuestion() {
                 <label>Question Text</label>
                 <textarea name="question_${questionCounter}" required></textarea>
             </div>
+            <div class="form-group">
+                <label>Question Image (Optional)</label>
+                <div class="image-upload-container">
+                    <input type="file" name="questionImage_${questionCounter}" id="questionImage_${questionCounter}" accept="image/*" onchange="handleQuestionImageUpload(${questionCounter}, this)">
+                    <label for="questionImage_${questionCounter}" class="image-upload-btn">
+                        <i class="fas fa-image"></i>
+                        <span>Choose Image</span>
+                    </label>
+                    <div class="image-preview" id="questionImagePreview_${questionCounter}" style="display: none;">
+                        <img id="questionImageDisplay_${questionCounter}" src="" alt="Question Image Preview">
+                        <button type="button" class="remove-image-btn" onclick="removeQuestionImage(${questionCounter})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
             <div class="answer-options" id="answerOptions_${questionCounter}">
                 <div class="form-group">
                     <label>Answer Options (Select one correct answer)</label>
                     <div class="answer-options-container" id="answerOptions_${questionCounter}">
                         <div class="answer-option">
                             <input type="radio" name="correct_${questionCounter}" value="0" required>
-                            <input type="text" name="option_${questionCounter}_0" placeholder="Option 1" required autocomplete="off">
+                            <div class="option-content">
+                                <input type="text" name="option_${questionCounter}_0" placeholder="Option 1" required autocomplete="off">
+                                <div class="option-image-container">
+                                    <input type="file" name="optionImage_${questionCounter}_0" id="optionImage_${questionCounter}_0" accept="image/*" onchange="handleOptionImageUpload(${questionCounter}, 0, this)" style="display: none;">
+                                    <label for="optionImage_${questionCounter}_0" class="option-image-btn" title="Add Image">
+                                        <i class="fas fa-image"></i>
+                                    </label>
+                                    <div class="option-image-preview" id="optionImagePreview_${questionCounter}_0" style="display: none;">
+                                        <img id="optionImageDisplay_${questionCounter}_0" src="" alt="Option Image">
+                                        <button type="button" class="remove-option-image-btn" onclick="removeOptionImage(${questionCounter}, 0)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                             <button type="button" class="remove-option-btn" onclick="removeAnswerOption(${questionCounter}, this)" style="display: none;">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                         <div class="answer-option">
                             <input type="radio" name="correct_${questionCounter}" value="1" required>
-                            <input type="text" name="option_${questionCounter}_1" placeholder="Option 2" required autocomplete="off">
+                            <div class="option-content">
+                                <input type="text" name="option_${questionCounter}_1" placeholder="Option 2" required autocomplete="off">
+                                <div class="option-image-container">
+                                    <input type="file" name="optionImage_${questionCounter}_1" id="optionImage_${questionCounter}_1" accept="image/*" onchange="handleOptionImageUpload(${questionCounter}, 1, this)" style="display: none;">
+                                    <label for="optionImage_${questionCounter}_1" class="option-image-btn" title="Add Image">
+                                        <i class="fas fa-image"></i>
+                                    </label>
+                                    <div class="option-image-preview" id="optionImagePreview_${questionCounter}_1" style="display: none;">
+                                        <img id="optionImageDisplay_${questionCounter}_1" src="" alt="Option Image">
+                                        <button type="button" class="remove-option-image-btn" onclick="removeOptionImage(${questionCounter}, 1)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                             <button type="button" class="remove-option-btn" onclick="removeAnswerOption(${questionCounter}, this)" style="display: none;">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                         <div class="answer-option">
                             <input type="radio" name="correct_${questionCounter}" value="2" required>
-                            <input type="text" name="option_${questionCounter}_2" placeholder="Option 3" required autocomplete="off">
+                            <div class="option-content">
+                                <input type="text" name="option_${questionCounter}_2" placeholder="Option 3" required autocomplete="off">
+                                <div class="option-image-container">
+                                    <input type="file" name="optionImage_${questionCounter}_2" id="optionImage_${questionCounter}_2" accept="image/*" onchange="handleOptionImageUpload(${questionCounter}, 2, this)" style="display: none;">
+                                    <label for="optionImage_${questionCounter}_2" class="option-image-btn" title="Add Image">
+                                        <i class="fas fa-image"></i>
+                                    </label>
+                                    <div class="option-image-preview" id="optionImagePreview_${questionCounter}_2" style="display: none;">
+                                        <img id="optionImageDisplay_${questionCounter}_2" src="" alt="Option Image">
+                                        <button type="button" class="remove-option-image-btn" onclick="removeOptionImage(${questionCounter}, 2)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                             <button type="button" class="remove-option-btn" onclick="removeAnswerOption(${questionCounter}, this)" style="display: none;">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                         <div class="answer-option">
                             <input type="radio" name="correct_${questionCounter}" value="3" required>
-                            <input type="text" name="option_${questionCounter}_3" placeholder="Option 4" required autocomplete="off">
+                            <div class="option-content">
+                                <input type="text" name="option_${questionCounter}_3" placeholder="Option 4" required autocomplete="off">
+                                <div class="option-image-container">
+                                    <input type="file" name="optionImage_${questionCounter}_3" id="optionImage_${questionCounter}_3" accept="image/*" onchange="handleOptionImageUpload(${questionCounter}, 3, this)" style="display: none;">
+                                    <label for="optionImage_${questionCounter}_3" class="option-image-btn" title="Add Image">
+                                        <i class="fas fa-image"></i>
+                                    </label>
+                                    <div class="option-image-preview" id="optionImagePreview_${questionCounter}_3" style="display: none;">
+                                        <img id="optionImageDisplay_${questionCounter}_3" src="" alt="Option Image">
+                                        <button type="button" class="remove-option-image-btn" onclick="removeOptionImage(${questionCounter}, 3)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                             <button type="button" class="remove-option-btn" onclick="removeAnswerOption(${questionCounter}, this)" style="display: none;">
                                 <i class="fas fa-times"></i>
                             </button>
@@ -990,6 +1115,124 @@ function duplicateQuestion(questionNum) {
     showToast('success', 'Success', 'Question duplicated successfully!');
 }
 
+// Handle question image upload
+function handleQuestionImageUpload(questionNum, input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        showToast('error', 'Error', 'Please select a valid image file.');
+        input.value = '';
+        return;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('error', 'Error', 'Image file size must be less than 5MB.');
+        input.value = '';
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const preview = document.getElementById(`questionImagePreview_${questionNum}`);
+        const img = document.getElementById(`questionImageDisplay_${questionNum}`);
+        const uploadBtn = input.previousElementSibling;
+        
+        console.log(`🔍 Question image upload for question ${questionNum}:`, {
+            preview: preview,
+            img: img,
+            uploadBtn: uploadBtn,
+            result: e.target.result.substring(0, 50) + '...'
+        });
+        
+        if (preview && img) {
+            img.src = e.target.result;
+            preview.style.display = 'block';
+            console.log(`✅ Question image preview set for question ${questionNum}`);
+        } else {
+            console.log(`❌ Missing elements for question image ${questionNum}`);
+        }
+        
+        // Hide the upload button
+        if (uploadBtn) {
+            uploadBtn.style.display = 'none';
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+// Remove question image
+function removeQuestionImage(questionNum) {
+    const input = document.getElementById(`questionImage_${questionNum}`);
+    const preview = document.getElementById(`questionImagePreview_${questionNum}`);
+    const uploadBtn = input.previousElementSibling;
+    
+    input.value = '';
+    preview.style.display = 'none';
+    uploadBtn.style.display = 'block';
+}
+
+// Handle option image upload
+function handleOptionImageUpload(questionNum, optionIndex, input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        showToast('error', 'Error', 'Please select a valid image file.');
+        input.value = '';
+        return;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('error', 'Error', 'Image file size must be less than 5MB.');
+        input.value = '';
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const preview = document.getElementById(`optionImagePreview_${questionNum}_${optionIndex}`);
+        const img = document.getElementById(`optionImageDisplay_${questionNum}_${optionIndex}`);
+        const uploadBtn = input.previousElementSibling;
+        
+        console.log(`🔍 Option image upload for question ${questionNum}, option ${optionIndex}:`, {
+            preview: preview,
+            img: img,
+            uploadBtn: uploadBtn,
+            result: e.target.result.substring(0, 50) + '...'
+        });
+        
+        if (preview && img) {
+            img.src = e.target.result;
+            preview.style.display = 'block';
+            console.log(`✅ Option image preview set for question ${questionNum}, option ${optionIndex}`);
+        } else {
+            console.log(`❌ Missing elements for option image ${questionNum}_${optionIndex}`);
+        }
+        
+        // Hide the upload button
+        if (uploadBtn) {
+            uploadBtn.style.display = 'none';
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+// Remove option image
+function removeOptionImage(questionNum, optionIndex) {
+    const input = document.getElementById(`optionImage_${questionNum}_${optionIndex}`);
+    const preview = document.getElementById(`optionImagePreview_${questionNum}_${optionIndex}`);
+    const uploadBtn = input.previousElementSibling;
+    
+    input.value = '';
+    preview.style.display = 'none';
+    uploadBtn.style.display = 'block';
+}
+
 // Change question type
 function changeQuestionType(questionNum, questionType) {
     const answerOptions = document.getElementById(`answerOptions_${questionNum}`);
@@ -1005,28 +1248,84 @@ function changeQuestionType(questionNum, questionType) {
                     <div class="answer-options-container" id="answerOptions_${questionNum}">
                         <div class="answer-option">
                             <input type="radio" name="correct_${questionNum}" value="0" required>
-                            <input type="text" name="option_${questionNum}_0" placeholder="Option 1" required autocomplete="off">
+                            <div class="option-content">
+                                <input type="text" name="option_${questionNum}_0" placeholder="Option 1" required autocomplete="off">
+                                <div class="option-image-container">
+                                    <input type="file" name="optionImage_${questionNum}_0" id="optionImage_${questionNum}_0" accept="image/*" onchange="handleOptionImageUpload(${questionNum}, 0, this)" style="display: none;">
+                                    <label for="optionImage_${questionNum}_0" class="option-image-btn" title="Add Image">
+                                        <i class="fas fa-image"></i>
+                                    </label>
+                                    <div class="option-image-preview" id="optionImagePreview_${questionNum}_0" style="display: none;">
+                                        <img id="optionImageDisplay_${questionNum}_0" src="" alt="Option Image">
+                                        <button type="button" class="remove-option-image-btn" onclick="removeOptionImage(${questionNum}, 0)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                             <button type="button" class="remove-option-btn" onclick="removeAnswerOption(${questionNum}, this)" style="display: none;">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                         <div class="answer-option">
                             <input type="radio" name="correct_${questionNum}" value="1" required>
-                            <input type="text" name="option_${questionNum}_1" placeholder="Option 2" required autocomplete="off">
+                            <div class="option-content">
+                                <input type="text" name="option_${questionNum}_1" placeholder="Option 2" required autocomplete="off">
+                                <div class="option-image-container">
+                                    <input type="file" name="optionImage_${questionNum}_1" id="optionImage_${questionNum}_1" accept="image/*" onchange="handleOptionImageUpload(${questionNum}, 1, this)" style="display: none;">
+                                    <label for="optionImage_${questionNum}_1" class="option-image-btn" title="Add Image">
+                                        <i class="fas fa-image"></i>
+                                    </label>
+                                    <div class="option-image-preview" id="optionImagePreview_${questionNum}_1" style="display: none;">
+                                        <img id="optionImageDisplay_${questionNum}_1" src="" alt="Option Image">
+                                        <button type="button" class="remove-option-image-btn" onclick="removeOptionImage(${questionNum}, 1)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                             <button type="button" class="remove-option-btn" onclick="removeAnswerOption(${questionNum}, this)" style="display: none;">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                         <div class="answer-option">
                             <input type="radio" name="correct_${questionNum}" value="2" required>
-                            <input type="text" name="option_${questionNum}_2" placeholder="Option 3" required autocomplete="off">
+                            <div class="option-content">
+                                <input type="text" name="option_${questionNum}_2" placeholder="Option 3" required autocomplete="off">
+                                <div class="option-image-container">
+                                    <input type="file" name="optionImage_${questionNum}_2" id="optionImage_${questionNum}_2" accept="image/*" onchange="handleOptionImageUpload(${questionNum}, 2, this)" style="display: none;">
+                                    <label for="optionImage_${questionNum}_2" class="option-image-btn" title="Add Image">
+                                        <i class="fas fa-image"></i>
+                                    </label>
+                                    <div class="option-image-preview" id="optionImagePreview_${questionNum}_2" style="display: none;">
+                                        <img id="optionImageDisplay_${questionNum}_2" src="" alt="Option Image">
+                                        <button type="button" class="remove-option-image-btn" onclick="removeOptionImage(${questionNum}, 2)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                             <button type="button" class="remove-option-btn" onclick="removeAnswerOption(${questionNum}, this)" style="display: none;">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                         <div class="answer-option">
                             <input type="radio" name="correct_${questionNum}" value="3" required>
-                            <input type="text" name="option_${questionNum}_3" placeholder="Option 4" required autocomplete="off">
+                            <div class="option-content">
+                                <input type="text" name="option_${questionNum}_3" placeholder="Option 4" required autocomplete="off">
+                                <div class="option-image-container">
+                                    <input type="file" name="optionImage_${questionNum}_3" id="optionImage_${questionNum}_3" accept="image/*" onchange="handleOptionImageUpload(${questionNum}, 3, this)" style="display: none;">
+                                    <label for="optionImage_${questionNum}_3" class="option-image-btn" title="Add Image">
+                                        <i class="fas fa-image"></i>
+                                    </label>
+                                    <div class="option-image-preview" id="optionImagePreview_${questionNum}_3" style="display: none;">
+                                        <img id="optionImageDisplay_${questionNum}_3" src="" alt="Option Image">
+                                        <button type="button" class="remove-option-image-btn" onclick="removeOptionImage(${questionNum}, 3)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                             <button type="button" class="remove-option-btn" onclick="removeAnswerOption(${questionNum}, this)" style="display: none;">
                                 <i class="fas fa-times"></i>
                             </button>
@@ -1125,7 +1424,7 @@ function removeShortAnswer(button) {
 }
 
 // Save quiz
-function saveQuiz(e) {
+async function saveQuiz(e) {
     e.preventDefault();
     
     const formData = new FormData(e.target);
@@ -1146,7 +1445,9 @@ function saveQuiz(e) {
     const questionElements = document.querySelectorAll('.question-item');
     console.log('🔍 Found question elements:', questionElements.length);
     
-    questionElements.forEach((element, index) => {
+    // Process questions asynchronously
+    for (let index = 0; index < questionElements.length; index++) {
+        const element = questionElements[index];
         const questionNum = element.dataset.question;
         const questionText = formData.get(`question_${questionNum}`);
         const questionType = formData.get(`questionType_${questionNum}`);
@@ -1159,14 +1460,31 @@ function saveQuiz(e) {
         
         if (!questionText || !questionType) {
             console.log(`⚠️ Skipping question ${questionNum} - missing text or type`);
-            return;
+            continue;
         }
         
         let questionData = {
             id: `q${index + 1}`,
             question: questionText,
-            type: questionType
+            type: questionType,
+            image: null
         };
+        
+        // Get question image if exists
+        const questionImageInput = document.getElementById(`questionImage_${questionNum}`);
+        if (questionImageInput && questionImageInput.files && questionImageInput.files[0]) {
+            // Upload image to database
+            const imagePath = window.dbService.generateImagePath(quizData.id, questionNum);
+            const uploadResult = await window.dbService.uploadImage(questionImageInput.files[0], imagePath);
+            
+            if (uploadResult.success) {
+                questionData.image = uploadResult.url;
+                console.log(`🔍 Question image uploaded for question ${questionNum}:`, uploadResult.url);
+            } else {
+                console.error(`❌ Failed to upload question image for question ${questionNum}:`, uploadResult.error);
+                showToast('error', 'Upload Error', `Failed to upload question image: ${uploadResult.error}`);
+            }
+        }
         
         switch(questionType) {
             case 'multiple_choice':
@@ -1176,7 +1494,29 @@ function saveQuiz(e) {
                 while (true) {
                     const optionText = formData.get(`option_${questionNum}_${optionIndex}`);
                     if (!optionText) break;
-                    options.push(optionText);
+                    
+                    const optionData = {
+                        text: optionText,
+                        image: null
+                    };
+                    
+                    // Get option image if exists
+                    const optionImageInput = document.getElementById(`optionImage_${questionNum}_${optionIndex}`);
+                    if (optionImageInput && optionImageInput.files && optionImageInput.files[0]) {
+                        // Upload image to database
+                        const imagePath = window.dbService.generateImagePath(quizData.id, questionNum, optionIndex);
+                        const uploadResult = await window.dbService.uploadImage(optionImageInput.files[0], imagePath);
+                        
+                        if (uploadResult.success) {
+                            optionData.image = uploadResult.url;
+                            console.log(`🔍 Option image uploaded for question ${questionNum}, option ${optionIndex}:`, uploadResult.url);
+                        } else {
+                            console.error(`❌ Failed to upload option image for question ${questionNum}, option ${optionIndex}:`, uploadResult.error);
+                            showToast('error', 'Upload Error', `Failed to upload option image: ${uploadResult.error}`);
+                        }
+                    }
+                    
+                    options.push(optionData);
                     optionIndex++;
                 }
                 
@@ -1237,11 +1577,12 @@ function saveQuiz(e) {
                 
                 if (correctAnswersText.length > 0) {
                     questionData.correctAnswers = correctAnswersText;
-                    quizData.questions.push(questionData);
                 }
                 break;
         }
-    });
+        
+        quizData.questions.push(questionData);
+    }
     
     console.log('🔍 Final quiz data questions:', quizData.questions.length);
     console.log('🔍 Questions data:', quizData.questions);
@@ -1345,7 +1686,21 @@ function addAnswerOption(questionNum, questionType) {
     const newOptionHtml = `
         <div class="answer-option">
             <input type="${inputType}" name="${nameAttribute}" value="${newIndex}" ${questionType === 'multiple_choice' ? 'required' : ''}>
-            <input type="text" name="option_${questionNum}_${newIndex}" placeholder="Option ${newIndex + 1}" required autocomplete="off">
+            <div class="option-content">
+                <input type="text" name="option_${questionNum}_${newIndex}" placeholder="Option ${newIndex + 1}" required autocomplete="off">
+                <div class="option-image-container">
+                    <input type="file" name="optionImage_${questionNum}_${newIndex}" id="optionImage_${questionNum}_${newIndex}" accept="image/*" onchange="handleOptionImageUpload(${questionNum}, ${newIndex}, this)" style="display: none;">
+                    <label for="optionImage_${questionNum}_${newIndex}" class="option-image-btn" title="Add Image">
+                        <i class="fas fa-image"></i>
+                    </label>
+                    <div class="option-image-preview" id="optionImagePreview_${questionNum}_${newIndex}" style="display: none;">
+                        <img id="optionImageDisplay_${questionNum}_${newIndex}" src="" alt="Option Image">
+                        <button type="button" class="remove-option-image-btn" onclick="removeOptionImage(${questionNum}, ${newIndex})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
             <button type="button" class="remove-option-btn" onclick="removeAnswerOption(${questionNum}, this)">
                 <i class="fas fa-times"></i>
             </button>
@@ -1503,6 +1858,16 @@ function populateEditForm(quiz) {
                 questionTypeSelect.dispatchEvent(new Event('change'));
             }
             
+            // Set question image if it exists
+            if (question.image) {
+                const questionImagePreview = questionElement.querySelector(`#questionImagePreview_${questionCounter}`);
+                const questionImageDisplay = questionElement.querySelector(`#questionImageDisplay_${questionCounter}`);
+                if (questionImagePreview && questionImageDisplay) {
+                    questionImageDisplay.src = question.image;
+                    questionImagePreview.style.display = 'block';
+                }
+            }
+            
             // Fill answer options based on type
             setTimeout(() => {
                 fillAnswerOptions(questionCounter, question);
@@ -1536,10 +1901,27 @@ function fillAnswerOptions(questionNum, question) {
             const inputType = question.type === 'multiple_choice' ? 'radio' : 'checkbox';
             const nameAttribute = question.type === 'multiple_choice' ? `correct_${questionNum}` : `correct_${questionNum}[]`;
             
+            const optionText = typeof option === 'string' ? option : option.text || '';
+            const optionImage = typeof option === 'object' && option.image ? option.image : null;
+            
             const optionHtml = `
                 <div class="answer-option">
                     <input type="${inputType}" name="${nameAttribute}" value="${index}" ${question.type === 'multiple_choice' ? 'required' : ''}>
-                    <input type="text" name="option_${questionNum}_${index}" placeholder="Option ${index + 1}" value="${option}" required autocomplete="off">
+                    <div class="option-content">
+                        <input type="text" name="option_${questionNum}_${index}" placeholder="Option ${index + 1}" value="${optionText}" required autocomplete="off">
+                        <div class="option-image-container">
+                            <input type="file" name="optionImage_${questionNum}_${index}" id="optionImage_${questionNum}_${index}" accept="image/*" onchange="handleOptionImageUpload(${questionNum}, ${index}, this)" style="display: none;">
+                            <label for="optionImage_${questionNum}_${index}" class="option-image-btn" title="Add Image">
+                                <i class="fas fa-image"></i>
+                            </label>
+                            <div class="option-image-preview" id="optionImagePreview_${questionNum}_${index}" style="display: ${optionImage ? 'block' : 'none'};">
+                                <img id="optionImageDisplay_${questionNum}_${index}" src="${optionImage || ''}" alt="Option Image">
+                                <button type="button" class="remove-option-image-btn" onclick="removeOptionImage(${questionNum}, ${index})">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                     <button type="button" class="remove-option-btn" onclick="removeAnswerOption(${questionNum}, this)" style="display: ${question.options.length > 2 ? 'inline-block' : 'none'}">
                         <i class="fas fa-times"></i>
                     </button>
@@ -1610,5 +1992,43 @@ window.removeAnswerOption = removeAnswerOption;
 window.editQuiz = editQuiz;
 window.deleteQuiz = deleteQuiz;
 window.viewResultDetails = viewResultDetails;
+
+// Image Modal Functions
+function openImageModal(imageSrc) {
+    const modal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    
+    if (modal && modalImage) {
+        modalImage.src = imageSrc;
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+}
+
+function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto'; // Restore scrolling
+    }
+}
+
+// Make functions globally available
+window.openImageModal = openImageModal;
+window.closeImageModal = closeImageModal;
+
+// Add event listeners for image modal
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('imageModal');
+    const closeBtn = document.querySelector('.image-modal-close');
+    
+    if (modal && closeBtn) {
+        // Close modal when clicking the X button
+        closeBtn.addEventListener('click', closeImageModal);
+        
+        // Note: Removed outside click and Escape key functionality
+        // Modal can only be closed with the X button
+    }
+});
 
 console.log('✅ Quiz script loaded successfully');

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Storage Bucket</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        button:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Create Supabase Storage Bucket</h1>
+    <p>This will create the 'quiz-images' bucket needed for image storage.</p>
+    
+    <button onclick="createBucket()">Create 'quiz-images' Bucket</button>
+    <div id="result"></div>
+
+    <script src="config.js"></script>
+    <script>
+        async function createBucket() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="result info">Creating bucket...</div>';
+            
+            try {
+                // Create bucket using Supabase REST API
+                const response = await fetch(`${window.dbService.supabaseUrl}/storage/v1/bucket`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${window.dbService.serviceKey}`,
+                        'apikey': window.dbService.serviceKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: 'quiz-images',
+                        name: 'quiz-images',
+                        public: true
+                    })
+                });
+
+                if (response.ok) {
+                    resultDiv.innerHTML = '<div class="result success">✅ Bucket "quiz-images" created successfully!</div>';
+                } else {
+                    const errorData = await response.json();
+                    if (errorData.message && errorData.message.includes('already exists')) {
+                        resultDiv.innerHTML = '<div class="result success">✅ Bucket "quiz-images" already exists!</div>';
+                    } else {
+                        resultDiv.innerHTML = `<div class="result error">❌ Failed to create bucket: ${errorData.message || response.statusText}</div>`;
+                    }
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
