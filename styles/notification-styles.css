@@ -212,10 +212,16 @@
         right: 10px;
         left: 10px;
         max-width: none;
+        z-index: 10004 !important; /* Higher z-index for mobile */
+        position: fixed !important;
+        pointer-events: auto !important;
     }
     
     .notification {
         margin-bottom: 8px;
+        background: white !important; /* Ensure visibility */
+        border: 2px solid var(--cfa-red) !important; /* Debug border */
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important; /* Stronger shadow */
     }
     
     .notification-content {
@@ -225,10 +231,20 @@
     
     .notification-title {
         font-size: 13px;
+        color: var(--navy) !important;
     }
     
     .notification-message {
         font-size: 12px;
+        color: var(--medium-gray) !important;
+    }
+    
+    /* Ensure notifications are visible on mobile */
+    .notification.show {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: translateX(0) !important;
+        display: flex !important;
     }
 }
 

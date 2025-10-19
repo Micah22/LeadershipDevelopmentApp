@@ -379,9 +379,14 @@ class NotificationService {
     }
 
     showInAppNotification(notification) {
+        console.log('showInAppNotification called for:', notification.title);
         const container = document.getElementById('notification-container');
-        if (!container) return;
+        if (!container) {
+            console.log('Notification container not found');
+            return;
+        }
 
+        console.log('Creating in-screen notification element');
         const notificationElement = document.createElement('div');
         notificationElement.className = `notification notification-${notification.type}`;
         notificationElement.id = `notification-${notification.id}`;
@@ -402,14 +407,18 @@ class NotificationService {
         `;
 
         container.appendChild(notificationElement);
+        console.log('Notification element added to container');
 
         // Animate in
         setTimeout(() => {
+            console.log('Adding show class to notification');
             notificationElement.classList.add('show');
+            console.log('Notification classes after show:', notificationElement.className);
         }, 100);
 
         // Auto-hide after delay (but keep in bell menu)
         setTimeout(() => {
+            console.log('Auto-hiding notification after delay');
             this.dismissNotification(notification.id);
         }, this.autoHideDelay);
     }
@@ -716,6 +725,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 2000);
 });
+
+// Test function for mobile debugging
+window.testInScreenNotification = function() {
+    console.log('Testing in-screen notification on mobile');
+    if (window.notificationService) {
+        window.notificationService.showSuccess('Test notification for mobile', 'Mobile Test');
+    } else {
+        console.log('Notification service not available');
+    }
+};
 
 // Export for module use
 if (typeof module !== 'undefined' && module.exports) {
