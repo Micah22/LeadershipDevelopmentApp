@@ -431,10 +431,16 @@ header.header {
     display: flex !important;
 }
 
+.apps-page-navbar .notification-bell-container {
+    display: flex !important;
+}
+
 /* Notification Bell Styles */
 .notification-bell-container {
     position: relative;
     margin-right: 1rem;
+    display: flex;
+    align-items: center;
 }
 
 .notification-bell {
@@ -796,12 +802,100 @@ header.header {
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .notification-center {
-        width: 300px;
-        right: -50px;
+        width: calc(100vw - 20px);
+        max-width: 350px;
+        right: 10px;
+        left: auto;
+        position: fixed;
+        z-index: 10003;
     }
     
     .notification-bell-container {
         margin-right: 0.5rem;
+    }
+    
+    .notification-bell {
+        width: 36px;
+        height: 36px;
+        font-size: 1.1rem;
+    }
+    
+    .notification-badge {
+        width: 16px;
+        height: 16px;
+        font-size: 0.65rem;
+        top: 3px;
+        right: 3px;
+    }
+    
+    .notification-center-header {
+        padding: 0.75rem;
+    }
+    
+    .notification-center-header h3 {
+        font-size: 1rem;
+    }
+    
+    .notification-center-actions {
+        gap: 0.25rem;
+    }
+    
+    .mark-all-read-btn,
+    .clear-all-btn {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
+    }
+    
+    .notification-center-content {
+        max-height: 60vh;
+        padding: 0.25rem;
+    }
+    
+    .notification-center-item {
+        padding: 0.6rem;
+        margin-bottom: 0.4rem;
+    }
+    
+    .notification-center-item-title {
+        font-size: 0.85rem;
+    }
+    
+    .notification-center-item-message {
+        font-size: 0.75rem;
+    }
+    
+    .notification-center-item-time {
+        font-size: 0.65rem;
+    }
+    
+    /* Ensure bell menu is visible on mobile */
+    .notification-center.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+        display: block;
+    }
+    
+    /* Touch-friendly buttons */
+    .notification-bell {
+        min-width: 44px;
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+    
+    .mark-read-btn,
+    .notification-center-item-close {
+        min-width: 32px;
+        min-height: 32px;
+        touch-action: manipulation;
+    }
+    
+    /* Prevent text selection on mobile */
+    .notification-center {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
     }
 }
 
