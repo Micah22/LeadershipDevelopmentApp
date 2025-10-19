@@ -1759,6 +1759,17 @@ function showToast(type, title, message, duration = 5000) {
     
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
+    
+    // Add temporary debugging styles to make toast visible
+    toast.style.backgroundColor = '#ff0000';
+    toast.style.border = '5px solid #00ff00';
+    toast.style.color = '#ffffff';
+    toast.style.fontSize = '20px';
+    toast.style.fontWeight = 'bold';
+    toast.style.padding = '20px';
+    toast.style.margin = '10px';
+    toast.style.zIndex = '9999';
+    
     console.log('Created toast element with class:', toast.className);
     
     const icon = getToastIcon(type);
@@ -1791,7 +1802,11 @@ function showToast(type, title, message, duration = 5000) {
             opacity: computedStyle.opacity,
             transform: computedStyle.transform,
             visibility: computedStyle.visibility,
-            zIndex: computedStyle.zIndex
+            zIndex: computedStyle.zIndex,
+            top: computedStyle.top,
+            right: computedStyle.right,
+            width: computedStyle.width,
+            height: computedStyle.height
         });
         
         // Debug container styles
@@ -1801,8 +1816,25 @@ function showToast(type, title, message, duration = 5000) {
             position: containerStyle.position,
             zIndex: containerStyle.zIndex,
             top: containerStyle.top,
-            right: containerStyle.right
+            right: containerStyle.right,
+            width: containerStyle.width,
+            height: containerStyle.height
         });
+        
+        // Debug actual position and size
+        const rect = toast.getBoundingClientRect();
+        console.log('Toast bounding rect:', {
+            top: rect.top,
+            left: rect.left,
+            right: rect.right,
+            bottom: rect.bottom,
+            width: rect.width,
+            height: rect.height
+        });
+        
+        // Check if toast is visible in viewport
+        const isVisible = rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth;
+        console.log('Toast is visible in viewport:', isVisible);
     }, 100);
     
     // Start progress bar animation
