@@ -829,6 +829,8 @@ header.header {
         left: auto;
         position: fixed;
         z-index: 10003;
+        top: 70px !important; /* Ensure it's below navbar */
+        transform: none !important; /* Remove any transforms that might hide it */
     }
     
     .notification-badge {
@@ -881,10 +883,12 @@ header.header {
     
     /* Ensure bell menu is visible on mobile */
     .notification-center.show {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-        display: block;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+        display: block !important;
+        background: yellow !important; /* Debug: make it obvious */
+        border: 3px solid red !important; /* Debug: make it obvious */
     }
     
     /* Touch-friendly buttons */

@@ -173,9 +173,15 @@ class NotificationService {
 
     showNotificationCenter() {
         const notificationCenter = document.getElementById('notificationCenter');
-        if (!notificationCenter) return;
+        if (!notificationCenter) {
+            console.log('Notification center element not found');
+            return;
+        }
 
+        console.log('Adding show class to notification center');
         notificationCenter.classList.add('show');
+        console.log('Notification center classes:', notificationCenter.className);
+        console.log('Notification center computed style:', window.getComputedStyle(notificationCenter).display);
         this.updateNotificationCenter();
     }
 
