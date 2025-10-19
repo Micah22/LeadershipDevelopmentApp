@@ -801,6 +801,27 @@ header.header {
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
+    /* Ensure bell is always visible on mobile */
+    .notification-bell-container {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        margin-right: 0.5rem;
+        order: 1; /* Show before user info */
+    }
+    
+    .notification-bell {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 36px;
+        height: 36px;
+        font-size: 1.1rem;
+        background: var(--cfa-red) !important; /* Debug: make it obvious */
+        color: white !important;
+        border: 2px solid white !important;
+    }
+    
     .notification-center {
         width: calc(100vw - 20px);
         max-width: 350px;
@@ -808,16 +829,6 @@ header.header {
         left: auto;
         position: fixed;
         z-index: 10003;
-    }
-    
-    .notification-bell-container {
-        margin-right: 0.5rem;
-    }
-    
-    .notification-bell {
-        width: 36px;
-        height: 36px;
-        font-size: 1.1rem;
     }
     
     .notification-badge {
@@ -896,6 +907,19 @@ header.header {
         -moz-user-select: none;
         -ms-user-select: none;
         user-select: none;
+    }
+    
+    /* Force header-right to show bell on mobile */
+    .header-right {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }
+    
+    /* Ensure bell is not hidden by other elements */
+    .notification-bell-container {
+        position: relative !important;
+        z-index: 1000 !important;
     }
 }
 
