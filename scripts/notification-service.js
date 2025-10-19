@@ -394,69 +394,54 @@ class NotificationService {
 
     showInAppNotification(notification) {
         console.log('showInAppNotification called for:', notification.title);
-        const container = document.getElementById('notification-container');
+        
+        // Ensure container exists
+        let container = document.getElementById('notification-container');
         if (!container) {
-            console.log('Notification container not found');
-            return;
+            console.log('Creating notification container');
+            container = document.createElement('div');
+            container.id = 'notification-container';
+            container.style.position = 'fixed';
+            container.style.top = '10px';
+            container.style.left = '10px';
+            container.style.right = '10px';
+            container.style.zIndex = '99999';
+            container.style.pointerEvents = 'auto';
+            document.body.appendChild(container);
         }
 
-        console.log('Creating in-screen notification element');
+        console.log('Creating simple notification element');
         const notificationElement = document.createElement('div');
-        notificationElement.className = `notification notification-${notification.type}`;
         notificationElement.id = `notification-${notification.id}`;
         
-        // Apply mobile-specific styles immediately
-        if (this.isMobile()) {
-            console.log('Applying mobile-specific styles');
-            notificationElement.style.position = 'relative';
-            notificationElement.style.width = '100%';
-            notificationElement.style.marginBottom = '8px';
-            notificationElement.style.background = 'white';
-            notificationElement.style.border = '2px solid #d32f2f';
-            notificationElement.style.borderRadius = '8px';
-            notificationElement.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)';
-            notificationElement.style.opacity = '0';
-            notificationElement.style.transform = 'translateX(100%)';
-            notificationElement.style.transition = 'all 0.3s ease';
-        }
+        // Apply all styles directly - no CSS classes
+        notificationElement.style.position = 'relative';
+        notificationElement.style.width = '100%';
+        notificationElement.style.marginBottom = '10px';
+        notificationElement.style.background = 'white';
+        notificationElement.style.border = '3px solid #d32f2f';
+        notificationElement.style.borderRadius = '8px';
+        notificationElement.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.5)';
+        notificationElement.style.padding = '15px';
+        notificationElement.style.boxSizing = 'border-box';
+        notificationElement.style.display = 'flex';
+        notificationElement.style.alignItems = 'center';
+        notificationElement.style.justifyContent = 'space-between';
+        notificationElement.style.opacity = '1';
+        notificationElement.style.visibility = 'visible';
+        notificationElement.style.transform = 'translateX(0)';
         
+        // Simple content - no complex HTML
         notificationElement.innerHTML = `
-            <div class="notification-content">
-                <div class="notification-icon">
-                    <i class="fas ${this.getNotificationIcon(notification.type)}"></i>
-                </div>
-                <div class="notification-text">
-                    <div class="notification-title">${notification.title}</div>
-                    <div class="notification-message">${notification.message}</div>
-                </div>
-                <button class="notification-close" onclick="notificationService.dismissNotification(${notification.id})">
-                    <i class="fas fa-times"></i>
-                </button>
+            <div style="flex: 1;">
+                <div style="font-weight: bold; color: #333; margin-bottom: 5px;">${notification.title}</div>
+                <div style="color: #666; font-size: 14px;">${notification.message}</div>
             </div>
+            <button onclick="notificationService.dismissNotification(${notification.id})" style="background: none; border: none; color: #666; font-size: 18px; cursor: pointer; margin-left: 10px;">×</button>
         `;
 
         container.appendChild(notificationElement);
-        console.log('Notification element added to container');
-
-        // Animate in
-        setTimeout(() => {
-            console.log('Adding show class to notification');
-            notificationElement.classList.add('show');
-            console.log('Notification classes after show:', notificationElement.className);
-            
-            // Force visibility on mobile
-            notificationElement.style.opacity = '1';
-            notificationElement.style.visibility = 'visible';
-            notificationElement.style.transform = 'translateX(0)';
-            notificationElement.style.display = 'flex';
-            
-            console.log('Notification computed styles:', {
-                opacity: window.getComputedStyle(notificationElement).opacity,
-                visibility: window.getComputedStyle(notificationElement).visibility,
-                display: window.getComputedStyle(notificationElement).display,
-                transform: window.getComputedStyle(notificationElement).transform
-            });
-        }, 100);
+        console.log('Simple notification element added to container');
 
         // Auto-hide after delay (but keep in bell menu)
         setTimeout(() => {
@@ -776,6 +761,48 @@ window.testInScreenNotification = function() {
     } else {
         console.log('Notification service not available');
     }
+};
+
+// Simple direct test function
+window.testDirectNotification = function() {
+    console.log('Testing direct notification creation');
+    
+    // Create container if it doesn't exist
+    let container = document.getElementById('notification-container');
+    if (!container) {
+        console.log('Creating notification container');
+        container = document.createElement('div');
+        container.id = 'notification-container';
+        container.style.position = 'fixed';
+        container.style.top = '10px';
+        container.style.left = '10px';
+        container.style.right = '10px';
+        container.style.zIndex = '99999';
+        container.style.pointerEvents = 'auto';
+        document.body.appendChild(container);
+    }
+    
+    // Create simple notification
+    const notification = document.createElement('div');
+    notification.style.background = 'red';
+    notification.style.color = 'white';
+    notification.style.padding = '20px';
+    notification.style.margin = '10px';
+    notification.style.borderRadius = '8px';
+    notification.style.position = 'relative';
+    notification.style.width = '100%';
+    notification.style.boxSizing = 'border-box';
+    notification.innerHTML = 'DIRECT TEST NOTIFICATION - CAN YOU SEE THIS?';
+    
+    container.appendChild(notification);
+    console.log('Direct notification added to container');
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 5000);
 };
 
 // Export for module use
