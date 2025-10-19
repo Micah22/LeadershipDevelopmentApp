@@ -160,7 +160,7 @@
             <h3>Notification Controls</h3>
             <p>Manage notifications:</p>
             <div class="button-grid">
-                <button class="test-button btn-primary" onclick="requestPermission()">
+                <button class="test-button btn-primary" onclick="requestNotificationPermission()">
                     <i class="fas fa-bell"></i> Request Permission
                 </button>
                 <button class="test-button btn-warning" onclick="clearAllNotifications()">
@@ -171,6 +171,9 @@
                 </button>
                 <button class="test-button btn-secondary" onclick="testBellIcon()">
                     <i class="fas fa-bell"></i> Test Bell Icon
+                </button>
+                <button class="test-button btn-success" onclick="testBrowserNotification()">
+                    <i class="fas fa-mobile-alt"></i> Test Browser Notification
                 </button>
             </div>
         </div>

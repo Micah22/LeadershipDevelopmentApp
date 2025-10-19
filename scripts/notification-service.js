@@ -42,11 +42,24 @@ class NotificationService {
     async requestPermission() {
         if ('Notification' in window) {
             try {
+                console.log('Requesting notification permission...');
                 this.permission = await Notification.requestPermission();
-                console.log('Notification permission:', this.permission);
+                console.log('Notification permission result:', this.permission);
+                
+                if (this.permission === 'granted') {
+                    console.log('Browser notifications enabled!');
+                } else if (this.permission === 'denied') {
+                    console.log('Browser notifications denied by user');
+                } else {
+                    console.log('Browser notifications permission dismissed');
+                }
             } catch (error) {
                 console.error('Error requesting notification permission:', error);
+                this.permission = 'denied';
             }
+        } else {
+            console.log('Browser does not support notifications');
+            this.permission = 'denied';
         }
     }
 
@@ -794,11 +807,21 @@ window.testNotificationService = function() {
 window.requestNotificationPermission = function() {
     console.log('Requesting browser notification permission');
     if (window.notificationService) {
+        // Show info notification first
+        window.notificationService.showInfo('Click "Allow" when prompted to enable device notifications', 'Enable Notifications');
+        
         window.notificationService.requestPermission().then(() => {
+            console.log('Permission request completed, current permission:', window.notificationService.permission);
             if (window.notificationService.permission === 'granted') {
-                window.notificationService.showSuccess('Browser notifications enabled!', 'Permission Granted');
+                window.notificationService.showSuccess('Browser notifications enabled! You will now receive alerts on your device.', 'Permission Granted');
+                // Test browser notification immediately
+                setTimeout(() => {
+                    window.notificationService.showSuccess('This is a test browser notification!', 'Test Notification');
+                }, 1000);
+            } else if (window.notificationService.permission === 'denied') {
+                window.notificationService.showWarning('Browser notifications were denied. You can enable them in your browser settings under Site Settings > Notifications.', 'Permission Denied');
             } else {
-                window.notificationService.showWarning('Browser notifications denied. You can enable them in your browser settings.', 'Permission Denied');
+                window.notificationService.showWarning('Permission request was dismissed. You can try again or enable notifications in your browser settings.', 'Permission Dismissed');
             }
         });
     } else {
