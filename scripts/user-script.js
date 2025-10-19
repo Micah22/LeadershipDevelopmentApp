@@ -13,8 +13,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    // Show loading indicator
-    showLoadingIndicator();
     
     // Initialize page with parallel operations
     initializeDashboard();
@@ -43,79 +41,11 @@ async function initializeDashboard() {
         // Load dashboard data
         await loadDashboardData();
         
-        // Hide loading indicator and show content
-        hideLoadingIndicator();
-        
-        // Fallback: ensure content is visible after 2 seconds (reduced from 3)
-        setTimeout(() => {
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            const mainContent = document.querySelector('.main-content');
-            
-            if (loadingIndicator && loadingIndicator.style.display !== 'none') {
-                console.log('User Script - Fallback: forcing loading indicator to hide');
-                loadingIndicator.style.display = 'none';
-            }
-            
-            if (mainContent && mainContent.style.display === 'none') {
-                console.log('User Script - Fallback: forcing main content to be visible');
-                mainContent.style.display = 'block';
-                mainContent.style.visibility = 'visible';
-                mainContent.style.opacity = '1';
-            }
-        }, 2000);
-        
     } catch (error) {
         console.error('Error initializing dashboard:', error);
-        hideLoadingIndicator();
     }
 }
 
-function showLoadingIndicator() {
-    const loadingIndicator = document.getElementById('loadingIndicator');
-    const mainContent = document.querySelector('.main-content');
-    
-    console.log('User Script - Showing loading indicator, hiding main content');
-    console.log('Loading indicator element:', loadingIndicator);
-    console.log('Main content element:', mainContent);
-    
-    if (loadingIndicator) {
-        loadingIndicator.style.display = 'flex';
-        console.log('Loading indicator shown');
-    }
-    if (mainContent) {
-        mainContent.style.display = 'none';
-        console.log('Main content hidden');
-    } else {
-        console.error('Main content element not found!');
-    }
-}
-
-function hideLoadingIndicator() {
-    const loadingIndicator = document.getElementById('loadingIndicator');
-    const mainContent = document.querySelector('.main-content');
-    
-    console.log('User Script - Hiding loading indicator, showing main content');
-    console.log('Loading indicator element:', loadingIndicator);
-    console.log('Main content element:', mainContent);
-    
-    if (loadingIndicator) {
-        loadingIndicator.style.display = 'none';
-        loadingIndicator.style.visibility = 'hidden';
-        loadingIndicator.style.opacity = '0';
-        console.log('Loading indicator hidden');
-    } else {
-        console.error('Loading indicator element not found!');
-    }
-    
-    if (mainContent) {
-        mainContent.style.display = 'block';
-        mainContent.style.visibility = 'visible';
-        mainContent.style.opacity = '1';
-        console.log('Main content shown');
-    } else {
-        console.error('Main content element not found!');
-    }
-}
 
 function waitForNavbar() {
     return new Promise((resolve) => {
