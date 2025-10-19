@@ -1,31 +1,6 @@
 // Apps List Script
 
-// Toast notification function
-function showToast(type, title, message) {
-    // Create toast element
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.innerHTML = `
-        <div class="toast-header">
-            <strong>${title}</strong>
-        </div>
-        <div class="toast-body">
-            ${message}
-        </div>
-    `;
-    
-    // Add to page
-    document.body.appendChild(toast);
-    
-    // Show toast
-    setTimeout(() => toast.classList.add('show'), 100);
-    
-    // Remove toast after 5 seconds
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => document.body.removeChild(toast), 300);
-    }, 5000);
-}
+// Toast notification function - Now handled by ToastComponent
 
 document.addEventListener('DOMContentLoaded', async function() {
     

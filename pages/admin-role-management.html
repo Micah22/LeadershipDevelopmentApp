@@ -7,14 +7,20 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
     <link rel="stylesheet" href="../styles/admin-role-management-styles.css?v=1">
     <link rel="stylesheet" href="../styles/admin-overview-styles.css?v=29">
-    <link rel="stylesheet" href="../styles/notification-styles.css">
+    <link rel="stylesheet" href="../styles/toast-component.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="../scripts/navbar.js?v=23"></script>
+    <script src="../components/toast-component.js"></script>
     <script src="../database/config.js"></script>
     <script src="../scripts/notification-service.js"></script>
 </head>
 <body>
     <!-- Navbar will be loaded by navbar.js -->
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer">
+        <!-- Toast notifications will be dynamically added here -->
+    </div>
 
     <div class="main-container">
         <!-- Sidebar -->
