@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Test - CFA Leadership Development</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔔</text></svg>">
+    
+    <!-- Load navbar component styles -->
+    <link rel="stylesheet" href="../styles/navbar-component.css">
+    <link rel="stylesheet" href="../styles/notification-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Load navbar component script -->
+    <script src="../components/navbar-component.js"></script>
+    <script src="../database/config.js"></script>
+    <script src="../scripts/notification-service.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        
+        .test-section h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .test-button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            color: white;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .btn-success { background: #28a745; }
+        .btn-info { background: #17a2b8; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-danger { background: #dc3545; }
+        .btn-primary { background: #007bff; }
+        .btn-secondary { background: #6c757d; }
+        
+        .permission-status {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .permission-granted {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .permission-denied {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .permission-default {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar will be automatically loaded by the navbar component -->
+
+    <div class="test-container">
+        <h1>🔔 Notification System Test</h1>
+        
+        <div id="permissionStatus" class="permission-status">
+            Checking notification permission...
+        </div>
+        
+        <div class="test-section">
+            <h3>Basic Notifications</h3>
+            <p>Test different types of basic notifications:</p>
+            <div class="button-grid">
+                <button class="test-button btn-success" onclick="testSuccess()">
+                    <i class="fas fa-check"></i> Success Notification
+                </button>
+                <button class="test-button btn-info" onclick="testInfo()">
+                    <i class="fas fa-info"></i> Info Notification
+                </button>
+                <button class="test-button btn-warning" onclick="testWarning()">
+                    <i class="fas fa-exclamation-triangle"></i> Warning Notification
+                </button>
+                <button class="test-button btn-danger" onclick="testError()">
+                    <i class="fas fa-exclamation-circle"></i> Error Notification
+                </button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Leadership Development Notifications</h3>
+            <p>Test notifications specific to the leadership development app:</p>
+            <div class="button-grid">
+                <button class="test-button btn-primary" onclick="testDeadlineWarning()">
+                    <i class="fas fa-clock"></i> Deadline Warning
+                </button>
+                <button class="test-button btn-secondary" onclick="testModuleAssignment()">
+                    <i class="fas fa-tasks"></i> Module Assignment
+                </button>
+                <button class="test-button btn-success" onclick="testProgressReminder()">
+                    <i class="fas fa-chart-line"></i> Progress Reminder
+                </button>
+                <button class="test-button btn-info" onclick="testSystemUpdate()">
+                    <i class="fas fa-sync-alt"></i> System Update
+                </button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Notification Controls</h3>
+            <p>Manage notifications:</p>
+            <div class="button-grid">
+                <button class="test-button btn-primary" onclick="requestPermission()">
+                    <i class="fas fa-bell"></i> Request Permission
+                </button>
+                <button class="test-button btn-warning" onclick="clearAllNotifications()">
+                    <i class="fas fa-trash"></i> Clear All
+                </button>
+                <button class="test-button btn-info" onclick="showNotificationHistory()">
+                    <i class="fas fa-history"></i> Show History
+                </button>
+                <button class="test-button btn-secondary" onclick="testBellIcon()">
+                    <i class="fas fa-bell"></i> Test Bell Icon
+                </button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Auto-Generated Notifications</h3>
+            <p>Test automatic notification triggers:</p>
+            <div class="button-grid">
+                <button class="test-button btn-primary" onclick="simulateModuleCompletion()">
+                    <i class="fas fa-trophy"></i> Simulate Module Completion
+                </button>
+                <button class="test-button btn-success" onclick="simulateTaskCompletion()">
+                    <i class="fas fa-check-circle"></i> Simulate Task Completion
+                </button>
+                <button class="test-button btn-warning" onclick="simulateDeadlineApproaching()">
+                    <i class="fas fa-exclamation"></i> Simulate Deadline Approaching
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update permission status
+        function updatePermissionStatus() {
+            const statusDiv = document.getElementById('permissionStatus');
+            if (window.notificationService) {
+                const permission = window.notificationService.permission;
+                statusDiv.textContent = `Notification Permission: ${permission.toUpperCase()}`;
+                statusDiv.className = `permission-status permission-${permission}`;
+            } else {
+                statusDiv.textContent = 'Notification Service not loaded';
+                statusDiv.className = 'permission-status permission-denied';
+            }
+        }
+        
+        // Test functions
+        function testSuccess() {
+            window.notificationService.showSuccess('This is a success notification!', 'Success');
+        }
+        
+        function testInfo() {
+            window.notificationService.showInfo('This is an informational notification.', 'Information');
+        }
+        
+        function testWarning() {
+            window.notificationService.showWarning('This is a warning notification.', 'Warning');
+        }
+        
+        function testError() {
+            window.notificationService.showError('This is an error notification.', 'Error');
+        }
+        
+        function testDeadlineWarning() {
+            window.notificationService.showDeadlineWarning('Communication Skills', 2);
+        }
+        
+        function testModuleAssignment() {
+            window.notificationService.showModuleAssignment('Strategic Thinking', 'John Smith');
+        }
+        
+        function testProgressReminder() {
+            window.notificationService.showProgressReminder(45, 'Complete the team leadership assessment');
+        }
+        
+        function testSystemUpdate() {
+            window.notificationService.showSystemUpdate('New Features', 'Enhanced progress tracking and improved user interface');
+        }
+        
+        function requestPermission() {
+            window.notificationService.requestPermission().then(() => {
+                updatePermissionStatus();
+                window.notificationService.showInfo('Permission status updated!', 'Permission');
+            });
+        }
+        
+        function clearAllNotifications() {
+            window.notificationService.clearAllNotifications();
+        }
+        
+        function showNotificationHistory() {
+            const history = window.notificationService.getNotificationHistory();
+            alert(`Notification History:\n\n${history.map(n => `${n.title}: ${n.message}`).join('\n')}`);
+        }
+        
+        function simulateModuleCompletion() {
+            window.notificationService.showSuccess(
+                'Congratulations! You completed the "Team Leadership" module',
+                'Module Completed'
+            );
+        }
+        
+        function simulateTaskCompletion() {
+            window.notificationService.showSuccess(
+                'Great job! You completed "Lead a team meeting" in Communication Skills',
+                'Task Completed'
+            );
+        }
+        
+        function simulateDeadlineApproaching() {
+            window.notificationService.showDeadlineWarning('Strategic Planning', 1);
+        }
+        
+        function testBellIcon() {
+            // Show a few notifications to test the bell icon
+            window.notificationService.showInfo('Testing bell icon functionality', 'Bell Test');
+            setTimeout(() => {
+                window.notificationService.showSuccess('Bell icon should show notification count', 'Bell Test');
+            }, 1000);
+            setTimeout(() => {
+                window.notificationService.showWarning('Click the bell icon in the navbar to see all notifications', 'Bell Test');
+            }, 2000);
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(updatePermissionStatus, 1000);
+        });
+    </script>
+</body>
+</html>

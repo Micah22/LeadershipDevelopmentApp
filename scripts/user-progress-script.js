@@ -52,6 +52,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Initialize the page
     await initializePage();
     
+    // Initialize notifications
+    initializeProgressNotifications();
+    
     // Set up event listeners
     setupEventListeners();
     
@@ -1503,3 +1506,57 @@ window.userProgress = {
 
 // Make refresh function available globally
 window.refreshUserProgressData = refreshUserProgressData;
+
+// Initialize progress notifications
+function initializeProgressNotifications() {
+    // Wait for notification service to be available
+    if (typeof window.notificationService === 'undefined') {
+        setTimeout(initializeProgressNotifications, 100);
+        return;
+    }
+    
+    console.log('User Progress Script - Initializing notifications');
+    
+    // Show progress page notification
+    setTimeout(() => {
+        if (window.notificationService) {
+            window.notificationService.showInfo(
+                'Track your progress and complete your assigned modules.',
+                'Progress Tracking'
+            );
+        }
+    }, 1000);
+}
+
+// Show completion notification when task is completed
+function showTaskCompletionNotification(taskTitle, moduleTitle) {
+    if (window.notificationService) {
+        window.notificationService.showSuccess(
+            `Great job! You completed "${taskTitle}" in ${moduleTitle}`,
+            'Task Completed'
+        );
+    }
+}
+
+// Show module completion notification
+function showModuleCompletionNotification(moduleTitle) {
+    if (window.notificationService) {
+        window.notificationService.showSuccess(
+            `Congratulations! You completed the "${moduleTitle}" module`,
+            'Module Completed'
+        );
+    }
+}
+
+// Show progress milestone notification
+function showProgressMilestoneNotification(percentage) {
+    if (window.notificationService) {
+        const milestones = [25, 50, 75, 90, 100];
+        if (milestones.includes(percentage)) {
+            window.notificationService.showProgressReminder(
+                percentage,
+                percentage === 100 ? 'All tasks completed!' : 'Keep up the great work!'
+            );
+        }
+    }
+}

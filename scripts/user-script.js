@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize page with parallel operations
     initializeDashboard();
+    
+    // Initialize notifications
+    initializeNotifications();
 });
 
 async function initializeDashboard() {
@@ -420,3 +423,143 @@ function viewProgress() {
 // Theme and dropdown functionality is now handled by navbar.js
 
 // Dashboard data loading is now handled by initializeDashboard() function
+
+// Initialize notifications
+function initializeNotifications() {
+    // Wait for notification service to be available
+    if (typeof window.notificationService === 'undefined') {
+        setTimeout(initializeNotifications, 100);
+        return;
+    }
+    
+    console.log('User Script - Initializing notifications');
+    
+    // Show welcome notification
+    setTimeout(() => {
+        if (window.notificationService) {
+            window.notificationService.showInfo(
+                'Welcome back! Check your progress and complete your assigned modules.',
+                'Dashboard Ready'
+            );
+        }
+    }, 1000);
+    
+    // Check for any pending notifications
+    checkPendingNotifications();
+}
+
+// Check for pending notifications
+function checkPendingNotifications() {
+    const username = localStorage.getItem('username');
+    if (!username || !window.notificationService) return;
+    
+    // Check for new module assignments
+    checkModuleAssignments();
+    
+    // Check for deadline warnings
+    checkDeadlineWarnings();
+    
+    // Check for progress reminders
+    checkProgressReminders();
+}
+
+// Check for module assignments
+function checkModuleAssignments() {
+    const username = localStorage.getItem('username');
+    const userProgress = getUserProgress(username);
+    const leadershipPaths = getLeadershipPaths();
+    const user = getCurrentUser();
+    
+    if (!user) return;
+    
+    leadershipPaths.forEach(path => {
+        if (isPathUnlocked(path, user.role)) {
+            const pathProgress = userProgress[path.title];
+            
+            // Check if this is a new assignment (no progress yet)
+            if (!pathProgress || !pathProgress.assigned) {
+                // Mark as assigned
+                if (!pathProgress) {
+                    userProgress[path.title] = { assigned: true, assignedDate: new Date().toISOString() };
+                } else {
+                    userProgress[path.title].assigned = true;
+                    userProgress[path.title].assignedDate = new Date().toISOString();
+                }
+                
+                // Show assignment notification
+                window.notificationService.showModuleAssignment(
+                    path.title,
+                    'System Administrator'
+                );
+            }
+        }
+    });
+    
+    // Save updated progress
+    const userProgressKey = `userProgress_${username}`;
+    localStorage.setItem(userProgressKey, JSON.stringify(userProgress));
+}
+
+// Check for deadline warnings
+function checkDeadlineWarnings() {
+    const username = localStorage.getItem('username');
+    const userProgress = getUserProgress(username);
+    const leadershipPaths = getLeadershipPaths();
+    const currentDate = new Date();
+    
+    leadershipPaths.forEach(path => {
+        const pathProgress = userProgress[path.title];
+        if (pathProgress && pathProgress.deadline) {
+            const deadline = new Date(pathProgress.deadline);
+            const daysLeft = Math.ceil((deadline - currentDate) / (1000 * 60 * 60 * 24));
+            
+            if (daysLeft <= 3 && daysLeft > 0) {
+                window.notificationService.showDeadlineWarning(path.title, daysLeft);
+            }
+        }
+    });
+}
+
+// Check for progress reminders
+function checkProgressReminders() {
+    const username = localStorage.getItem('username');
+    const userProgress = getUserProgress(username);
+    const leadershipPaths = getLeadershipPaths();
+    const user = getCurrentUser();
+    
+    if (!user) return;
+    
+    let totalCompleted = 0;
+    let totalTasks = 0;
+    let nextTask = '';
+    
+    leadershipPaths.forEach(path => {
+        if (isPathUnlocked(path, user.role)) {
+            totalTasks += (path.checklist || []).length;
+            const pathProgress = userProgress[path.title];
+            
+            if (pathProgress && pathProgress.checklist) {
+                const completed = pathProgress.checklist.filter(task => task === true).length;
+                totalCompleted += completed;
+                
+                // Find next incomplete task
+                if (!nextTask) {
+                    const incompleteIndex = pathProgress.checklist.findIndex(task => task === false);
+                    if (incompleteIndex !== -1) {
+                        nextTask = path.checklist[incompleteIndex];
+                    }
+                }
+            }
+        }
+    });
+    
+    const progressPercentage = totalTasks > 0 ? Math.round((totalCompleted / totalTasks) * 100) : 0;
+    
+    // Show reminder if progress is low
+    if (progressPercentage < 30 && totalTasks > 0) {
+        window.notificationService.showProgressReminder(
+            progressPercentage, 
+            nextTask || 'Complete your assigned modules'
+        );
+    }
+}
