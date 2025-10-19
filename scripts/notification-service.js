@@ -36,29 +36,19 @@ class NotificationService {
             }, 2000);
         }
         
-        console.log('Notification Service initialized');
+        // Notification Service initialized
     }
 
     async requestPermission() {
         if ('Notification' in window) {
             try {
-                console.log('Requesting notification permission...');
-                this.permission = await Notification.requestPermission();
-                console.log('Notification permission result:', this.permission);
-                
-                if (this.permission === 'granted') {
-                    console.log('Browser notifications enabled!');
-                } else if (this.permission === 'denied') {
-                    console.log('Browser notifications denied by user');
-                } else {
-                    console.log('Browser notifications permission dismissed');
-                }
+        this.permission = await Notification.requestPermission();
             } catch (error) {
                 console.error('Error requesting notification permission:', error);
                 this.permission = 'denied';
             }
         } else {
-            console.log('Browser does not support notifications');
+            // Browser does not support notifications
             this.permission = 'denied';
         }
     }
@@ -219,10 +209,10 @@ class NotificationService {
         }
 
         if (notificationCenter.classList.contains('show')) {
-            console.log('Hiding notification center');
+            // Hiding notification center
             this.hideNotificationCenter();
         } else {
-            console.log('Showing notification center');
+            // Showing notification center
             this.showNotificationCenter();
         }
     }
@@ -234,10 +224,7 @@ class NotificationService {
             return;
         }
 
-        console.log('Adding show class to notification center');
         notificationCenter.classList.add('show');
-        console.log('Notification center classes:', notificationCenter.className);
-        console.log('Notification center computed style:', window.getComputedStyle(notificationCenter).display);
         this.updateNotificationCenter();
     }
 
@@ -416,22 +403,15 @@ class NotificationService {
     }
 
     showInAppNotification(notification) {
-        console.log('showInAppNotification called for:', notification.title);
-        console.log('Toast function available:', typeof window.showToast);
-        console.log('Toast container exists:', !!document.getElementById('toastContainer'));
-        
         // Use the existing toast system instead of custom notifications
         if (typeof window.showToast === 'function') {
-            console.log('Using toast system for notification');
             try {
                 window.showToast(notification.type, notification.title, notification.message, this.autoHideDelay);
-                console.log('Toast function called successfully');
             } catch (error) {
                 console.error('Error calling showToast:', error);
                 this.showCustomNotification(notification);
             }
         } else {
-            console.log('Toast system not available, falling back to custom notification');
             // Fallback to custom notification if toast system not available
             this.showCustomNotification(notification);
         }
@@ -441,7 +421,6 @@ class NotificationService {
         // Ensure container exists
         let container = document.getElementById('notification-container');
         if (!container) {
-            console.log('Creating notification container');
             container = document.createElement('div');
             container.id = 'notification-container';
             container.style.position = 'fixed';
@@ -453,7 +432,7 @@ class NotificationService {
             document.body.appendChild(container);
         }
 
-        console.log('Creating simple notification element');
+        // Creating simple notification element
         const notificationElement = document.createElement('div');
         notificationElement.id = `notification-${notification.id}`;
         
@@ -484,11 +463,9 @@ class NotificationService {
         `;
 
         container.appendChild(notificationElement);
-        console.log('Simple notification element added to container');
 
         // Auto-hide after delay (but keep in bell menu)
         setTimeout(() => {
-            console.log('Auto-hiding notification after delay');
             this.dismissNotification(notification.id);
         }, this.autoHideDelay);
     }
@@ -785,10 +762,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (notificationCenter) {
                     if (notificationCenter.classList.contains('show')) {
                         notificationCenter.classList.remove('show');
-                        console.log('Fallback: hiding notification center');
+                        // Fallback: hiding notification center
                     } else {
                         notificationCenter.classList.add('show');
-                        console.log('Fallback: showing notification center');
+                        // Fallback: showing notification center
                     }
                 }
             });
@@ -796,115 +773,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 2000);
 });
 
-// Test function for mobile debugging
-window.testInScreenNotification = function() {
-    console.log('Testing in-screen notification on mobile');
-    if (window.notificationService) {
-        window.notificationService.showSuccess('Test notification for mobile', 'Mobile Test');
-    } else {
-        console.log('Notification service not available');
-    }
-};
-
-// Test the actual notification service
-window.testNotificationService = function() {
-    console.log('Testing notification service directly');
-    if (window.notificationService) {
-        // Test different notification types
-        window.notificationService.showSuccess('Success notification test', 'Success Test');
-        setTimeout(() => {
-            window.notificationService.showInfo('Info notification test', 'Info Test');
-        }, 1000);
-        setTimeout(() => {
-            window.notificationService.showWarning('Warning notification test', 'Warning Test');
-        }, 2000);
-    } else {
-        console.log('Notification service not available');
-    }
-};
-
-// Request browser notification permission
-window.requestNotificationPermission = function() {
-    console.log('Requesting browser notification permission');
-    if (window.notificationService) {
-        // Show info notification first
-        window.notificationService.showInfo('Click "Allow" when prompted to enable device notifications', 'Enable Notifications');
-        
-        window.notificationService.requestPermission().then(() => {
-            console.log('Permission request completed, current permission:', window.notificationService.permission);
-            if (window.notificationService.permission === 'granted') {
-                window.notificationService.showSuccess('Browser notifications enabled! You will now receive alerts on your device.', 'Permission Granted');
-                // Test browser notification immediately
-                setTimeout(() => {
-                    window.notificationService.showSuccess('This is a test browser notification!', 'Test Notification');
-                }, 1000);
-            } else if (window.notificationService.permission === 'denied') {
-                window.notificationService.showWarning('Browser notifications were denied. You can enable them in your browser settings under Site Settings > Notifications.', 'Permission Denied');
-            } else {
-                window.notificationService.showWarning('Permission request was dismissed. You can try again or enable notifications in your browser settings.', 'Permission Dismissed');
-            }
-        });
-    } else {
-        console.log('Notification service not available');
-    }
-};
-
-// Test browser notifications specifically
-window.testBrowserNotification = function() {
-    console.log('Testing browser notification');
-    if (window.notificationService) {
-        if (window.notificationService.permission === 'granted') {
-            window.notificationService.showSuccess('This is a browser notification!', 'Browser Test');
-        } else {
-            console.log('Browser notifications not enabled. Call requestNotificationPermission() first.');
-            window.notificationService.showWarning('Browser notifications not enabled. Call requestNotificationPermission() first.', 'Permission Required');
-        }
-    } else {
-        console.log('Notification service not available');
-    }
-};
-
-// Simple direct test function
-window.testDirectNotification = function() {
-    console.log('Testing direct notification creation');
-    
-    // Create container if it doesn't exist
-    let container = document.getElementById('notification-container');
-    if (!container) {
-        console.log('Creating notification container');
-        container = document.createElement('div');
-        container.id = 'notification-container';
-        container.style.position = 'fixed';
-        container.style.top = '10px';
-        container.style.left = '10px';
-        container.style.right = '10px';
-        container.style.zIndex = '99999';
-        container.style.pointerEvents = 'auto';
-        document.body.appendChild(container);
-    }
-    
-    // Create simple notification
-    const notification = document.createElement('div');
-    notification.style.background = 'red';
-    notification.style.color = 'white';
-    notification.style.padding = '20px';
-    notification.style.margin = '10px';
-    notification.style.borderRadius = '8px';
-    notification.style.position = 'relative';
-    notification.style.width = '100%';
-    notification.style.boxSizing = 'border-box';
-    notification.innerHTML = 'DIRECT TEST NOTIFICATION - CAN YOU SEE THIS?';
-    
-    container.appendChild(notification);
-    console.log('Direct notification added to container');
-    
-    // Remove after 5 seconds
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-        }
-    }, 5000);
-};
+// Test functions removed - production ready
 
 // Export for module use
 if (typeof module !== 'undefined' && module.exports) {

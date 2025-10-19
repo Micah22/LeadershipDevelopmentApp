@@ -1490,7 +1490,7 @@ function initializeProgressNotifications() {
         return;
     }
     
-    console.log('User Progress Script - Initializing notifications');
+    // User Progress Script - Initializing notifications
     
     // Show progress page notification
     setTimeout(() => {

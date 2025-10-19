@@ -432,7 +432,7 @@ function initializeNotifications() {
         return;
     }
     
-    console.log('User Script - Initializing notifications');
+    // User Script - Initializing notifications
     
     // Show welcome notification
     setTimeout(() => {

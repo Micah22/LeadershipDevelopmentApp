@@ -4849,14 +4849,7 @@ function saveNotificationSettings() {
     showToast('success', 'Settings Saved', 'Your notification preferences have been saved');
 }
 
-function testNotifications() {
-    if (window.notificationService) {
-        window.notificationService.showSuccess('Test notification from settings', 'Settings Test');
-        showToast('info', 'Test Sent', 'Check your notifications to see the test message');
-    } else {
-        showToast('error', 'Service Unavailable', 'Notification service is not available');
-    }
-}
+// Test function removed - production ready
 
 // Privacy & Security Functions
 function setupTwoFactor() {
