@@ -6,20 +6,20 @@
     <title>Dashboard - Leadership Development</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
     <!-- Preload critical resources -->
-    <link rel="preload" href="../styles/user-styles.css?v=9" as="style">
     <link rel="preload" href="../scripts/user-script.js?v=30" as="script">
     <link rel="preload" href="../database/config.js" as="script">
     
-    <!-- Load stylesheets -->
-    <link rel="stylesheet" href="../styles/user-styles.css?v=9">
+    <!-- Load navbar component styles -->
+    <link rel="stylesheet" href="../styles/navbar-component.css">
+    <link rel="stylesheet" href="../styles/user-dashboard-content.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- Load critical scripts -->
-    <script src="../scripts/navbar.js?v=19"></script>
+    <!-- Load navbar component script -->
+    <script src="../components/navbar-component.js"></script>
     <script src="../database/config.js"></script>
 </head>
 <body>
-    <!-- Navbar will be loaded by navbar.js -->
+    <!-- Navbar will be automatically loaded by the navbar component -->
 
     <!-- Loading indicator -->
     <div id="loadingIndicator" class="loading-indicator">
@@ -62,25 +62,6 @@
                     </div>
                 </div>
 
-                <!-- Quick Actions Card -->
-                <div class="dashboard-card quick-actions-card">
-                    <div class="card-header">
-                        <i class="fas fa-bolt"></i>
-                        <h3>Quick Actions</h3>
-                    </div>
-                    <div class="card-content">
-                        <div class="action-buttons">
-                            <button class="action-btn" onclick="viewProgress()">
-                                <i class="fas fa-chart-line"></i>
-                                <span>View Progress</span>
-                            </button>
-                            <button class="action-btn" onclick="explorePaths()">
-                                <i class="fas fa-route"></i>
-                                <span>Explore Paths</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Resources Card -->
                 <div class="dashboard-card resources-card">

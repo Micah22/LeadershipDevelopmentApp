@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Set up event listeners
     setupEventListeners();
     
+    // Set up tab navigation
+    setupTabNavigation();
+    
     // Set up assignment event listeners
     setupAssignmentEventListeners();
     
@@ -27,7 +30,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Ensure content is visible after everything is loaded
     setTimeout(() => {
+        // Check if reports should be shown (if URL has hash or reports is active)
+        const urlHash = window.location.hash;
+        const reportsTab = document.querySelector('[data-section="reports"]');
+        const isReportsActive = reportsTab && reportsTab.classList.contains('active');
+        
+        if (urlHash === '#reports' || isReportsActive) {
+            showReportsContent();
+        } else {
         showUserManagementContent();
+        }
     }, 100);
     
     } catch (error) {
@@ -36,22 +48,111 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 async function initializePage() {
-    // Check if user is logged in and is admin
+    // Check if user is logged in
     const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     
-    if (!isLoggedIn || currentUser.role !== 'Admin') {
-        alert('Access denied. Admin privileges required.');
+    if (!isLoggedIn) {
+        alert('Please log in to access this page.');
         window.location.href = 'index.html';
         return;
     }
     
+    // Store current user info for role-based functionality
+    window.currentUser = currentUser;
+    
+    // Load role management data first
+    await loadRoleManagementData();
+    
+    // Set up role-based UI
+    setupRoleBasedUI();
     
     // Set up user info
     await updateUserInfo();
     
     // Set up navigation
-    await updateNavigation();
+    // Navigation is now handled by the navbar component
+}
+
+// Set up role-based UI elements
+function setupRoleBasedUI() {
+    const currentUser = window.currentUser;
+    const userRole = currentUser.role || 'Team Member';
+    
+    console.log('🔍 Setting up UI for role:', userRole);
+    
+    // Get the role ID for permission checking
+    const roleId = reverseRoleMapping[userRole] || 'team-member';
+    console.log('🔍 Role ID for permissions:', roleId);
+    
+    // Find the role definition to get page access
+    const roleDefinition = roles.find(r => r.id === roleId);
+    const userPageAccess = roleDefinition ? (roleDefinition.pageAccess || []) : pageAccessLevels[1];
+    console.log('🔍 User page access from role definition:', userPageAccess);
+    
+    // Update sidebar header based on role
+    const sidebarHeader = document.querySelector('.sidebar-header h2');
+    if (sidebarHeader) {
+        if (userRole === 'Admin') {
+            sidebarHeader.textContent = 'ADMIN TOOLS';
+        } else if (userRole === 'Director') {
+            sidebarHeader.textContent = 'MANAGEMENT TOOLS';
+        } else {
+            sidebarHeader.textContent = 'USER TOOLS';
+        }
+    }
+    
+    // Show/hide sidebar items based on role permissions
+    const sidebarItems = {
+        userManagement: 'userManagement',
+        pathManagement: 'pathManagement',
+        roleManagement: 'roleManagement',
+        reports: 'reports',
+        settings: 'settings'
+    };
+    
+    Object.keys(sidebarItems).forEach(itemId => {
+        const item = document.getElementById(itemId);
+        if (item) {
+            const hasAccess = userPageAccess.includes(sidebarItems[itemId]);
+            console.log(`🔍 ${itemId}: ${hasAccess ? 'show' : 'hide'} (${sidebarItems[itemId]} in ${userPageAccess})`);
+            if (hasAccess) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        }
+    });
+    
+    // Update page title based on role
+    const pageTitle = document.querySelector('.page-title');
+    if (pageTitle) {
+        if (userRole === 'Admin') {
+            pageTitle.textContent = 'User Progress Overview';
+        } else if (userRole === 'Director') {
+            pageTitle.textContent = 'Team Progress Overview';
+        } else {
+            pageTitle.textContent = 'User Overview';
+        }
+    }
+    
+    // Update page subtitle based on role
+    const pageSubtitle = document.querySelector('.page-subtitle');
+    if (pageSubtitle) {
+        if (userRole === 'Admin') {
+            pageSubtitle.textContent = 'Track and monitor all users\' leadership development progress';
+        } else if (userRole === 'Director') {
+            pageSubtitle.textContent = 'Monitor your team\'s leadership development progress';
+        } else {
+            pageSubtitle.textContent = 'View user information and progress';
+        }
+    }
+}
+
+// Refresh role-based UI after role changes
+function refreshRoleBasedUI() {
+    console.log('🔍 Refreshing role-based UI after role changes...');
+    setupRoleBasedUI();
 }
 
 async function updateUserInfo() {
@@ -81,34 +182,7 @@ async function updateUserInfo() {
     }
 }
 
-async function updateNavigation() {
-    const username = localStorage.getItem('username');
-    const users = await getUsers();
-    const user = users.find(u => u.username === username);
-    const navLinks = document.getElementById('navLinks');
-    
-    if (!navLinks) {
-        return;
-    }
-    
-    if (!user) {
-        navLinks.innerHTML = '<a href="index.html" class="nav-link">Login</a>';
-        return;
-    }
-    
-    let navigationHTML = '';
-    
-    if (user.role === 'Admin') {
-        navigationHTML = '<a href="user-dashboard.html" class="nav-link">Dashboard</a><a href="user-progress.html" class="nav-link">My Progress</a><a href="quizzes.html" class="nav-link">Quizzes</a><a href="admin-user-overview.html" class="nav-link active">User Overview</a><a href="#" class="nav-link">Resources</a>';
-    } else if (user.role === 'Director' || user.role === 'Supervisor') {
-        navigationHTML = '<a href="user-dashboard.html" class="nav-link">Dashboard</a><a href="user-progress.html" class="nav-link">My Progress</a><a href="quizzes.html" class="nav-link">Quizzes</a><a href="admin-user-overview.html" class="nav-link active">User Overview</a><a href="#" class="nav-link">Resources</a>';
-    } else {
-        navigationHTML = '<a href="user-dashboard.html" class="nav-link">Dashboard</a><a href="user-progress.html" class="nav-link">My Progress</a><a href="quizzes.html" class="nav-link">Quizzes</a><a href="#" class="nav-link">Resources</a>';
-    }
-    
-    navLinks.innerHTML = navigationHTML;
-   
-}
+// Navigation is now handled by the navbar component
 
 function setupEventListeners() {
     
@@ -128,6 +202,18 @@ function setupEventListeners() {
     
     if (modalSave) {
         modalSave.addEventListener('click', saveUserChanges);
+    }
+    
+    // Reset progress button in modal
+    const modalResetProgress = document.getElementById('modalResetProgress');
+    if (modalResetProgress) {
+        modalResetProgress.addEventListener('click', function() {
+            const currentUsername = document.getElementById('editUsername').value;
+            if (currentUsername) {
+                resetUserProgress(currentUsername);
+                closeUserModal();
+            }
+        });
     }
     
     // Close modal when clicking outside
@@ -269,10 +355,12 @@ function handleNavigation(itemId, e) {
     
     switch(itemId) {
         case 'userManagement':
+            cleanupCharts();
             showUserManagementContent();
             break;
         case 'pathManagement':
             try {
+                cleanupCharts();
                 showPathManagementContent();
             } catch (error) {
                 console.error('Error in showPathManagementContent:', error);
@@ -280,18 +368,27 @@ function handleNavigation(itemId, e) {
             break;
         case 'roleManagement':
             try {
+                cleanupCharts();
                 showRoleManagementContent();
             } catch (error) {
                 console.error('Error in showRoleManagementContent:', error);
             }
             break;
         case 'reports':
-            // TODO: Show reports content
+            try {
+                showReportsContent();
+            } catch (error) {
+                console.error('Error in showReportsContent:', error);
+            }
             break;
         case 'settings':
             // TODO: Show settings content
             break;
         default:
+            // Default to user management content
+            cleanupCharts();
+            showUserManagementContent();
+            break;
     }
 }
 
@@ -330,19 +427,38 @@ async function loadUserData() {
         }
     }
     
+    // Filter users based on current user's role
+    const currentUser = window.currentUser;
+    const userRole = currentUser.role || 'Team Member';
+    let filteredUsers = users;
+    
+    if (userRole === 'Team Member') {
+        // Team members can only see their own data
+        filteredUsers = users.filter(user => user.username === currentUser.username);
+    } else if (userRole === 'Supervisor') {
+        // Supervisors can see their team members (for now, show all users)
+        filteredUsers = users;
+    } else if (userRole === 'Director') {
+        // Directors can see their team and below
+        filteredUsers = users;
+    }
+    // Admins can see all users (no filtering)
+    
+    console.log('🔍 Filtered users for role', userRole, ':', filteredUsers.length, 'out of', users.length);
+    
     // Cache users data to avoid redundant queries
-    window.cachedUsers = users;
+    window.cachedUsers = filteredUsers;
     
     // Load user progress data in parallel for better performance
-    const userProgressPromises = users.map(async (user) => {
+    const userProgressPromises = filteredUsers.map(async (user) => {
         try {
-            const userProgress = await getUserProgress(user.username);
-            const overallProgress = await calculateUserOverallProgress(user.username);
+        const userProgress = await getUserProgress(user.username);
+        const overallProgress = await calculateUserOverallProgress(user.username);
             return { user, userProgress, overallProgress };
         } catch (error) {
             console.error(`Failed to load progress for user ${user.username}:`, error);
             return { user, userProgress: {}, overallProgress: 0 };
-        }
+    }
     });
     
     // Wait for all user progress data to load in parallel
@@ -350,13 +466,13 @@ async function loadUserData() {
     console.log('Admin Overview - Loaded progress data for all users:', userProgressData.length);
     
     // Update summary cards
-    updateSummaryCards(users);
+    updateSummaryCards(filteredUsers);
     
     // Update role statistics
-    updateRoleStats(users);
+    updateRoleStats(filteredUsers);
     
     // Update user progress table
-    updateUserProgressTable(users);
+    updateUserProgressTable(filteredUsers);
     
     // Load module assignments
     loadModuleAssignments();
@@ -401,7 +517,9 @@ function updateRoleStats(users) {
 
 function updateUserProgressTable(users) {
     const tableBody = document.getElementById('userProgressTable');
-    if (!tableBody) {
+    const mobileTable = document.getElementById('userProgressTableMobile');
+    
+    if (!tableBody || !mobileTable) {
         return;
     }
     
@@ -412,6 +530,13 @@ function updateUserProgressTable(users) {
                     No users found
                 </td>
             </tr>
+        `;
+        mobileTable.innerHTML = `
+            <div class="user-card-mobile">
+                <div style="text-align: center; padding: 2rem; color: var(--medium-gray);">
+                    No users found
+                </div>
+            </div>
         `;
         return;
     }
@@ -459,7 +584,45 @@ function updateUserProgressTable(users) {
         `;
     });
     
+    // Generate mobile cards for each user
+    const mobileCards = users.map(user => {
+        const status = user.status || 'active';
+        const fullName = user.full_name || user.fullName || user.username;
+        
+        return `
+            <div class="user-card-mobile">
+                <div class="user-details">
+                    <div class="detail-item">
+                        <div class="detail-label">Full name</div>
+                        <div class="detail-value">${fullName}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Role</div>
+                        <div class="detail-value">${user.role}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Username</div>
+                        <div class="detail-value">${user.username}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Status</div>
+                        <div class="detail-value">${status}</div>
+                    </div>
+                </div>
+                <div class="user-actions">
+                    <button class="action-btn-mobile" onclick="editUser('${user.username}')">
+                        Edit
+                    </button>
+                    <button class="action-btn-mobile primary" onclick="viewUserDetails('${user.username}')">
+                        Details
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
     tableBody.innerHTML = tableRows.join('');
+    mobileTable.innerHTML = mobileCards.join('');
 }
 
 function getStatusClass(role) {
@@ -852,8 +1015,14 @@ async function openUserDetailsModal(username) {
                     </div>
                 </div>
                 
+                <div class="progress-sections-container">
+                    <div class="progress-section-left">
                 ${moduleProgressHtml}
+                    </div>
+                    <div class="progress-section-right">
                 ${quizScoresHtml}
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -1305,14 +1474,14 @@ async function calculateUserOverallProgress(username) {
         // Get user's role from cached data or database
         let users = window.cachedUsers;
         if (!users) {
-            try {
-                if (window.dbService && window.dbService.isConfigured) {
-                    users = await window.dbService.getUsers();
+        try {
+            if (window.dbService && window.dbService.isConfigured) {
+                users = await window.dbService.getUsers();
                     window.cachedUsers = users;
-                } else {
-                    users = JSON.parse(localStorage.getItem('users') || '[]');
-                }
-            } catch (error) {
+            } else {
+                users = JSON.parse(localStorage.getItem('users') || '[]');
+            }
+        } catch (error) {
                 console.error('Failed to get users for progress calculation:', error);
                 users = [];
             }
@@ -1472,89 +1641,66 @@ function getModuleData(moduleTitle) {
     };
 }
 
+// Tab navigation setup
+function setupTabNavigation() {
+    const tabs = document.querySelectorAll('.admin-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all tabs
+            tabs.forEach(t => t.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            this.classList.add('active');
+            
+            // Hide all tab content
+            const allTabContents = document.querySelectorAll('.tab-content');
+            allTabContents.forEach(content => content.classList.remove('active'));
+            
+            // Show the corresponding tab content
+            const tabId = this.id;
+            const contentId = tabId + 'Content';
+            const targetContent = document.getElementById(contentId);
+            
+            if (targetContent) {
+                targetContent.classList.add('active');
+                
+                // Load specific content based on tab
+                switch(tabId) {
+                    case 'userManagement':
+                        showUserManagementContent();
+                        break;
+                    case 'pathManagement':
+                        showPathManagementContent();
+                        break;
+                    case 'roleManagement':
+                        showRoleManagementContent();
+                        break;
+                    case 'reports':
+                        showReportsContent();
+                        break;
+                    case 'settings':
+                        // Settings content is already in HTML
+                        break;
+                }
+            }
+        });
+    });
+}
+
 // Content switching functions
 function showUserManagementContent() {
-    
-    // Hide path management content
-    const pathContent = document.getElementById('pathManagementContent');
-    if (pathContent) {
-        pathContent.style.display = 'none';
-    }
-    
-    // Hide role management content
-    const roleContent = document.getElementById('roleManagementContent');
-    if (roleContent) {
-        roleContent.style.display = 'none';
-    }
-    
-        // Show user management content (main content is already visible)
-        const mainContent = document.querySelector('.main-content');
-        if (mainContent) {
-            mainContent.style.display = 'block';
-            mainContent.style.visibility = 'visible';
-            mainContent.style.opacity = '1';
-            mainContent.style.minHeight = '100vh';
-            mainContent.style.width = '100%';
-        } else {
-        }
-        
-        // Show user management sections
-        const userManagementSections = document.querySelectorAll('.section');
-        userManagementSections.forEach(section => {
-            section.style.display = 'block';
-        });
-        
-        // Also show the content header
-        const contentHeader = document.querySelector('.content-header');
-        if (contentHeader) {
-            contentHeader.style.display = 'block';
-        }
-        
+    // User management content is now handled by tab switching
+    // This function can be used for any additional setup needed
+    console.log('User Management content shown');
 }
 
 async function showPathManagementContent() {
     try {
+        // Path management content is now handled by tab switching
+        console.log('Path Management content shown');
         
-        // Keep main content visible but hide user management sections
-        const mainContent = document.querySelector('.main-content');
-        if (mainContent) {
-            mainContent.style.display = 'block';
-            mainContent.style.visibility = 'visible';
-            mainContent.style.opacity = '1';
-            mainContent.style.minHeight = '100vh';
-            mainContent.style.width = '100%';
-        } else {
-        }
-        
-        // Hide user management sections
-        const userManagementSections = document.querySelectorAll('.section');
-        userManagementSections.forEach(section => {
-            section.style.display = 'none';
-        });
-        
-        // Also hide the content header
-        const contentHeader = document.querySelector('.content-header');
-        if (contentHeader) {
-            contentHeader.style.display = 'none';
-        }
-        
-        // Hide role management content
-        const roleContent = document.getElementById('roleManagementContent');
-        if (roleContent) {
-            roleContent.style.display = 'none';
-        }
-        
-        // Show path management content
-        const pathContent = document.getElementById('pathManagementContent');
-        if (pathContent) {
-            pathContent.style.display = 'block';
-            pathContent.style.visibility = 'visible';
-            pathContent.style.opacity = '1';
-            pathContent.style.position = 'relative';
-            pathContent.style.zIndex = '999';
-            pathContent.style.backgroundColor = '#f0f0f0';
-            pathContent.style.minHeight = '500px';
-            pathContent.style.border = '2px solid red';
         // Load modules data when showing path management
         try {
             await loadModulesData();
@@ -1564,8 +1710,6 @@ async function showPathManagementContent() {
         
         // Setup search and filter functionality
         setupSearchAndFilter();
-        } else {
-        }
     } catch (error) {
         console.error('Error in showPathManagementContent:', error);
     }
@@ -1573,53 +1717,14 @@ async function showPathManagementContent() {
 
 async function showRoleManagementContent() {
     try {
-        // Keep main content visible but hide user management sections
-        const mainContent = document.querySelector('.main-content');
-        if (mainContent) {
-            mainContent.style.display = 'block';
-            mainContent.style.visibility = 'visible';
-            mainContent.style.opacity = '1';
-            mainContent.style.minHeight = '100vh';
-            mainContent.style.width = '100%';
-        }
-        
-        // Hide user management sections (but not role management sections)
-        const userManagementSections = document.querySelectorAll('.section:not(#roleManagementContent .section)');
-        userManagementSections.forEach(section => {
-            section.style.display = 'none';
-        });
-        
-        // Also hide the content header (but not role management header)
-        const contentHeader = document.querySelector('.content-header:not(#roleManagementContent .content-header)');
-        if (contentHeader) {
-            contentHeader.style.display = 'none';
-        }
-        
-        // Hide path management content
-        const pathContent = document.getElementById('pathManagementContent');
-        if (pathContent) {
-            pathContent.style.display = 'none';
-        }
-        
-        // Show role management content
-        const roleContent = document.getElementById('roleManagementContent');
-        if (roleContent) {
-            console.log('🔍 Showing role management content...');
-            roleContent.style.display = 'block';
-            roleContent.style.visibility = 'visible';
-            roleContent.style.opacity = '1';
-            roleContent.style.position = 'relative';
-            roleContent.style.zIndex = '999';
-            roleContent.style.backgroundColor = 'transparent';
-            roleContent.style.minHeight = 'auto';
-            roleContent.style.border = 'none';
+        // Role management content is now handled by tab switching
+        console.log('Role Management content shown');
             
             // Load role management data
             try {
                 await loadRoleManagementData();
         } catch (error) {
                 console.error('Error in loadRoleManagementData:', error);
-            }
         }
     } catch (error) {
         console.error('Error in showRoleManagementContent:', error);
@@ -1776,11 +1881,9 @@ function renderModulesGrid(modules) {
                 <div class="module-management-card">
                     <div class="module-management-header">
                         <h3 class="module-management-title">${module.title}</h3>
-                    <div class="module-management-meta">
                         <span class="module-management-phase">${module.phase || module.difficulty || 'Phase 1'}</span>
                         <span class="module-management-status ${module.status || 'active'}">${(module.status || 'active').replace('-', ' ')}</span>
                     </div>
-                </div>
                     <div class="module-management-stats">
                     <div class="module-management-tasks">${(module.checklist || []).length} learning tasks</div>
                         ${tasksWithFiles > 0 ? `<div class="module-management-files"><i class="fas fa-file"></i> ${tasksWithFiles} tasks with files</div>` : ''}
@@ -3012,12 +3115,22 @@ async function loadModuleAssignments() {
 // Update assignments table
 async function updateAssignmentsTable() {
     const tbody = document.getElementById('assignmentsTableBody');
-    if (!tbody) return;
+    const mobileTable = document.getElementById('assignmentsTableMobile');
+    
+    if (!tbody || !mobileTable) return;
 
     tbody.innerHTML = '';
+    mobileTable.innerHTML = '';
 
     if (moduleAssignments.length === 0) {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem; color: #666;">No module assignments found</td></tr>';
+        mobileTable.innerHTML = `
+            <div class="assignment-card-mobile">
+                <div style="text-align: center; padding: 2rem; color: #666;">
+                    No module assignments found
+                </div>
+            </div>
+        `;
         return;
     }
 
@@ -3079,6 +3192,61 @@ async function updateAssignmentsTable() {
         `;
         tbody.appendChild(row);
     }
+
+    // Generate mobile cards for each assignment
+    const mobileCards = moduleAssignments.map(assignment => {
+        const assignedDate = formatDate(assignment.assigned_at);
+        const dueDate = assignment.due_date ? formatDate(assignment.due_date) : 'No due date';
+        const progressPercentage = Math.round(assignment.progress_percentage || 0);
+        
+        return `
+            <div class="assignment-card-mobile">
+                <div class="assignment-card-header">
+                    <input type="checkbox" class="assignment-checkbox" data-assignment-id="${assignment.id}">
+                    <div class="assignment-user-info">
+                        <div class="assignment-user-name">${assignment.user_name || 'Unknown User'}</div>
+                        <div class="assignment-module-name">${assignment.module_title || 'Unknown Module'}</div>
+                    </div>
+                </div>
+                <div class="assignment-details">
+                    <div class="assignment-detail-item">
+                        <div class="assignment-detail-label">Assigned Date</div>
+                        <div class="assignment-detail-value">${assignedDate}</div>
+                    </div>
+                    <div class="assignment-detail-item">
+                        <div class="assignment-detail-label">Due Date</div>
+                        <div class="assignment-detail-value">${dueDate}</div>
+                    </div>
+                    <div class="assignment-detail-item">
+                        <div class="assignment-detail-label">Status</div>
+                        <div class="assignment-detail-value">
+                            <span class="status-badge status-${assignment.status}">${assignment.status}</span>
+                        </div>
+                    </div>
+                    <div class="assignment-detail-item">
+                        <div class="assignment-detail-label">Progress</div>
+                        <div class="assignment-detail-value">${progressPercentage}%</div>
+                    </div>
+                </div>
+                <div class="assignment-actions">
+                    <button class="assignment-btn-mobile" onclick="editAssignment('${assignment.id}')" title="Edit Assignment">
+                        <i class="fas fa-edit"></i>
+                        Edit
+                    </button>
+                    <button class="assignment-btn-mobile danger" onclick="unassignModule('${assignment.id}')" title="Unassign Module">
+                        <i class="fas fa-user-minus"></i>
+                        Unassign
+                    </button>
+                    <button class="assignment-btn-mobile danger" onclick="deleteAssignment('${assignment.id}')" title="Delete Assignment">
+                        <i class="fas fa-trash"></i>
+                        Delete
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    mobileTable.innerHTML = mobileCards.join('');
 
     // Add event listeners to individual checkboxes
     const assignmentCheckboxes = document.querySelectorAll('.assignment-checkbox');
@@ -3614,6 +3782,23 @@ const pagePermissions = {
     }
 };
 
+// Role mapping between different naming conventions
+const roleMapping = {
+    'admin': 'Admin',
+    'director': 'Director', 
+    'supervisor': 'Supervisor',
+    'team-member': 'Team Member',
+    'team_member': 'Team Member'
+};
+
+// Reverse mapping for getting role ID from display name
+const reverseRoleMapping = {
+    'Admin': 'admin',
+    'Director': 'director',
+    'Supervisor': 'supervisor', 
+    'Team Member': 'team-member'
+};
+
 // Default page access based on role level
 const pageAccessLevels = {
     1: ['userManagement'], // Team Member - can only view user management (their own progress)
@@ -3651,8 +3836,6 @@ async function loadRoleManagementData() {
         console.log('🔍 Rendering roles grid...');
         renderRolesGrid();
         
-        console.log('🔍 Rendering permission matrix...');
-        renderPermissionMatrix();
         
         console.log('🔍 Setting up event listeners...');
         setupRoleManagementEventListeners();
@@ -3716,46 +3899,6 @@ function renderRolesGrid() {
     rolesGrid.innerHTML = rolesHTML;
 }
 
-// Render permission matrix
-function renderPermissionMatrix() {
-    const permissionMatrix = document.getElementById('permissionMatrix');
-    console.log('🔍 renderPermissionMatrix - permissionMatrix element:', permissionMatrix);
-    if (!permissionMatrix) {
-        console.error('❌ permissionMatrix element not found!');
-        return;
-    }
-    
-    // Create header row
-    const headerRow = permissionMatrix.querySelector('thead tr');
-    headerRow.innerHTML = '<th>Page Access</th>' + roles.map(role => `<th>${role.name}</th>`).join('');
-    
-    // Create permission rows
-    const tbody = permissionMatrix.querySelector('tbody');
-    tbody.innerHTML = '';
-    
-    Object.entries(pagePermissions).forEach(([pageName, pageInfo]) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>
-                <div class="page-info">
-                    <i class="${pageInfo.icon}"></i>
-                    <div>
-                        <strong>${pageInfo.name}</strong><br>
-                        <small>${pageInfo.description}</small>
-                    </div>
-                </div>
-            </td>
-            ${roles.map(role => `
-                <td class="permission-checkbox">
-                    <input type="checkbox" 
-                           ${(role.pageAccess || []).includes(pageInfo.id) ? 'checked' : ''}
-                           onchange="updateRolePageAccess('${role.id}', '${pageInfo.id}', this.checked)">
-                </td>
-            `).join('')}
-        `;
-        tbody.appendChild(row);
-    });
-}
 
 // Setup role management event listeners
 function setupRoleManagementEventListeners() {
@@ -3841,15 +3984,24 @@ function closeRoleModal() {
 
 // Populate role page access
 function populateRolePageAccess(selectedPageAccess) {
+    console.log('🔍 populateRolePageAccess called with:', selectedPageAccess);
     const rolePermissionsGrid = document.getElementById('rolePermissionsGrid');
-    if (!rolePermissionsGrid) return;
+    console.log('🔍 rolePermissionsGrid element:', rolePermissionsGrid);
+    if (!rolePermissionsGrid) {
+        console.error('❌ rolePermissionsGrid element not found!');
+        return;
+    }
     
-    const permissionsHTML = Object.entries(pagePermissions).map(([pageName, pageInfo]) => `
+    console.log('🔍 Available page permissions:', pagePermissions);
+    const permissionsHTML = Object.entries(pagePermissions).map(([pageName, pageInfo]) => {
+        const isChecked = selectedPageAccess.includes(pageInfo.id);
+        console.log(`🔍 Page ${pageInfo.name} (${pageInfo.id}): ${isChecked ? 'checked' : 'unchecked'}`);
+        return `
         <div class="permission-item">
             <input type="checkbox" 
                    id="page_${pageInfo.id}" 
                    value="${pageInfo.id}"
-                   ${selectedPageAccess.includes(pageInfo.id) ? 'checked' : ''}>
+                   ${isChecked ? 'checked' : ''}>
             <label for="page_${pageInfo.id}">
                 <i class="${pageInfo.icon}"></i>
                 <div>
@@ -3858,9 +4010,11 @@ function populateRolePageAccess(selectedPageAccess) {
                 </div>
             </label>
         </div>
-    `).join('');
+    `;
+    }).join('');
     
     rolePermissionsGrid.innerHTML = permissionsHTML;
+    console.log('✅ Role permissions grid populated');
 }
 
 // Apply permission level
@@ -3907,7 +4061,9 @@ function saveRole(e) {
     // Refresh displays
     renderRoleOverviewCards();
     renderRolesGrid();
-    renderPermissionMatrix();
+    
+    // Refresh role-based UI for current user
+    refreshRoleBasedUI();
     
     closeRoleModal();
     showToast('success', 'Success', `Role ${roleIdInput.value ? 'updated' : 'created'} successfully`);
@@ -3916,7 +4072,9 @@ function saveRole(e) {
 // Get selected page access
 function getSelectedPageAccess() {
     const checkboxes = document.querySelectorAll('#rolePermissionsGrid input[type="checkbox"]:checked');
-    return Array.from(checkboxes).map(cb => cb.value);
+    const selectedAccess = Array.from(checkboxes).map(cb => cb.value);
+    console.log('🔍 getSelectedPageAccess - Selected checkboxes:', selectedAccess);
+    return selectedAccess;
 }
 
 // Generate role ID
@@ -3927,6 +4085,12 @@ function generateRoleId() {
 // Edit role
 function editRole(roleId) {
     console.log('🔍 editRole called with ID:', roleId);
+    console.log('🔍 Available roles:', roles);
+    const role = roles.find(r => r.id === roleId);
+    console.log('🔍 Found role:', role);
+    if (role) {
+        console.log('🔍 Role page access:', role.pageAccess);
+    }
     openRoleModal(roleId);
 }
 
@@ -3942,7 +4106,6 @@ function deleteRole(roleId) {
         
         renderRoleOverviewCards();
         renderRolesGrid();
-        renderPermissionMatrix();
         
         showToast('success', 'Success', 'Role deleted successfully');
     }
@@ -3969,28 +4132,678 @@ function hideLoadingIndicator() {
 // Make functions globally accessible
 window.editRole = editRole;
 window.deleteRole = deleteRole;
-window.updateRolePageAccess = updateRolePageAccess;
 window.closeRoleModal = closeRoleModal;
 
-// Update role page access
-function updateRolePageAccess(roleId, pageId, hasAccess) {
-    const role = roles.find(r => r.id === roleId);
-    if (!role) return;
+
+// ===== REPORTS & ANALYTICS FUNCTIONALITY =====
+
+// Show reports content
+function showReportsContent() {
+    console.log('🔍 Showing reports content...');
     
-    if (!role.pageAccess) {
-        role.pageAccess = [];
+    // Clean up any existing charts first
+    cleanupCharts();
+    
+    // Hide all content sections
+    const sections = document.querySelectorAll('.content-section');
+    sections.forEach(section => section.style.display = 'none');
+    
+    // Hide the main content (user management content)
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        mainContent.style.display = 'none';
     }
     
-    if (hasAccess) {
-        if (!role.pageAccess.includes(pageId)) {
-            role.pageAccess.push(pageId);
-        }
+    // Show reports content
+    const reportsContent = document.getElementById('reportsContent');
+    if (reportsContent) {
+        console.log('🔍 Reports content found, showing...');
+        reportsContent.style.display = 'block';
+        reportsContent.style.visibility = 'visible';
+        reportsContent.style.opacity = '1';
+        
+        // Load reports data
+        loadReportsData();
+        
+        // Setup reports event listeners
+        setupReportsEventListeners();
     } else {
-        role.pageAccess = role.pageAccess.filter(p => p !== pageId);
+        console.error('❌ Reports content element not found!');
+    }
+}
+
+// Clean up charts to prevent memory leaks
+function cleanupCharts() {
+    if (window.progressChart && typeof window.progressChart.destroy === 'function') {
+        window.progressChart.destroy();
+        window.progressChart = null;
+    }
+    if (window.roleChart && typeof window.roleChart.destroy === 'function') {
+        window.roleChart.destroy();
+        window.roleChart = null;
+    }
+    if (window.moduleChart && typeof window.moduleChart.destroy === 'function') {
+        window.moduleChart.destroy();
+        window.moduleChart = null;
+    }
+}
+
+// Load reports data
+async function loadReportsData() {
+    try {
+        console.log('🔍 Loading reports data...');
+        
+        // Load user data
+        await loadUserData();
+        
+        // Load quiz data
+        await loadQuizData();
+        
+        // Generate analytics
+        generateAnalytics();
+        
+        // Render charts
+        renderCharts();
+        
+        // Load quiz results table
+        loadQuizResultsTable();
+        
+        console.log('✅ Reports data loaded successfully');
+    } catch (error) {
+        console.error('❌ Error loading reports data:', error);
+        showToast('error', 'Error', 'Failed to load reports data');
+    }
+}
+
+// Load quiz data for reports
+async function loadQuizData() {
+    try {
+        // Load quiz results from localStorage
+        const storedResults = localStorage.getItem('quizResults');
+        if (storedResults) {
+            window.quizResults = JSON.parse(storedResults);
+    } else {
+            window.quizResults = [];
+        }
+        
+        // Load quizzes from localStorage
+        const storedQuizzes = localStorage.getItem('quizzes');
+        if (storedQuizzes) {
+            window.quizzes = JSON.parse(storedQuizzes);
+        } else {
+            window.quizzes = [];
+        }
+        
+        console.log('📊 Loaded quiz data:', {
+            results: window.quizResults.length,
+            quizzes: window.quizzes.length
+        });
+    } catch (error) {
+        console.error('❌ Error loading quiz data:', error);
+        window.quizResults = [];
+        window.quizzes = [];
+    }
+}
+
+// Generate analytics data
+function generateAnalytics() {
+    console.log('🔍 Generating analytics...');
+    
+    // Calculate metrics
+    const metrics = calculateMetrics();
+    
+    // Update metric cards
+    updateMetricCards(metrics);
+    
+    // Generate analytics table data
+    generateAnalyticsTable();
+    
+    // Generate quiz performance data
+    generateQuizPerformance();
+}
+
+// Calculate key metrics
+function calculateMetrics() {
+    const users = window.cachedUsers || [];
+    const quizResults = window.quizResults || [];
+    const quizzes = window.quizzes || [];
+    
+    // Active users (users with activity in last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const activeUsers = users.filter(user => {
+        const lastActivity = new Date(user.lastActivity || user.createdAt);
+        return lastActivity >= thirtyDaysAgo;
+    }).length;
+    
+    // Modules completed (from quiz results)
+    const completedModules = quizResults.length;
+    
+    // Average completion time (mock data for now)
+    const avgCompletionTime = 2.5; // hours
+    
+    // Average satisfaction (mock data for now)
+    const avgSatisfaction = 85; // percentage
+    
+    // Calculate changes (mock data for now)
+    const activeUsersChange = 12; // +12%
+    const completedModulesChange = 8; // +8%
+    const completionTimeChange = -5; // -5%
+    const satisfactionChange = 3; // +3%
+    
+    return {
+        activeUsers,
+        completedModules,
+        avgCompletionTime,
+        avgSatisfaction,
+        activeUsersChange,
+        completedModulesChange,
+        completionTimeChange,
+        satisfactionChange
+    };
+}
+
+// Update metric cards
+function updateMetricCards(metrics) {
+    // Active Users
+    document.getElementById('totalActiveUsers').textContent = metrics.activeUsers;
+    const activeUsersChange = document.getElementById('activeUsersChange');
+    activeUsersChange.textContent = `+${metrics.activeUsersChange}%`;
+    activeUsersChange.className = `metric-change ${metrics.activeUsersChange >= 0 ? 'positive' : 'negative'}`;
+    
+    // Completed Modules
+    document.getElementById('completedModules').textContent = metrics.completedModules;
+    const completedModulesChange = document.getElementById('completedModulesChange');
+    completedModulesChange.textContent = `+${metrics.completedModulesChange}%`;
+    completedModulesChange.className = `metric-change ${metrics.completedModulesChange >= 0 ? 'positive' : 'negative'}`;
+    
+    // Average Completion Time
+    document.getElementById('avgCompletionTime').textContent = `${metrics.avgCompletionTime}h`;
+    const completionTimeChange = document.getElementById('completionTimeChange');
+    completionTimeChange.textContent = `${metrics.completionTimeChange > 0 ? '+' : ''}${metrics.completionTimeChange}%`;
+    completionTimeChange.className = `metric-change ${metrics.completionTimeChange <= 0 ? 'positive' : 'negative'}`;
+    
+    // Average Satisfaction
+    document.getElementById('avgSatisfaction').textContent = `${metrics.avgSatisfaction}%`;
+    const satisfactionChange = document.getElementById('satisfactionChange');
+    satisfactionChange.textContent = `+${metrics.satisfactionChange}%`;
+    satisfactionChange.className = `metric-change ${metrics.satisfactionChange >= 0 ? 'positive' : 'negative'}`;
+}
+
+// Generate analytics table
+function generateAnalyticsTable() {
+    const users = window.cachedUsers || [];
+    const quizResults = window.quizResults || [];
+    
+    const tableBody = document.getElementById('analyticsTableBody');
+    if (!tableBody) return;
+    
+    // Group quiz results by user
+    const userStats = {};
+    quizResults.forEach(result => {
+        if (!userStats[result.username]) {
+            userStats[result.username] = {
+                username: result.username,
+                role: 'Team Member', // Default role
+                modulesCompleted: 0,
+                totalScore: 0,
+                lastActivity: result.dateTaken,
+                scores: []
+            };
+        }
+        userStats[result.username].modulesCompleted++;
+        userStats[result.username].totalScore += result.score;
+        userStats[result.username].scores.push(result.score);
+        userStats[result.username].lastActivity = result.dateTaken;
+    });
+    
+    // Add users without quiz results
+    users.forEach(user => {
+        if (!userStats[user.username]) {
+            userStats[user.username] = {
+                username: user.username,
+                role: user.role || 'Team Member',
+                modulesCompleted: 0,
+                totalScore: 0,
+                lastActivity: user.lastActivity || user.createdAt,
+                scores: []
+            };
+        } else {
+            // Update role from user data
+            userStats[user.username].role = user.role || 'Team Member';
+        }
+    });
+    
+    // Convert to array and sort by last activity
+    const userStatsArray = Object.values(userStats).sort((a, b) => 
+        new Date(b.lastActivity) - new Date(a.lastActivity)
+    );
+    
+    // Render table rows
+    tableBody.innerHTML = userStatsArray.map(user => {
+        const avgScore = user.scores.length > 0 ? 
+            Math.round(user.totalScore / user.scores.length) : 0;
+        const progress = Math.min(100, user.modulesCompleted * 10); // Mock progress calculation
+        const status = progress >= 80 ? 'Advanced' : progress >= 50 ? 'Intermediate' : 'Beginner';
+        
+        return `
+            <tr>
+                <td>${user.username}</td>
+                <td><span class="role-badge role-${user.role.toLowerCase().replace(' ', '-')}">${user.role}</span></td>
+                <td>${user.modulesCompleted}</td>
+                <td>${avgScore}%</td>
+                <td>${new Date(user.lastActivity).toLocaleDateString()}</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                    <span class="progress-text">${progress}%</span>
+                </td>
+                <td><span class="status-badge status-${status.toLowerCase()}">${status}</span></td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Generate quiz performance data
+function generateQuizPerformance() {
+    const quizResults = window.quizResults || [];
+    
+    if (quizResults.length === 0) {
+        // No quiz data available
+        document.getElementById('totalQuizzesTaken').textContent = '0';
+        document.getElementById('avgQuizScore').textContent = '0%';
+        document.getElementById('quizPassRate').textContent = '0%';
+        document.getElementById('avgQuizTime').textContent = '0m';
+        return;
     }
     
-    localStorage.setItem('roles', JSON.stringify(roles));
+    // Calculate quiz statistics
+    const totalQuizzes = quizResults.length;
+    const avgScore = Math.round(quizResults.reduce((sum, result) => sum + result.score, 0) / totalQuizzes);
+    const passRate = Math.round((quizResults.filter(result => result.passed).length / totalQuizzes) * 100);
+    const avgTime = 15; // Mock average time in minutes
     
-    // Refresh the roles grid to show updated page access
-    renderRolesGrid();
+    // Update quiz performance cards
+    document.getElementById('totalQuizzesTaken').textContent = totalQuizzes;
+    document.getElementById('avgQuizScore').textContent = `${avgScore}%`;
+    document.getElementById('quizPassRate').textContent = `${passRate}%`;
+    document.getElementById('avgQuizTime').textContent = `${avgTime}m`;
+}
+
+// Render charts
+function renderCharts() {
+    // User Progress Over Time Chart
+    renderProgressChart();
+    
+    // Module Completion by Role Chart
+    renderRoleChart();
+    
+    // Top Performing Modules Chart
+    renderModuleChart();
+    
+    // User Engagement Heatmap
+    renderHeatmap();
+}
+
+// Render progress chart
+function renderProgressChart() {
+    const ctx = document.getElementById('progressChart');
+    if (!ctx) return;
+    
+    // Destroy existing chart if it exists
+    if (window.progressChart && typeof window.progressChart.destroy === 'function') {
+        window.progressChart.destroy();
+    }
+    
+    // Generate mock data for the last 30 days
+    const labels = [];
+    const progressData = [];
+    const completionData = [];
+    
+    for (let i = 29; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        
+        // Mock data - in real app, this would come from database
+        progressData.push(Math.floor(Math.random() * 20) + 10);
+        completionData.push(Math.floor(Math.random() * 5) + 1);
+    }
+    
+    window.progressChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'User Progress',
+                data: progressData,
+                borderColor: '#E51636',
+                backgroundColor: 'rgba(229, 22, 54, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#f0f0f0'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Render role chart
+function renderRoleChart() {
+    const ctx = document.getElementById('roleChart');
+    if (!ctx) return;
+    
+    if (window.roleChart && typeof window.roleChart.destroy === 'function') {
+        window.roleChart.destroy();
+    }
+    
+    const users = window.cachedUsers || [];
+    const roleCounts = {
+        'Admin': users.filter(u => u.role === 'admin').length,
+        'Director': users.filter(u => u.role === 'director').length,
+        'Team Member': users.filter(u => u.role === 'team_member').length
+    };
+    
+    window.roleChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(roleCounts),
+            datasets: [{
+                data: Object.values(roleCounts),
+                backgroundColor: [
+                    '#E51636',
+                    '#20B2AA',
+                    '#6C757D'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+// Render module chart
+function renderModuleChart() {
+    const ctx = document.getElementById('moduleChart');
+    if (!ctx) return;
+    
+    if (window.moduleChart && typeof window.moduleChart.destroy === 'function') {
+        window.moduleChart.destroy();
+    }
+    
+    // Mock data for top performing modules
+    const moduleData = {
+        labels: ['Leadership Fundamentals', 'Team Communication', 'Project Management', 'Conflict Resolution', 'Strategic Thinking'],
+        data: [85, 78, 72, 68, 65]
+    };
+    
+    window.moduleChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: moduleData.labels,
+            datasets: [{
+                label: 'Completion Rate (%)',
+                data: moduleData.data,
+                backgroundColor: '#E51636',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: {
+                        color: '#f0f0f0'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Render heatmap
+function renderHeatmap() {
+    const container = document.getElementById('heatmapContainer');
+    if (!container) return;
+    
+    // Mock heatmap data
+    container.innerHTML = `
+        <div style="text-align: center; color: #6C757D;">
+            <i class="fas fa-calendar-alt" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+            <p>User Engagement Heatmap</p>
+            <small>Coming Soon - Track daily user activity patterns</small>
+        </div>
+    `;
+}
+
+// Load and display quiz results table
+function loadQuizResultsTable() {
+    console.log('🔍 Loading quiz results table...');
+    
+    const quizResults = window.quizResults || [];
+    const quizzes = window.quizzes || [];
+    const users = window.cachedUsers || [];
+    
+    // Create a map of quiz IDs to quiz titles
+    const quizMap = {};
+    quizzes.forEach(quiz => {
+        quizMap[quiz.id] = quiz.title;
+    });
+    
+    // Create a map of usernames to user data
+    const userMap = {};
+    users.forEach(user => {
+        userMap[user.username] = user;
+    });
+    
+    // Sort results by date (newest first)
+    const sortedResults = quizResults.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    const tbody = document.getElementById('quizResultsTableBody');
+    if (!tbody) return;
+    
+    if (sortedResults.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 2rem; color: var(--medium-gray);">
+                    <i class="fas fa-clipboard-list" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                    <p>No quiz results found</p>
+                    <small>Quiz results will appear here once users start taking quizzes</small>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = sortedResults.map(result => {
+        const quizTitle = quizMap[result.quizId] || 'Unknown Quiz';
+        const user = userMap[result.username] || { username: result.username, fullName: result.username };
+        const userInitial = user.fullName ? user.fullName.charAt(0).toUpperCase() : result.username.charAt(0).toUpperCase();
+        
+        // Calculate score percentage
+        const score = result.score || 0;
+        const earnedPoints = result.earnedPoints || 0;
+        const totalPoints = result.totalPoints || 1;
+        
+        // Determine score color class
+        let scoreClass = 'score-poor';
+        if (score >= 90) scoreClass = 'score-excellent';
+        else if (score >= 80) scoreClass = 'score-good';
+        else if (score >= 70) scoreClass = 'score-fair';
+        
+        // Determine status
+        const status = score >= 70 ? 'passed' : 'failed';
+        const statusClass = status === 'passed' ? 'status-passed' : 'status-failed';
+        
+        // Format time taken
+        const timeTaken = result.timeTaken ? formatTime(result.timeTaken) : 'N/A';
+        
+        // Format date
+        const date = new Date(result.timestamp);
+        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        return `
+            <tr>
+                <td class="quiz-title">${quizTitle}</td>
+                <td class="quiz-user">
+                    <div class="user-avatar">${userInitial}</div>
+                    <span>${user.fullName || result.username}</span>
+                </td>
+                <td class="quiz-score ${scoreClass}">${score}%</td>
+                <td class="quiz-points">${earnedPoints}</td>
+                <td class="quiz-points">${totalPoints}</td>
+                <td class="quiz-time">${timeTaken}</td>
+                <td class="quiz-date">${formattedDate}</td>
+                <td class="quiz-status ${statusClass}">${status}</td>
+            </tr>
+        `;
+    }).join('');
+    
+    console.log(`✅ Loaded ${sortedResults.length} quiz results`);
+}
+
+// Format time in minutes and seconds
+function formatTime(seconds) {
+    if (!seconds) return 'N/A';
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`;
+}
+
+// Setup reports event listeners
+function setupReportsEventListeners() {
+    // Generate Report button
+    const generateBtn = document.getElementById('generateReportBtn');
+    if (generateBtn) {
+        generateBtn.addEventListener('click', () => {
+            loadReportsData();
+            showToast('success', 'Report Generated', 'Analytics data has been refreshed');
+        });
+    }
+    
+    // Export Report button
+    const exportBtn = document.getElementById('exportReportBtn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', exportReport);
+    }
+    
+    // Refresh Data button
+    const refreshBtn = document.getElementById('refreshDataBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            loadReportsData();
+            showToast('success', 'Data Refreshed', 'All analytics data has been updated');
+        });
+    }
+    
+    // Refresh Quiz Results button
+    const refreshQuizBtn = document.getElementById('refreshQuizResultsBtn');
+    if (refreshQuizBtn) {
+        refreshQuizBtn.addEventListener('click', () => {
+            loadQuizResultsTable();
+            showToast('success', 'Quiz Results Refreshed', 'Quiz results data has been updated');
+        });
+    }
+    
+    // Chart control buttons
+    const chartBtns = document.querySelectorAll('.chart-btn');
+    chartBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Remove active class from all buttons
+            chartBtns.forEach(b => b.classList.remove('active'));
+            // Add active class to clicked button
+            e.target.classList.add('active');
+            
+            // Update chart based on button data
+            const chartType = e.target.dataset.chart;
+            if (chartType === 'completions') {
+                // Switch to completions view
+                console.log('Switching to completions view');
+            } else {
+                // Switch to progress view
+                console.log('Switching to progress view');
+            }
+        });
+    });
+}
+
+// Export report functionality
+function exportReport() {
+    try {
+        // Create CSV data
+        const users = window.cachedUsers || [];
+        const quizResults = window.quizResults || [];
+        
+        let csvContent = 'User,Role,Modules Completed,Avg Score,Last Activity,Progress,Status\n';
+        
+        // Add user data
+        users.forEach(user => {
+            const userResults = quizResults.filter(r => r.username === user.username);
+            const avgScore = userResults.length > 0 ? 
+                Math.round(userResults.reduce((sum, r) => sum + r.score, 0) / userResults.length) : 0;
+            const progress = Math.min(100, userResults.length * 10);
+            const status = progress >= 80 ? 'Advanced' : progress >= 50 ? 'Intermediate' : 'Beginner';
+            
+            csvContent += `${user.username},${user.role || 'Team Member'},${userResults.length},${avgScore}%,${user.lastActivity || 'N/A'},${progress}%,${status}\n`;
+        });
+        
+        // Create and download file
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `leadership-reports-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        showToast('success', 'Export Complete', 'Report has been downloaded as CSV');
+    } catch (error) {
+        console.error('❌ Error exporting report:', error);
+        showToast('error', 'Export Failed', 'Failed to export report data');
+    }
 }

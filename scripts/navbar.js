@@ -24,12 +24,25 @@ async function loadNavbar() {
         // Re-initialize any navbar-related functionality
         initializeNavbar();
         
+        // Initialize hamburger menu functionality
+        initializeHamburgerMenu();
+        
+        // Debug: Check if mobile styles are applied
+        setTimeout(() => {
+            const userInfo = document.querySelector('.user-info');
+            const hamburgerMenu = document.querySelector('.hamburger-menu');
+            console.log('User info element:', userInfo);
+            console.log('User info computed style:', userInfo ? window.getComputedStyle(userInfo).display : 'not found');
+            console.log('Hamburger menu element:', hamburgerMenu);
+            console.log('Hamburger menu computed style:', hamburgerMenu ? window.getComputedStyle(hamburgerMenu).display : 'not found');
+        }, 500);
+        
         // Populate navigation with a small delay to ensure DOM is ready
         setTimeout(() => {
             try {
                 updateNavigation();
             } catch (error) {
-                console.error('Navbar v16 - Error in updateNavigation():', error);
+                console.error('Navbar v24 - Error in updateNavigation():', error);
             }
         }, 100);
         
@@ -237,6 +250,10 @@ function signOut() {
         
         let navigationHTML = '';
         
+        // Check if we're on mobile (screen width <= 768px)
+        const isMobile = window.innerWidth <= 768;
+        console.log('Mobile detection:', isMobile, 'Window width:', window.innerWidth);
+        
         if (user.role === 'Admin') {
             navigationHTML = `
                 <a href="apps-list.html" class="nav-link ${currentPage === 'apps-list.html' ? 'active' : ''}">Apps</a>
@@ -245,6 +262,17 @@ function signOut() {
                 <a href="quizzes.html" class="nav-link ${currentPage === 'quizzes.html' ? 'active' : ''}">Quizzes</a>
                 <a href="admin-user-overview.html" class="nav-link ${currentPage === 'admin-user-overview.html' ? 'active' : ''}">User Overview</a>
                 <a href="#" class="nav-link">Resources</a>
+                ${isMobile ? `
+                    <div class="nav-divider"></div>
+                    <a href="#" class="nav-link mobile-user-option" id="darkModeToggle">
+                        <i class="fas fa-moon"></i>
+                        <span>Dark Mode</span>
+                    </a>
+                    <a href="#" class="nav-link mobile-user-option" id="signOutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Sign Out</span>
+                    </a>
+                ` : ''}
             `;
         } else if (user.role === 'Director') {
             navigationHTML = `
@@ -254,6 +282,17 @@ function signOut() {
                 <a href="quizzes.html" class="nav-link ${currentPage === 'quizzes.html' ? 'active' : ''}">Quizzes</a>
                 <a href="admin-user-overview.html" class="nav-link ${currentPage === 'admin-user-overview.html' ? 'active' : ''}">User Overview</a>
                 <a href="#" class="nav-link">Resources</a>
+                ${isMobile ? `
+                    <div class="nav-divider"></div>
+                    <a href="#" class="nav-link mobile-user-option" id="darkModeToggle">
+                        <i class="fas fa-moon"></i>
+                        <span>Dark Mode</span>
+                    </a>
+                    <a href="#" class="nav-link mobile-user-option" id="signOutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Sign Out</span>
+                    </a>
+                ` : ''}
             `;
         } else {
             navigationHTML = `
@@ -261,13 +300,46 @@ function signOut() {
                 <a href="user-dashboard.html" class="nav-link ${currentPage === 'user-dashboard.html' ? 'active' : ''}">Dashboard</a>
                 <a href="user-progress.html" class="nav-link ${currentPage === 'user-progress.html' ? 'active' : ''}">My Progress</a>
                 <a href="quizzes.html" class="nav-link ${currentPage === 'quizzes.html' ? 'active' : ''}">Quizzes</a>
+                <a href="admin-user-overview.html" class="nav-link ${currentPage === 'admin-user-overview.html' ? 'active' : ''}">User Overview</a>
                 <a href="#" class="nav-link">Resources</a>
+                ${isMobile ? `
+                    <div class="nav-divider"></div>
+                    <a href="#" class="nav-link mobile-user-option" id="darkModeToggle">
+                        <i class="fas fa-moon"></i>
+                        <span>Dark Mode</span>
+                    </a>
+                    <a href="#" class="nav-link mobile-user-option" id="signOutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Sign Out</span>
+                    </a>
+                ` : ''}
             `;
         }
         
         navLinks.innerHTML = navigationHTML;
+        
+        // Add event listeners for mobile user options
+        if (isMobile || forceMobile) {
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const signOutBtn = document.getElementById('signOutBtn');
+            
+            if (darkModeToggle) {
+                darkModeToggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    toggleDarkMode();
+                });
+            }
+            
+            if (signOutBtn) {
+                signOutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    signOut();
+                });
+            }
+        }
+        
         } catch (error) {
-            console.error('Navbar v16 - Error in updateNavigation():', error);
+            console.error('Navbar v22 - Error in updateNavigation():', error);
         }
     }
 
@@ -288,10 +360,13 @@ function getUsers() {
 
 // Load navbar when DOM is ready (only if not already loaded)
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Navbar.js - DOMContentLoaded fired');
     // Check if navbar is already loaded to prevent multiple loads
     if (!document.getElementById('navbar')) {
+        console.log('Navbar.js - Loading navbar...');
         loadNavbar();
     } else {
+        console.log('Navbar.js - Navbar already loaded, updating...');
         // Just update the user info without reloading
         setTimeout(() => {
             updateDropdownUserInfo();
@@ -308,3 +383,113 @@ function refreshNavbar() {
 
 // Make refreshNavbar available globally so other scripts can call it
 window.refreshNavbar = refreshNavbar;
+
+// Hamburger Menu Functionality
+function initializeHamburgerMenu() {
+    console.log('Initializing hamburger menu...');
+    const hamburgerMenu = document.getElementById('hamburgerMenu');
+    const navLinks = document.getElementById('navLinks');
+    
+    console.log('Hamburger menu element:', hamburgerMenu);
+    console.log('Nav links element:', navLinks);
+    
+    if (!hamburgerMenu || !navLinks) {
+        console.log('Hamburger menu elements not found');
+        return;
+    }
+    
+    // Toggle hamburger menu
+    hamburgerMenu.addEventListener('click', () => {
+        hamburgerMenu.classList.toggle('active');
+        navLinks.classList.toggle('active');
+        
+        // Hide hamburger menu when nav is open
+        if (navLinks.classList.contains('active')) {
+            hamburgerMenu.classList.add('hidden');
+            document.body.style.overflow = 'hidden';
+        } else {
+            hamburgerMenu.classList.remove('hidden');
+            document.body.style.overflow = '';
+        }
+    });
+    
+    // Close menu when clicking on nav links
+    const navLinkElements = navLinks.querySelectorAll('.nav-link');
+    navLinkElements.forEach(link => {
+        link.addEventListener('click', () => {
+            hamburgerMenu.classList.remove('active');
+            hamburgerMenu.classList.remove('hidden');
+            navLinks.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    });
+    
+    // Close menu when clicking on the close button (::before pseudo-element)
+    navLinks.addEventListener('click', (e) => {
+        // Check if click is on the close button area (top-right corner)
+        const rect = navLinks.getBoundingClientRect();
+        const closeButtonArea = {
+            top: rect.top + 20,
+            right: rect.right - 20,
+            bottom: rect.top + 50,
+            left: rect.right - 50
+        };
+        
+        if (e.clientX >= closeButtonArea.left && e.clientX <= closeButtonArea.right &&
+            e.clientY >= closeButtonArea.top && e.clientY <= closeButtonArea.bottom) {
+            hamburgerMenu.classList.remove('active');
+            hamburgerMenu.classList.remove('hidden');
+            navLinks.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!hamburgerMenu.contains(e.target) && !navLinks.contains(e.target)) {
+            hamburgerMenu.classList.remove('active');
+            hamburgerMenu.classList.remove('hidden');
+            navLinks.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+    
+    // Close menu on window resize if screen becomes larger
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) {
+            hamburgerMenu.classList.remove('active');
+            hamburgerMenu.classList.remove('hidden');
+            navLinks.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        // Update navigation when screen size changes
+        setTimeout(() => {
+            try {
+                updateNavigation();
+            } catch (error) {
+                console.error('Navbar v24 - Error in updateNavigation() on resize:', error);
+            }
+        }, 100);
+    });
+}
+
+// Toggle dark mode
+function toggleDarkMode() {
+    const body = document.body;
+    const isDarkMode = body.classList.contains('dark-mode');
+    
+    if (isDarkMode) {
+        body.classList.remove('dark-mode');
+        localStorage.setItem('darkMode', 'false');
+    } else {
+        body.classList.add('dark-mode');
+        localStorage.setItem('darkMode', 'true');
+    }
+}
+
+// Sign out function
+function signOut() {
+    localStorage.removeItem('username');
+    localStorage.removeItem('currentUser');
+    window.location.href = 'index.html';
+}

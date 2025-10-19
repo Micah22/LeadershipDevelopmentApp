@@ -1,16 +1,26 @@
 <!-- Header -->
-<header class="header">
+<header class="header" id="navbar">
     <div class="header-content">
         <div class="logo">
             <div class="logo-img">
                 <img src="../assets/CFA_CSymbol_Circle_Red_PMS.webp" alt="CFA Logo" width="40" height="40">
             </div>
-            <span class="logo-text">Leadership Development</span>
+            <span class="logo-text">CFA Bayou</span>
         </div>
         <nav class="nav-links" id="navLinks">
             <!-- Navigation will be populated by JavaScript -->
         </nav>
-        <div class="user-info">
+        
+        <!-- Right side controls -->
+        <div class="header-right">
+            <!-- Hamburger Menu Button -->
+            <button class="hamburger-menu" id="hamburgerMenu">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+            
+            <div class="user-info">
             <div class="user-avatar-container">
                 <div class="user-avatar" id="userAvatar">A</div>
                 <div class="user-dropdown" id="userDropdown">
@@ -31,6 +41,7 @@
                         <span>Sign Out</span>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     </div>

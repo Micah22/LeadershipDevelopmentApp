@@ -46,16 +46,23 @@ async function initializeDashboard() {
         // Hide loading indicator and show content
         hideLoadingIndicator();
         
-        // Fallback: ensure content is visible after 3 seconds
+        // Fallback: ensure content is visible after 2 seconds (reduced from 3)
         setTimeout(() => {
+            const loadingIndicator = document.getElementById('loadingIndicator');
             const mainContent = document.querySelector('.main-content');
+            
+            if (loadingIndicator && loadingIndicator.style.display !== 'none') {
+                console.log('User Script - Fallback: forcing loading indicator to hide');
+                loadingIndicator.style.display = 'none';
+            }
+            
             if (mainContent && mainContent.style.display === 'none') {
                 console.log('User Script - Fallback: forcing main content to be visible');
                 mainContent.style.display = 'block';
                 mainContent.style.visibility = 'visible';
                 mainContent.style.opacity = '1';
             }
-        }, 3000);
+        }, 2000);
         
     } catch (error) {
         console.error('Error initializing dashboard:', error);
@@ -93,8 +100,13 @@ function hideLoadingIndicator() {
     
     if (loadingIndicator) {
         loadingIndicator.style.display = 'none';
+        loadingIndicator.style.visibility = 'hidden';
+        loadingIndicator.style.opacity = '0';
         console.log('Loading indicator hidden');
+    } else {
+        console.error('Loading indicator element not found!');
     }
+    
     if (mainContent) {
         mainContent.style.display = 'block';
         mainContent.style.visibility = 'visible';
@@ -441,6 +453,8 @@ async function loadDashboardData() {
     
     // Update progress items
     updateProgressItems(leadershipPaths, userProgress, user.role);
+    
+    console.log('User Script - Dashboard data loaded successfully');
 }
 
 // Update progress items
@@ -472,10 +486,6 @@ function viewProgress() {
     window.location.href = 'user-progress.html';
 }
 
-// Explore paths function
-function explorePaths() {
-    window.location.href = 'user-progress.html';
-}
 
 // Theme and dropdown functionality is now handled by navbar.js
 

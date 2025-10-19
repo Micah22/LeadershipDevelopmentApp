@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Example Page with Navbar Component</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+    
+    <!-- Load navbar component styles -->
+    <link rel="stylesheet" href="../styles/navbar-component.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Load navbar component script -->
+    <script src="../components/navbar-component.js"></script>
+</head>
+<body>
+    <!-- Navbar will be automatically loaded by the component -->
+    
+    <!-- Your page content -->
+    <main class="main-content">
+        <h1>This is an example page</h1>
+        <p>The navbar component is automatically loaded and managed!</p>
+        
+        <h2>Benefits of this approach:</h2>
+        <ul>
+            <li>✅ Only one file to update for navbar changes</li>
+            <li>✅ Consistent navbar across all pages</li>
+            <li>✅ Automatic mobile responsiveness</li>
+            <li>✅ Easy to maintain and debug</li>
+            <li>✅ No need to update every page individually</li>
+        </ul>
+    </main>
+    
+    <style>
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: var(--navy);
+            margin-bottom: 1rem;
+        }
+        
+        h2 {
+            color: var(--navy);
+            margin: 2rem 0 1rem 0;
+        }
+        
+        ul {
+            margin-left: 2rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</body>
+</html>

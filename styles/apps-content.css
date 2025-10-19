@@ -1,0 +1,309 @@
+/* Apps Content Styles - Page-specific only */
+
+:root {
+    --cfa-red: #E31837;
+    --navy: #1B365D;
+    --light-gray: #F8F9FA;
+    --medium-gray: #6C757D;
+    --white: #FFFFFF;
+    --border-color: #DEE2E6;
+    --success-green: #28A745;
+    --warning-orange: #FFC107;
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--light-gray);
+    color: var(--navy);
+    line-height: 1.6;
+}
+
+.main-content {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: 100vh;
+}
+
+/* Page Header */
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    color: var(--navy);
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.page-header p {
+    font-size: 1.1rem;
+    color: var(--medium-gray);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Apps Container */
+.apps-container {
+    width: 100%;
+}
+
+/* Apps Grid */
+.apps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* App Card */
+.app-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 2rem;
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.app-card:hover {
+    border-color: var(--cfa-red);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+}
+
+.app-card.coming-soon {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.app-card.coming-soon:hover {
+    border-color: var(--border-color);
+    transform: none;
+    box-shadow: var(--shadow);
+}
+
+/* App Icon */
+.app-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--cfa-red), #C41E3A);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    color: var(--white);
+    font-size: 1.5rem;
+}
+
+.coming-soon .app-icon {
+    background: linear-gradient(135deg, var(--medium-gray), #5A6268);
+}
+
+/* App Content */
+.app-content {
+    margin-bottom: 1.5rem;
+}
+
+.app-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 0.75rem;
+}
+
+.app-description {
+    color: var(--medium-gray);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+/* App Features */
+.app-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.feature-tag {
+    background: var(--light-gray);
+    color: var(--navy);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+}
+
+/* App Status */
+.app-status {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.available {
+    background: var(--success-green);
+    color: var(--white);
+}
+
+.status-badge.coming-soon {
+    background: var(--warning-orange);
+    color: var(--navy);
+}
+
+/* Coming Soon Overlay */
+.app-card.coming-soon::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 48%, rgba(255, 255, 255, 0.1) 49%, rgba(255, 255, 255, 0.1) 51%, transparent 52%);
+    background-size: 20px 20px;
+    animation: shimmer 2s infinite;
+    pointer-events: none;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -20px 0;
+    }
+    100% {
+        background-position: 20px 0;
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 1rem;
+    }
+    
+    .page-header h1 {
+        font-size: 2rem;
+    }
+    
+    .page-header p {
+        font-size: 1rem;
+    }
+    
+    .apps-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .app-card {
+        padding: 1.5rem;
+    }
+    
+    .app-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .app-title {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .app-card {
+        padding: 1rem;
+    }
+    
+    .app-features {
+        gap: 0.25rem;
+    }
+    
+    .feature-tag {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
+    }
+}
+
+/* More Apps Coming Soon Card */
+.more-apps-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px dashed var(--medium-gray);
+    position: relative;
+}
+
+.more-apps-card:hover {
+    border-color: var(--cfa-red);
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe6e6 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(227, 24, 55, 0.15);
+}
+
+.more-apps-card .app-icon {
+    background: linear-gradient(135deg, var(--medium-gray), #5a6268);
+    animation: pulse 2s infinite;
+}
+
+.more-apps-card .app-title {
+    color: var(--navy);
+    font-weight: 600;
+}
+
+.more-apps-card .app-description {
+    color: var(--medium-gray);
+    font-style: italic;
+}
+
+.more-apps-card .feature-tag {
+    background: var(--light-gray);
+    color: var(--medium-gray);
+    border: 1px solid var(--border-color);
+}
+
+.more-apps-card .status-badge.coming-soon {
+    background: var(--cfa-red);
+    color: var(--white);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}

@@ -17,6 +17,7 @@ const sampleQuizzes = [
         description: 'Test your knowledge of basic leadership principles and practices.',
         category: 'leadership',
         difficulty: 'beginner',
+        tags: ['leadership', 'fundamentals', 'management', 'teamwork'],
         questions: [
             {
                 id: 'q1',
@@ -149,6 +150,24 @@ const sampleQuizzes = [
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔍 Quiz system initializing...');
     
+    // Ensure modals are hidden on page load
+    const quizModal = document.getElementById('quizModal');
+    const resultsModal = document.getElementById('quizResultsModal');
+    const manageTagsModal = document.getElementById('manageTagsModal');
+    
+    if (quizModal) {
+        quizModal.classList.remove('show');
+        console.log('✅ Quiz modal hidden on load');
+    }
+    if (resultsModal) {
+        resultsModal.classList.remove('show');
+        console.log('✅ Results modal hidden on load');
+    }
+    if (manageTagsModal) {
+        manageTagsModal.classList.remove('show');
+        console.log('✅ Manage tags modal hidden on load');
+    }
+    
     // Load data from localStorage or use sample data
     loadQuizData();
     loadQuizResults();
@@ -159,6 +178,9 @@ document.addEventListener('DOMContentLoaded', function() {
     setupQuizActions();
     setupModalEvents();
     setupQuizForm();
+    
+    // Initialize tag display
+    updateTagDisplay();
     
     // Render initial content
     renderAvailableQuizzes();
@@ -257,16 +279,16 @@ function saveQuizResults() {
 
 // Setup navigation
 function setupNavigation() {
-    const navItems = document.querySelectorAll('.nav-item');
+    const tabs = document.querySelectorAll('.tab');
     
-    navItems.forEach(item => {
-        item.addEventListener('click', function(e) {
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function(e) {
             e.preventDefault();
             
-            // Remove active class from all items
-            navItems.forEach(nav => nav.classList.remove('active'));
+            // Remove active class from all tabs
+            tabs.forEach(t => t.classList.remove('active'));
             
-            // Add active class to clicked item
+            // Add active class to clicked tab
             this.classList.add('active');
             
             // Show corresponding content
@@ -278,14 +300,14 @@ function setupNavigation() {
 
 // Show content section
 function showContentSection(sectionId) {
-    // Hide all content sections
-    const sections = document.querySelectorAll('.content-section');
-    sections.forEach(section => section.classList.remove('active'));
+    // Hide all tab content
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(content => content.classList.remove('active'));
     
-    // Show target section
-    const targetSection = document.getElementById(sectionId + 'Content');
-    if (targetSection) {
-        targetSection.classList.add('active');
+    // Show target tab content
+    const targetContent = document.getElementById(sectionId + 'Content');
+    if (targetContent) {
+        targetContent.classList.add('active');
         
         // Load section-specific data
         switch(sectionId) {
@@ -349,9 +371,11 @@ function renderAvailableQuizzes() {
         const description = quiz.description || '';
         const category = quiz.category || '';
         const difficulty = quiz.difficulty || '';
+        const tags = quiz.tags || [];
         
         const matchesSearch = title.toLowerCase().includes(searchTerm) ||
-                            description.toLowerCase().includes(searchTerm);
+                            description.toLowerCase().includes(searchTerm) ||
+                            tags.some(tag => tag.toLowerCase().includes(searchTerm));
         const matchesCategory = !categoryFilter || category === categoryFilter;
         const matchesDifficulty = !difficultyFilter || difficulty === difficultyFilter;
         
@@ -369,6 +393,11 @@ function renderAvailableQuizzes() {
                 <span class="quiz-difficulty difficulty-${quiz.difficulty}">${quiz.difficulty}</span>
             </div>
             <p class="quiz-description">${quiz.description}</p>
+            ${quiz.tags && quiz.tags.length > 0 ? `
+                <div class="quiz-tags-simple">
+                    ${quiz.tags.map(tag => `<span class="quiz-tag-simple">${tag}</span>`).join('')}
+                </div>
+            ` : ''}
             <div class="quiz-meta">
                 <span><i class="fas fa-question-circle"></i> ${quiz.questions.length} questions</span>
                 <span><i class="fas fa-clock"></i> ${quiz.timeLimit} min</span>
@@ -451,7 +480,11 @@ function renderCurrentQuestion() {
         }))
     });
     
+    const questionPoints = question.points || 1;
     let questionHtml = `<div class="question-text">${question.question}</div>`;
+    
+    // Add point value display
+    questionHtml += `<div class="question-points">(${questionPoints} point${questionPoints !== 1 ? 's' : ''})</div>`;
     
     // Add question image if it exists
     if (question.image) {
@@ -622,18 +655,23 @@ function setupQuizActions() {
 function submitQuiz() {
     if (!currentQuiz) return;
     
-    // Calculate score
-    let correctAnswers = 0;
-    const totalQuestions = currentQuiz.questions.length;
+    // Calculate score using point values
+    let earnedPoints = 0;
+    let totalPoints = 0;
     
     currentQuiz.questions.forEach((question, index) => {
         const userAnswer = userAnswers[index];
         const questionType = question.type || 'multiple_choice';
+        const questionPoints = question.points || 1;
+        
+        totalPoints += questionPoints;
+        
+        let isCorrect = false;
         
         switch(questionType) {
             case 'multiple_choice':
                 if (userAnswer === question.correct) {
-                    correctAnswers++;
+                    isCorrect = true;
                 }
                 break;
                 
@@ -643,7 +681,7 @@ function submitQuiz() {
                     const userSet = new Set(userAnswer);
                     const correctSet = new Set(question.correct);
                     if (userSet.size === correctSet.size && [...userSet].every(val => correctSet.has(val))) {
-                        correctAnswers++;
+                        isCorrect = true;
                     }
                 }
                 break;
@@ -653,14 +691,18 @@ function submitQuiz() {
                     const userAnswerLower = userAnswer.toLowerCase().trim();
                     const correctAnswersLower = question.correctAnswers.map(ans => ans.toLowerCase().trim());
                     if (correctAnswersLower.includes(userAnswerLower)) {
-                        correctAnswers++;
+                        isCorrect = true;
                     }
                 }
                 break;
         }
+        
+        if (isCorrect) {
+            earnedPoints += questionPoints;
+        }
     });
     
-    const score = Math.round((correctAnswers / totalQuestions) * 100);
+    const score = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
     const passed = score >= currentQuiz.passingScore;
     
     // Get current user
@@ -673,8 +715,10 @@ function submitQuiz() {
         quizTitle: currentQuiz.title,
         username: currentUsername,
         score: score,
-        correctAnswers: correctAnswers,
-        totalQuestions: totalQuestions,
+        earnedPoints: earnedPoints,
+        totalPoints: totalPoints,
+        correctAnswers: Math.round(earnedPoints), // For backward compatibility
+        totalQuestions: currentQuiz.questions.length, // For backward compatibility
         passed: passed,
         dateTaken: new Date().toISOString(),
         completedAt: new Date().toISOString(), // For compatibility with admin overview
@@ -722,8 +766,10 @@ function showQuizResults(result) {
                 switch(questionType) {
                     case 'multiple_choice':
                         isCorrect = userAnswer === question.correct;
-                        userAnswerText = userAnswer !== undefined ? question.options[userAnswer] : 'Not answered';
-                        correctAnswerText = question.options[question.correct];
+                        userAnswerText = userAnswer !== undefined ? 
+                            (typeof question.options[userAnswer] === 'string' ? question.options[userAnswer] : question.options[userAnswer]?.text || 'Invalid answer') : 'Not answered';
+                        correctAnswerText = typeof question.options[question.correct] === 'string' ? 
+                            question.options[question.correct] : question.options[question.correct]?.text || 'Invalid answer';
                         break;
                         
                     case 'multiple_answer':
@@ -733,8 +779,8 @@ function showQuizResults(result) {
                             isCorrect = userSet.size === correctSet.size && [...userSet].every(val => correctSet.has(val));
                         }
                         userAnswerText = Array.isArray(userAnswer) ? 
-                            userAnswer.map(i => question.options[i]).join(', ') : 'Not answered';
-                        correctAnswerText = question.correct.map(i => question.options[i]).join(', ');
+                            userAnswer.map(i => typeof question.options[i] === 'string' ? question.options[i] : question.options[i]?.text || 'Invalid answer').join(', ') : 'Not answered';
+                        correctAnswerText = question.correct.map(i => typeof question.options[i] === 'string' ? question.options[i] : question.options[i]?.text || 'Invalid answer').join(', ');
                         break;
                         
                     case 'short_answer':
@@ -795,6 +841,12 @@ function setupModalEvents() {
         closeResults.addEventListener('click', closeResultsModal);
     }
     
+    // Manage tags modal close
+    const manageTagsClose = document.querySelector('.manage-tags-close');
+    if (manageTagsClose) {
+        manageTagsClose.addEventListener('click', closeManageTagsModal);
+    }
+    
     // Note: Removed outside click functionality
     // Modals can only be closed with their respective X buttons
 }
@@ -849,6 +901,45 @@ function renderQuizResults() {
             `;
         }).join('');
     }
+    
+    // Render mobile results cards
+    const mobileCards = document.getElementById('resultsCardsMobile');
+    if (mobileCards) {
+        mobileCards.innerHTML = quizResults.map(result => {
+            const date = new Date(result.dateTaken);
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString();
+            
+            return `
+                <div class="results-card-mobile">
+                    <div class="card-header">
+                        <h3 class="quiz-name">${result.quizTitle}</h3>
+                        <div class="quiz-score">${result.score}%</div>
+                    </div>
+                    <div class="card-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Category</span>
+                            <span class="detail-value">${getCategoryName(result.quizId)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Date Taken</span>
+                            <span class="detail-value">${dateStr}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Time</span>
+                            <span class="detail-value">${timeStr}</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-secondary" onclick="viewResultDetails('${result.id}')">
+                            <i class="fas fa-eye"></i>
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
 }
 
 // Get category name from quiz ID
@@ -890,6 +981,7 @@ function setupQuizForm() {
 // Add question to form
 function addQuestion() {
     questionCounter++;
+    console.log(`🔍 Adding question ${questionCounter}. Current questions in container:`, document.querySelectorAll('.question-item').length);
     const container = document.getElementById('questionsContainer');
     
     const questionHtml = `
@@ -905,13 +997,20 @@ function addQuestion() {
                     </button>
                 </div>
             </div>
-            <div class="form-group">
-                <label>Question Type</label>
-                <select name="questionType_${questionCounter}" onchange="changeQuestionType(${questionCounter}, this.value)" required>
-                    <option value="multiple_choice">Multiple Choice (Single Answer)</option>
-                    <option value="multiple_answer">Multiple Answer (Multiple Correct)</option>
-                    <option value="short_answer">Short Answer (Text Input)</option>
-                </select>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Question Type</label>
+                    <select name="questionType_${questionCounter}" onchange="changeQuestionType(${questionCounter}, this.value)" required>
+                        <option value="multiple_choice">Multiple Choice (Single Answer)</option>
+                        <option value="multiple_answer">Multiple Answer (Multiple Correct)</option>
+                        <option value="short_answer">Short Answer (Text Input)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="questionPoints_${questionCounter}">Points</label>
+                    <input type="number" id="questionPoints_${questionCounter}" name="questionPoints_${questionCounter}" min="1" max="100" value="1" required>
+                    <small class="form-help">Points (1-100)</small>
+                </div>
             </div>
             <div class="form-group">
                 <label>Question Text</label>
@@ -1043,6 +1142,7 @@ function removeQuestion(questionNum) {
 
 // Duplicate question
 function duplicateQuestion(questionNum) {
+    console.log(`🔍 Duplicating question ${questionNum}`);
     const questionElement = document.querySelector(`[data-question="${questionNum}"]`);
     if (!questionElement) {
         console.error('Question element not found');
@@ -1430,15 +1530,19 @@ async function saveQuiz(e) {
     const formData = new FormData(e.target);
     const isEditing = e.target.dataset.editingQuizId;
     
+    // Use current tags from the tag management interface
+    const tags = currentTags;
+    
     const quizData = {
         id: isEditing || 'quiz_' + Date.now(),
         title: formData.get('quizTitle'),
         description: formData.get('quizDescription'),
         category: formData.get('quizCategory'),
         difficulty: formData.get('quizDifficulty'),
+        tags: tags,
         questions: [],
         timeLimit: 15,
-        passingScore: 70
+        passingScore: parseInt(formData.get('quizPassingScore')) || 70
     };
     
     // Extract questions
@@ -1451,10 +1555,13 @@ async function saveQuiz(e) {
         const questionNum = element.dataset.question;
         const questionText = formData.get(`question_${questionNum}`);
         const questionType = formData.get(`questionType_${questionNum}`);
+        const questionPoints = parseInt(formData.get(`questionPoints_${questionNum}`)) || 1;
         
-        console.log(`🔍 Question ${questionNum}:`, {
+        console.log(`🔍 Processing question ${index + 1}/${questionElements.length}:`, {
+            questionNum: questionNum,
             text: questionText,
             type: questionType,
+            points: questionPoints,
             element: element
         });
         
@@ -1467,6 +1574,7 @@ async function saveQuiz(e) {
             id: `q${index + 1}`,
             question: questionText,
             type: questionType,
+            points: questionPoints,
             image: null
         };
         
@@ -1531,7 +1639,7 @@ async function saveQuiz(e) {
                     questionData.options = options;
                     questionData.correct = correctAnswer;
                     quizData.questions.push(questionData);
-                    console.log(`✅ Added multiple choice question ${questionNum}`);
+                    console.log(`✅ Added multiple choice question ${questionNum}. Total questions in quizData: ${quizData.questions.length}`);
                 } else {
                     console.log(`❌ Skipped multiple choice question ${questionNum} - validation failed`);
                 }
@@ -1559,7 +1667,7 @@ async function saveQuiz(e) {
                     questionData.options = multiOptions;
                     questionData.correct = correctAnswers;
                     quizData.questions.push(questionData);
-                    console.log(`✅ Added multiple answer question ${questionNum}`);
+                    console.log(`✅ Added multiple answer question ${questionNum}. Total questions in quizData: ${quizData.questions.length}`);
                 } else {
                     console.log(`❌ Skipped multiple answer question ${questionNum} - validation failed`);
                 }
@@ -1577,11 +1685,13 @@ async function saveQuiz(e) {
                 
                 if (correctAnswersText.length > 0) {
                     questionData.correctAnswers = correctAnswersText;
+                    quizData.questions.push(questionData);
+                    console.log(`✅ Added short answer question ${questionNum}. Total questions in quizData: ${quizData.questions.length}`);
+                } else {
+                    console.log(`❌ Skipped short answer question ${questionNum} - no correct answers`);
                 }
                 break;
         }
-        
-        quizData.questions.push(questionData);
     }
     
     console.log('🔍 Final quiz data questions:', quizData.questions.length);
@@ -1615,6 +1725,7 @@ async function saveQuiz(e) {
     e.target.reset();
     document.getElementById('questionsContainer').innerHTML = '';
     questionCounter = 0;
+    console.log('🔍 Form reset - questionCounter set to 0, questions container cleared');
     delete e.target.dataset.editingQuizId;
     
     // Reset form title
@@ -1832,6 +1943,11 @@ function populateEditForm(quiz) {
     document.getElementById('quizDescription').value = quiz.description || '';
     document.getElementById('quizCategory').value = quiz.category || '';
     document.getElementById('quizDifficulty').value = quiz.difficulty || '';
+    document.getElementById('quizPassingScore').value = quiz.passingScore || 70;
+    
+    // Populate tags in the management interface
+    currentTags = [...(quiz.tags || [])];
+    updateTagDisplay();
     
     // Clear existing questions
     document.getElementById('questionsContainer').innerHTML = '';
@@ -1856,6 +1972,12 @@ function populateEditForm(quiz) {
                 questionTypeSelect.value = question.type || 'multiple_choice';
                 // Trigger change to update answer options
                 questionTypeSelect.dispatchEvent(new Event('change'));
+            }
+            
+            // Set question points
+            const questionPointsInput = questionElement.querySelector(`input[name="questionPoints_${questionCounter}"]`);
+            if (questionPointsInput) {
+                questionPointsInput.value = question.points || 1;
             }
             
             // Set question image if it exists
@@ -2013,9 +2135,134 @@ function closeImageModal() {
     }
 }
 
+// Filter quizzes by tag
+function filterByTag(tag) {
+    const searchInput = document.getElementById('quizSearch');
+    if (searchInput) {
+        searchInput.value = tag;
+        renderAvailableQuizzes();
+    }
+}
+
+// Tag management for create quiz form
+let currentTags = [];
+let presetTags = ['leadership', 'management', 'communication', 'teamwork', 'training', 'skills', 'development', 'assessment', 'beginner', 'intermediate', 'advanced'];
+
+
+function removeTag(tag) {
+    currentTags = currentTags.filter(t => t !== tag);
+    updateTagDisplay();
+}
+
+function clearAllTags() {
+    currentTags = [];
+    updateTagDisplay();
+}
+
+function updateTagDisplay() {
+    const tagDisplay = document.getElementById('tagDisplay');
+    if (tagDisplay) {
+        // Show all preset tags with selection state
+        tagDisplay.innerHTML = presetTags.map(tag => {
+            const isSelected = currentTags.includes(tag);
+            return `<span class="quiz-tag ${isSelected ? 'selected' : ''}" onclick="toggleTag('${tag}')">${tag}</span>`;
+        }).join('');
+    }
+}
+
+// Manage Tags Modal Functions
+function openManageTagsModal() {
+    const modal = document.getElementById('manageTagsModal');
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        loadExistingTags();
+    }
+}
+
+function closeManageTagsModal() {
+    const modal = document.getElementById('manageTagsModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+    }
+}
+
+function loadExistingTags() {
+    const existingTagsList = document.getElementById('existingTagsList');
+    if (existingTagsList) {
+        existingTagsList.innerHTML = presetTags.map(tag => `
+            <span class="existing-tag" onclick="addPresetTagToCurrent('${tag}')" title="Click to add to quiz">
+                ${tag}
+                <button class="remove-tag" onclick="event.stopPropagation(); removePresetTag('${tag}')" title="Remove tag">
+                    <i class="fas fa-times"></i>
+                </button>
+            </span>
+        `).join('');
+    }
+}
+
+function addNewTag() {
+    const input = document.getElementById('newTagInput');
+    const tagName = input.value.trim();
+    
+    if (tagName && !presetTags.includes(tagName)) {
+        presetTags.push(tagName);
+        loadExistingTags();
+        updateTagDisplay(); // Update the main quiz form tag box
+        input.value = '';
+        showToast('success', 'Tag Added', `"${tagName}" has been added to the preset tags.`);
+    } else if (presetTags.includes(tagName)) {
+        showToast('warning', 'Tag Exists', `"${tagName}" is already in the preset tags.`);
+    }
+}
+
+function removePresetTag(tagName) {
+    if (confirm(`Are you sure you want to remove "${tagName}" from the preset tags?`)) {
+        presetTags = presetTags.filter(tag => tag !== tagName);
+        // Also remove from current tags if it was selected
+        currentTags = currentTags.filter(tag => tag !== tagName);
+        loadExistingTags();
+        updateTagDisplay(); // Update the main quiz form tag box
+        showToast('success', 'Tag Removed', `"${tagName}" has been removed from the preset tags.`);
+    }
+}
+
+function addPresetTagToCurrent(tagName) {
+    if (!currentTags.includes(tagName)) {
+        currentTags.push(tagName);
+        updateTagDisplay();
+        showToast('success', 'Tag Added', `"${tagName}" has been added to your quiz.`);
+    } else {
+        showToast('info', 'Tag Already Added', `"${tagName}" is already added to your quiz.`);
+    }
+}
+
+function toggleTag(tagName) {
+    if (currentTags.includes(tagName)) {
+        // Remove tag
+        currentTags = currentTags.filter(tag => tag !== tagName);
+        showToast('info', 'Tag Removed', `"${tagName}" has been removed from your quiz.`);
+    } else {
+        // Add tag
+        currentTags.push(tagName);
+        showToast('success', 'Tag Added', `"${tagName}" has been added to your quiz.`);
+    }
+    updateTagDisplay();
+}
+
 // Make functions globally available
 window.openImageModal = openImageModal;
 window.closeImageModal = closeImageModal;
+window.filterByTag = filterByTag;
+window.removeTag = removeTag;
+window.clearAllTags = clearAllTags;
+window.openManageTagsModal = openManageTagsModal;
+window.closeManageTagsModal = closeManageTagsModal;
+window.addNewTag = addNewTag;
+window.removePresetTag = removePresetTag;
+window.addPresetTagToCurrent = addPresetTagToCurrent;
+window.toggleTag = toggleTag;
 
 // Add event listeners for image modal
 document.addEventListener('DOMContentLoaded', function() {
@@ -2028,6 +2275,33 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Note: Removed outside click and Escape key functionality
         // Modal can only be closed with the X button
+    }
+    
+    // Add event listeners for manage tags modal
+    const manageTagsModal = document.getElementById('manageTagsModal');
+    const manageTagsCloseBtn = document.querySelector('.manage-tags-close');
+    const newTagInput = document.getElementById('newTagInput');
+    
+    if (manageTagsModal && manageTagsCloseBtn) {
+        // Close modal when clicking the X button
+        manageTagsCloseBtn.addEventListener('click', closeManageTagsModal);
+        
+        // Close modal when clicking outside
+        manageTagsModal.addEventListener('click', function(e) {
+            if (e.target === manageTagsModal) {
+                closeManageTagsModal();
+            }
+        });
+    }
+    
+    if (newTagInput) {
+        // Add tag when pressing Enter
+        newTagInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addNewTag();
+            }
+        });
     }
 });
 

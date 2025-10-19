@@ -5,25 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Progress - CFA Leadership Development</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-    <link rel="stylesheet" href="../styles/user-progress-styles.css?v=35">
+    <!-- Load navbar component styles -->
+    <link rel="stylesheet" href="../styles/navbar-component.css">
+    <link rel="stylesheet" href="../styles/user-progress-content.css">
+    <link rel="stylesheet" href="../styles/user-progress-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="../scripts/navbar.js?v=19"></script>
+    
+    <!-- Load navbar component script -->
+    <script src="../components/navbar-component.js"></script>
     <script src="../database/config.js"></script>
 </head>
 <body>
-    <!-- Navbar will be loaded by navbar.js -->
+    <!-- Navbar will be automatically loaded by the navbar component -->
 
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Page Header -->
-        <div class="page-header">
-            <h1>My Progress</h1>
-            <p>Track your leadership development journey and achievements</p>
-        </div>
-        
         <div class="progress-container">
-
-            <!-- Progress Overview Cards -->
+            <!-- Left Column: Floating Progress Cards -->
             <div class="progress-cards">
                 <div class="progress-card">
                     <div class="card-icon">
@@ -63,38 +61,64 @@
                 </div>
             </div>
 
-            <!-- Current Learning Path - Floating Left -->
-            <div class="current-path-floating">
-                <div class="section">
-                    <div class="section-header">
-                        <h2>Current Learning Path</h2>
-                        <span class="section-badge" id="currentPathBadge">Leadership Fundamentals</span>
+            <!-- Right Column: Main Content -->
+            <div class="main-content-area">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <h1>My Progress</h1>
+                    <p>Track your leadership development journey and achievements</p>
+                </div>
+
+                <!-- Progress Cards (Mobile Only) -->
+                <div class="progress-cards-mobile">
+                    <div class="progress-card">
+                        <div class="card-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-number" id="overallProgressMobile">0%</div>
+                            <div class="card-label">Overall Progress</div>
+                        </div>
                     </div>
-                    <div class="section-content">
-                        <div class="path-progress">
-                            <div class="progress-bar">
-                                <div class="progress-fill" id="pathProgressFill"></div>
-                            </div>
-                            <div class="progress-text">
-                                <span id="pathProgressText">0% Complete</span>
-                                <span id="pathProgressDetails">0 of 0 tasks completed</span>
-                            </div>
+                    <div class="progress-card">
+                        <div class="card-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-number" id="completedTasksMobile">0</div>
+                            <div class="card-label">Completed Tasks</div>
+                        </div>
+                    </div>
+                    <div class="progress-card">
+                        <div class="card-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-number" id="totalTasksMobile">0</div>
+                            <div class="card-label">Total Tasks</div>
+                        </div>
+                    </div>
+                    <div class="progress-card">
+                        <div class="card-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-number" id="achievementsMobile">0</div>
+                            <div class="card-label">Achievements</div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Progress Sections -->
-            <div class="progress-sections">
 
                 <!-- Learning Modules -->
-                <div class="section">
-                    <div class="section-header">
-                        <h2>Developmental & Training Modules</h2>
-                    </div>
-                    <div class="section-content">
-                        <div class="modules-grid" id="modulesGrid">
-                            <!-- Modules will be populated here -->
+                <div class="modules-section">
+                    <div class="section">
+                        <div class="section-header">
+                            <h2>Developmental & Training Modules</h2>
+                        </div>
+                        <div class="section-content">
+                            <div class="modules-grid" id="modulesGrid">
+                                <!-- Modules will be populated here -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -128,11 +152,61 @@
                 </div>
             </div>
             <div class="modal-body">
-                <div class="module-description" id="modalModuleDescription">
-                    <!-- Module description will be populated here -->
+                <!-- Module Description -->
+                <div class="module-description-section">
+                    <p id="modalModuleDescription">This training covers fry station standards and procedures, including when to drop fries, quality times, and expectations for both fries and packaging. It also reviews proper salting methods, preparing no-salt fries, fryer troubleshooting, and maintaining correct oil levels. Team members will focus on communication with Front of House, coordinating during Boosts, and completing checklists accurately and on time.</p>
                 </div>
-                <div class="rubric-section" id="modalRubricSection" style="display: none;">
-                    <!-- Performance rubric will be populated here -->
+                
+                <!-- Performance Rubric Section -->
+                <div class="rubric-section" id="modalRubricSection">
+                    <h3>Performance Rubric</h3>
+                    <div class="rubric-grid">
+                        <div class="rubric-column">
+                            <h4>Quality Criteria</h4>
+                            <div class="rubric-level unsatisfactory">
+                                <h5>Unsatisfactory</h5>
+                                <p>Too much oil; unevenly salted; does not follow quality timers</p>
+                            </div>
+                            <div class="rubric-level average">
+                                <h5>Average</h5>
+                                <p>Shakes off oil; stirs salt but not always enough; follows quality timers in holding station but not in chute</p>
+                            </div>
+                            <div class="rubric-level excellent">
+                                <h5>Excellent</h5>
+                                <p>Lets oil drain; perfectly evenly salted; perfectly follows quality timers</p>
+                            </div>
+                        </div>
+                        <div class="rubric-column">
+                            <h4>Speed/Timing Criteria</h4>
+                            <div class="rubric-level unsatisfactory">
+                                <h5>Unsatisfactory</h5>
+                                <p>Scoops a bag in over 1 minute, 5 seconds</p>
+                            </div>
+                            <div class="rubric-level average">
+                                <h5>Average</h5>
+                                <p>Scoops a bag of fries in under 1 minute, 5 seconds</p>
+                            </div>
+                            <div class="rubric-level excellent">
+                                <h5>Excellent</h5>
+                                <p>Scoops a bag of fries in under 50 seconds</p>
+                            </div>
+                        </div>
+                        <div class="rubric-column">
+                            <h4>Communication Criteria</h4>
+                            <div class="rubric-level unsatisfactory">
+                                <h5>Unsatisfactory</h5>
+                                <p>Refuses to call for boosts; FOH unable to park because of lack of communicating holds; does not parrot what FOH communicates to kitchen</p>
+                            </div>
+                            <div class="rubric-level average">
+                                <h5>Average</h5>
+                                <p>Communicates with leader and FOH but with some inconsistencies, calls for boost when pressure is called but not proactively</p>
+                            </div>
+                            <div class="rubric-level excellent">
+                                <h5>Excellent</h5>
+                                <p>Always on top of communicating to leader and FOH, calls for boost proactively to avoid any holds; always parrots what FOH calls to kitchen</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="checklist-section">
                     <h3>Learning Checklist</h3>

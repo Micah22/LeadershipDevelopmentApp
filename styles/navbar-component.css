@@ -1,4 +1,8 @@
-/* Apps List Styles */
+/**
+ * Navbar Component Styles
+ * Centralized styles for the navbar component
+ * Version: 1.0
+ */
 
 /* CSS Variables */
 :root {
@@ -29,6 +33,11 @@
     box-sizing: border-box;
 }
 
+/* Add top padding to body to account for fixed navbar */
+body {
+    padding-top: 0px; /* Adjust this value based on navbar height */
+}
+
 /* Header Styles */
 header.header {
     background: var(--white) !important;
@@ -37,18 +46,13 @@ header.header {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
     position: sticky !important;
     top: 0 !important;
-    z-index: 1001 !important;
-}
-
-header.header::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    height: 4px !important;
-    background: #4a4a4a !important;
+    width: 100% !important;
+    z-index: 1000 !important;
 }
+
+
 
 .header-content {
     max-width: 1200px;
@@ -75,6 +79,7 @@ header.header::before {
     font-size: 1.5rem !important;
     font-weight: 700 !important;
     color: var(--navy) !important;
+    white-space: nowrap;
 }
 
 .nav-links {
@@ -83,7 +88,6 @@ header.header::before {
     align-items: center;
     flex-wrap: nowrap;
 }
-
 
 .nav-link {
     color: #666 !important;
@@ -156,6 +160,7 @@ header.header::before {
     transform: rotate(-45deg) translate(7px, -6px);
 }
 
+/* User Avatar Container and Dropdown */
 .user-avatar-container {
     position: relative;
     cursor: pointer;
@@ -181,19 +186,19 @@ header.header::before {
 }
 
 .user-dropdown {
-    position: absolute !important;
-    top: 100% !important;
-    right: 0 !important;
-    background: var(--white) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-    min-width: 200px !important;
-    z-index: 1001 !important;
-    opacity: 0 !important;
-    visibility: hidden !important;
-    transform: translateY(-10px) !important;
-    transition: all 0.3s ease !important;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 200px;
+    z-index: 1001;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
     display: block !important;
 }
 
@@ -253,189 +258,13 @@ header.header::before {
     color: var(--medium-gray);
 }
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--light-gray);
-    color: var(--navy);
-    line-height: 1.6;
+/* Hide mobile user options on desktop */
+.mobile-user-option {
+    display: none !important;
 }
 
-.main-content {
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-    min-height: 100vh;
-}
-
-/* Page Header */
-.page-header {
-    text-align: center;
-    margin-bottom: 3rem;
-}
-
-.page-header h1 {
-    font-size: 2.5rem;
-    color: var(--navy);
-    margin-bottom: 0.5rem;
-    font-weight: 700;
-}
-
-.page-header p {
-    font-size: 1.1rem;
-    color: var(--medium-gray);
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-/* Apps Container */
-.apps-container {
-    width: 100%;
-}
-
-/* Apps Grid */
-.apps-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 2rem;
-    max-width: 1000px;
-    margin: 0 auto;
-}
-
-/* App Card */
-.app-card {
-    background: var(--white);
-    border-radius: 12px;
-    padding: 2rem;
-    border: 2px solid var(--border-color);
-    transition: all 0.3s ease;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-}
-
-.app-card:hover {
-    border-color: var(--cfa-red);
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-hover);
-}
-
-.app-card.coming-soon {
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-.app-card.coming-soon:hover {
-    border-color: var(--border-color);
-    transform: none;
-    box-shadow: var(--shadow);
-}
-
-/* App Icon */
-.app-icon {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, var(--cfa-red), #C41E3A);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1.5rem;
-    color: var(--white);
-    font-size: 1.5rem;
-}
-
-.coming-soon .app-icon {
-    background: linear-gradient(135deg, var(--medium-gray), #5A6268);
-}
-
-/* App Content */
-.app-content {
-    margin-bottom: 1.5rem;
-}
-
-.app-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--navy);
-    margin-bottom: 0.75rem;
-}
-
-.app-description {
-    color: var(--medium-gray);
-    font-size: 0.95rem;
-    line-height: 1.6;
-    margin-bottom: 1rem;
-}
-
-/* App Features */
-.app-features {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.feature-tag {
-    background: var(--light-gray);
-    color: var(--navy);
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    border: 1px solid var(--border-color);
-}
-
-/* App Status */
-.app-status {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-}
-
-.status-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.status-badge.available {
-    background: var(--success-green);
-    color: var(--white);
-}
-
-.status-badge.coming-soon {
-    background: var(--warning-orange);
-    color: var(--navy);
-}
-
-/* Coming Soon Overlay */
-.app-card.coming-soon::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 48%, rgba(255, 255, 255, 0.1) 49%, rgba(255, 255, 255, 0.1) 51%, transparent 52%);
-    background-size: 20px 20px;
-    animation: shimmer 2s infinite;
-    pointer-events: none;
-}
-
-@keyframes shimmer {
-    0% {
-        background-position: -20px 0;
-    }
-    100% {
-        background-position: 20px 0;
-    }
-}
-
-/* Responsive Design */
+/* Mobile Styles */
 @media (max-width: 768px) {
-    /* Mobile Header Optimization */
     .header-content {
         padding: 0 0.5rem;
         flex-wrap: nowrap;
@@ -480,7 +309,7 @@ body {
     .nav-links {
         position: fixed;
         top: 0;
-        left: -100%;
+        right: -100%;
         width: 85%;
         max-width: 350px;
         height: 100vh;
@@ -489,9 +318,9 @@ body {
         justify-content: flex-start;
         align-items: stretch;
         padding: 0;
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-        transition: left 0.3s ease;
-        z-index: 1000;
+        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+        transition: right 0.3s ease;
+        z-index: 1001;
         gap: 0;
     }
     
@@ -500,7 +329,7 @@ body {
         content: '×';
         position: absolute;
         top: 20px;
-        right: 20px;
+        left: 20px;
         font-size: 24px;
         font-weight: bold;
         color: var(--navy);
@@ -520,7 +349,7 @@ body {
     }
     
     .nav-links.active {
-        left: 0;
+        right: 0;
     }
     
     .nav-link {
@@ -579,108 +408,25 @@ body {
         color: var(--cfa-red) !important;
         border-left: 4px solid var(--cfa-red);
     }
-    
-    .user-info {
-        flex-shrink: 0;
-        margin-left: 0.5rem;
-    }
-    
-    .user-avatar {
-        width: 32px;
-        height: 32px;
-        font-size: 1rem;
-    }
-    
-    /* Mobile Content Optimization */
-    .main-content {
-        padding: 0.75rem;
-    }
-    
-    .page-header h1 {
-        font-size: 1.5rem;
-    }
-    
-    .apps-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .app-card {
-        padding: 1rem;
-    }
-    
-    .app-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 1.25rem;
-    }
-    
-    .app-title {
-        font-size: 1.25rem;
-    }
-    
-    /* Mobile Touch Targets */
-    .nav-link {
-        min-height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .user-avatar {
-        min-width: 44px;
-        min-height: 44px;
-    }
-    
-    .btn {
-        min-height: 44px;
-        padding: 0.75rem 1rem;
-    }
-    
-    .app-card {
-        min-height: 120px;
-    }
 }
 
-@media (max-width: 480px) {
-    .page-header h1 {
-        font-size: 1.75rem;
-    }
-    
-    .page-header p {
-        font-size: 1rem;
-    }
-    
-    .app-card {
-        padding: 1rem;
-    }
-    
-    .app-features {
-        gap: 0.25rem;
-    }
-    
-    .feature-tag {
-        font-size: 0.75rem;
-        padding: 0.2rem 0.5rem;
-    }
+/* Apps Page Special Styling */
+.apps-page-navbar .header-content {
+    justify-content: space-between !important;
 }
 
-/* Dark theme adjustments */
-[data-theme="dark"] .app-card {
-    background: var(--white);
-    border-color: var(--border-color);
+.apps-page-navbar .nav-links {
+    display: none !important;
 }
 
-[data-theme="dark"] .app-card:hover {
-    border-color: var(--cfa-red);
+.apps-page-navbar .hamburger-menu {
+    display: none !important;
 }
 
-[data-theme="dark"] .feature-tag {
-    background: var(--light-gray);
-    border-color: var(--border-color);
+.apps-page-navbar .header-right {
+    display: flex !important;
 }
 
-[data-theme="dark"] .app-card.coming-soon::before {
-    background: linear-gradient(45deg, transparent 48%, rgba(0, 0, 0, 0.1) 49%, rgba(0, 0, 0, 0.1) 51%, transparent 52%);
+.apps-page-navbar .user-info {
+    display: flex !important;
 }
-

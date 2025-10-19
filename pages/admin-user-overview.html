@@ -5,57 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Progress Overview - CFA Leadership Development</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-    <link rel="stylesheet" href="../styles/admin-overview-styles.css?v=34">
+    <!-- Load navbar component styles -->
+    <link rel="stylesheet" href="../styles/navbar-component.css?v=2">
+    <link rel="stylesheet" href="../styles/admin-overview-content.css">
     <link rel="stylesheet" href="../styles/admin-path-management-styles.css?v=8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="../scripts/navbar.js?v=19"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Load navbar component script -->
+    <script src="../components/navbar-component.js?v=2"></script>
     <script src="../database/config.js"></script>
 </head>
 <body>
-    <!-- Navbar will be loaded by navbar.js -->
+    <!-- Navbar Container -->
+    <div id="navbar-container"></div>
 
     <!-- Loading Indicator -->
     <div id="loadingIndicator" class="loading-indicator" style="display: none;">
-        <div class="loading-spinner"></div>
-        <p>Loading user data...</p>
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Loading user data...</p>
+        </div>
     </div>
 
-    <div class="main-container">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h2>ADMIN TOOLS</h2>
-                <button class="refresh-btn" onclick="refreshDataFromDatabase()" title="Refresh data from database">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" id="userManagement">
-                    <i class="fas fa-users"></i>
-                    <span>User Management</span>
-                </a>
-                <a href="#" class="nav-item" id="pathManagement">
-                    <i class="fas fa-cogs"></i>
-                    <span>Path Management</span>
-                </a>
-                <a href="#" class="nav-item" id="roleManagement">
-                    <i class="fas fa-user-shield"></i>
-                    <span>Role Management</span>
-                </a>
-                <a href="#" class="nav-item" id="reports">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Reports</span>
-                </a>
-                <a href="#" class="nav-item" id="settings">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
-            </nav>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Admin Tools Tabs -->
+        <div class="admin-tabs">
+            <button class="admin-tab active" id="userManagement">
+                <i class="fas fa-users"></i>
+                User Management
+            </button>
+            <button class="admin-tab" id="pathManagement">
+                <i class="fas fa-cogs"></i>
+                Path Management
+            </button>
+            <button class="admin-tab" id="roleManagement">
+                <i class="fas fa-user-shield"></i>
+                Role Management
+            </button>
+            <button class="admin-tab" id="reports">
+                <i class="fas fa-chart-bar"></i>
+                Reports
+            </button>
+            <button class="admin-tab" id="settings">
+                <i class="fas fa-cog"></i>
+                Settings
+            </button>
+            <button class="refresh-btn" onclick="refreshDataFromDatabase()" title="Refresh data from database">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
 
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
+        <!-- Tab Content -->
+        <div class="tab-content active" id="userManagementContent">
             <div class="content-header">
                 <div class="header-top">
                     <div class="header-text">
@@ -139,6 +142,11 @@
                             </tbody>
                         </table>
                     </div>
+                    
+                    <!-- Mobile User Cards -->
+                    <div class="progress-table-mobile" id="userProgressTableMobile">
+                        <!-- Mobile user cards will be populated here -->
+                    </div>
                 </div>
             </div>
 
@@ -197,12 +205,19 @@
                                 </tbody>
                             </table>
                         </div>
+                        
+                        <!-- Mobile Assignments Cards -->
+                        <div class="assignments-table-mobile" id="assignmentsTableMobile">
+                            <!-- Mobile assignment cards will be populated here -->
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Path Management Content (Hidden by default) -->
-            <div id="pathManagementContent" class="content-section" style="display: none;">
+        </div>
+
+        <!-- Path Management Tab Content -->
+        <div class="tab-content" id="pathManagementContent">
                 <div class="content-header">
                     <h1 class="page-title">Path Management</h1>
                     <p class="page-subtitle">Manage learning modules and their requirements</p>
@@ -256,8 +271,10 @@
                 </div>
             </div>
 
-            <!-- Role Management Content (Hidden by default) -->
-            <div id="roleManagementContent" class="content-section" style="display: none;">
+        </div>
+
+        <!-- Role Management Tab Content -->
+        <div class="tab-content" id="roleManagementContent">
                 <div class="content-header">
                     <h1 class="page-title">Role Management</h1>
                     <p class="page-subtitle">Manage user roles and permission levels across the system</p>
@@ -303,31 +320,289 @@
                     </div>
                 </div>
 
-                <!-- Page Access Matrix Section -->
-                <div class="section">
-                    <div class="section-header">
-                        <h2>Page Access Matrix</h2>
-                        <p class="section-description">View and adjust page access for each role.</p>
+            </div>
+
+        </div>
+
+        <!-- Reports Tab Content -->
+        <div class="tab-content" id="reportsContent">
+            <div class="content-header">
+                <h1 class="page-title">Reports & Analytics</h1>
+                <p class="page-subtitle">Comprehensive insights into user progress, system performance, and learning outcomes</p>
+            </div>
+
+            <!-- Report Filters -->
+            <div class="report-filters">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="reportDateRange">Date Range</label>
+                        <select id="reportDateRange">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                            <option value="365">Last year</option>
+                            <option value="all">All time</option>
+                        </select>
                     </div>
-                    <div class="section-content">
-                        <div class="permission-matrix-container">
-                            <table class="permission-matrix" id="permissionMatrix">
-                                <thead>
-                                    <tr>
-                                        <th>Permission</th>
-                                        <!-- Role headers will be populated by JS -->
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Permission rows will be populated by JS -->
-                                </tbody>
-                            </table>
+                    <div class="filter-group">
+                        <label for="reportRoleFilter">Role Filter</label>
+                        <select id="reportRoleFilter">
+                            <option value="all">All Roles</option>
+                            <option value="admin">Admin</option>
+                            <option value="director">Director</option>
+                            <option value="team_member">Team Member</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="reportModuleFilter">Module Filter</label>
+                        <select id="reportModuleFilter">
+                            <option value="all">All Modules</option>
+                            <!-- Module options will be populated by JS -->
+                        </select>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn btn-primary" id="generateReportBtn">
+                            <i class="fas fa-chart-line"></i>
+                            Generate Report
+                        </button>
+                        <button class="btn btn-secondary" id="exportReportBtn">
+                            <i class="fas fa-download"></i>
+                            Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Metrics Cards -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="totalActiveUsers">0</div>
+                        <div class="metric-label">Active Users</div>
+                        <div class="metric-change" id="activeUsersChange">+0%</div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="completedModules">0</div>
+                        <div class="metric-label">Modules Completed</div>
+                        <div class="metric-change" id="completedModulesChange">+0%</div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="avgCompletionTime">0h</div>
+                        <div class="metric-label">Avg. Completion Time</div>
+                        <div class="metric-change" id="completionTimeChange">+0%</div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="avgSatisfaction">0%</div>
+                        <div class="metric-label">Avg. Satisfaction</div>
+                        <div class="metric-change" id="satisfactionChange">+0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <div class="chart-row">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>User Progress Over Time</h3>
+                            <div class="chart-controls">
+                                <button class="chart-btn active" data-chart="progress">Progress</button>
+                                <button class="chart-btn" data-chart="completions">Completions</button>
+                            </div>
+                        </div>
+                        <div class="chart-content">
+                            <canvas id="progressChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Module Completion by Role</h3>
+                        </div>
+                        <div class="chart-content">
+                            <canvas id="roleChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chart-row">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Top Performing Modules</h3>
+                        </div>
+                        <div class="chart-content">
+                            <canvas id="moduleChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>User Engagement Heatmap</h3>
+                        </div>
+                        <div class="chart-content">
+                            <div id="heatmapContainer">
+                                <!-- Heatmap will be rendered here -->
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+
+            <!-- Detailed Reports Table -->
+            <div class="section">
+                <div class="section-header">
+                    <h2>Detailed Analytics</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-secondary" id="refreshDataBtn">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh Data
+                        </button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <div class="table-container">
+                        <table class="analytics-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Role</th>
+                                    <th>Modules Completed</th>
+                                    <th>Avg. Score</th>
+                                    <th>Last Activity</th>
+                                    <th>Progress %</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analyticsTableBody">
+                                <!-- Analytics data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Performance Section -->
+            <div class="section">
+                <div class="section-header">
+                    <h2>Quiz Performance</h2>
+                </div>
+                <div class="section-content">
+                    <div class="quiz-stats-grid">
+                        <div class="quiz-stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-question-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalQuizzesTaken">0</div>
+                                <div class="stat-label">Quizzes Taken</div>
+                            </div>
+                        </div>
+                        
+                        <div class="quiz-stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="avgQuizScore">0%</div>
+                                <div class="stat-label">Average Score</div>
+                            </div>
+                        </div>
+                        
+                        <div class="quiz-stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="quizPassRate">0%</div>
+                                <div class="stat-label">Pass Rate</div>
+                            </div>
+                        </div>
+                        
+                        <div class="quiz-stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="avgQuizTime">0m</div>
+                                <div class="stat-label">Avg. Time</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Results Table -->
+            <div class="section">
+                <div class="section-header">
+                    <h2>Quiz Results</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-secondary" id="refreshQuizResultsBtn">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh Results
+                        </button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <div class="table-container">
+                        <table class="quiz-results-table">
+                            <thead>
+                                <tr>
+                                    <th>Quiz Title</th>
+                                    <th>User</th>
+                                    <th>Score</th>
+                                    <th>Points Earned</th>
+                                    <th>Total Points</th>
+                                    <th>Time Taken</th>
+                                    <th>Date Taken</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="quizResultsTableBody">
+                                <!-- Quiz results will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab Content -->
+        <div class="tab-content" id="settingsContent">
+            <div class="content-header">
+                <h1 class="page-title">Settings</h1>
+                <p class="page-subtitle">Configure system settings and preferences</p>
+            </div>
+            <div class="section">
+                <div class="section-header">
+                    <h2>System Settings</h2>
+                </div>
+                <div class="section-content">
+                    <p>Settings content will be implemented here.</p>
+                </div>
+            </div>
+        </div>
+    </main>
 
     <!-- User Details Modal -->
     <div class="modal-overlay" id="userModal">
@@ -387,6 +662,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="modalCancel">Cancel</button>
+                <button type="button" class="btn btn-danger" id="modalResetProgress" style="display: none;">
+                    <i class="fas fa-undo"></i>
+                    Reset Progress
+                </button>
                 <button type="button" class="btn btn-primary" id="modalSave">Save Changes</button>
             </div>
         </div>
@@ -611,7 +890,22 @@
     <script>
         console.log('🔍 HTML: About to load admin-overview-script.js');
     </script>
-    <script src="../scripts/admin-overview-script.js?v=92"></script>
+    
+    <!-- Initialize Navbar Component -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔍 Initializing navbar component...');
+            if (window.NavbarComponent) {
+                console.log('🔍 NavbarComponent found, creating instance...');
+                const navbar = new window.NavbarComponent();
+                console.log('🔍 Navbar component initialized');
+            } else {
+                console.error('❌ NavbarComponent not found');
+            }
+        });
+    </script>
+    
+    <script src="../scripts/admin-overview-script.js?v=105"></script>
     <script>
         console.log('🔍 HTML: admin-overview-script.js should be loaded now');
         console.log('🔍 HTML: testScript available?', typeof window.testScript);

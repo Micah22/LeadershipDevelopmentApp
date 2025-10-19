@@ -5,13 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apps - CFA Leadership Development</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-    <link rel="stylesheet" href="../styles/apps-list-styles.css?v=1">
+    <!-- Load navbar component styles -->
+    <link rel="stylesheet" href="../styles/navbar-component.css">
+    <link rel="stylesheet" href="../styles/apps-content.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="../scripts/navbar.js?v=19"></script>
+    
+    <!-- Load navbar component script -->
+    <script src="../components/navbar-component.js"></script>
     <script src="../database/config.js"></script>
 </head>
 <body>
-    <!-- Navbar will be loaded by navbar.js -->
+    <!-- Navbar will be automatically loaded by the navbar component -->
 
     <!-- Main Content -->
     <main class="main-content">
@@ -43,56 +47,18 @@
                     </div>
                 </div>
 
-                <!-- Coming Soon App 1 -->
-                <div class="app-card coming-soon">
+                <!-- More Apps Coming Soon -->
+                <div class="app-card coming-soon more-apps-card">
                     <div class="app-icon">
-                        <i class="fas fa-chart-bar"></i>
+                        <i class="fas fa-plus-circle"></i>
                     </div>
                     <div class="app-content">
-                        <h3 class="app-title">Performance Analytics</h3>
-                        <p class="app-description">Comprehensive analytics and reporting tools to track team performance, identify trends, and make data-driven decisions.</p>
+                        <h3 class="app-title">More Apps Coming Soon</h3>
+                        <p class="app-description">We're working on exciting new applications to enhance your workflow. Stay tuned for updates on upcoming features and tools.</p>
                         <div class="app-features">
-                            <span class="feature-tag">Analytics Dashboard</span>
-                            <span class="feature-tag">Performance Reports</span>
-                            <span class="feature-tag">Trend Analysis</span>
-                        </div>
-                    </div>
-                    <div class="app-status">
-                        <span class="status-badge coming-soon">Coming Soon</span>
-                    </div>
-                </div>
-
-                <!-- Coming Soon App 2 -->
-                <div class="app-card coming-soon">
-                    <div class="app-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="app-content">
-                        <h3 class="app-title">Team Management</h3>
-                        <p class="app-description">Advanced team management tools for scheduling, communication, task assignment, and collaboration across teams.</p>
-                        <div class="app-features">
-                            <span class="feature-tag">Scheduling</span>
-                            <span class="feature-tag">Communication</span>
-                            <span class="feature-tag">Task Management</span>
-                        </div>
-                    </div>
-                    <div class="app-status">
-                        <span class="status-badge coming-soon">Coming Soon</span>
-                    </div>
-                </div>
-
-                <!-- Coming Soon App 3 -->
-                <div class="app-card coming-soon">
-                    <div class="app-icon">
-                        <i class="fas fa-clipboard-check"></i>
-                    </div>
-                    <div class="app-content">
-                        <h3 class="app-title">Quality Assurance</h3>
-                        <p class="app-description">Quality control and assurance tools to maintain high standards, conduct inspections, and ensure compliance.</p>
-                        <div class="app-features">
-                            <span class="feature-tag">Quality Control</span>
-                            <span class="feature-tag">Inspections</span>
-                            <span class="feature-tag">Compliance</span>
+                            <span class="feature-tag">Performance Analytics</span>
+                            <span class="feature-tag">Team Management</span>
+                            <span class="feature-tag">Quality Assurance</span>
                         </div>
                     </div>
                     <div class="app-status">

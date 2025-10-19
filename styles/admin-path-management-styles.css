@@ -2,35 +2,76 @@
 @import url('admin-overview-styles.css');
 
 /* Mobile Responsive Styles for Path Management */
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
     .modules-management-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
     }
     
     .module-management-card {
-        padding: 1rem;
+        padding: 1rem !important;
     }
     
     .module-management-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
+        display: grid !important;
+        grid-template-columns: 1fr auto auto !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+        margin-bottom: 0.5rem !important;
     }
     
     .module-management-title {
-        font-size: 1.1rem;
+        font-size: 1rem !important;
+        margin: 0 !important;
+        grid-column: 1 !important;
+        justify-self: start !important;
+    }
+    
+    .module-management-phase {
+        font-size: 0.7rem !important;
+        padding: 0.2rem 0.5rem !important;
+        white-space: nowrap !important;
+        margin: 0 !important;
+        grid-column: 2 !important;
+        justify-self: center !important;
+    }
+    
+    .module-management-status {
+        font-size: 0.7rem !important;
+        padding: 0.2rem 0.5rem !important;
+        white-space: nowrap !important;
+        margin: 0 !important;
+        grid-column: 3 !important;
+        justify-self: end !important;
+    }
+    
+    .module-management-stats {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+        flex-wrap: wrap !important;
+        justify-content: flex-start !important;
+    }
+    
+    .module-management-tasks {
+        font-size: 0.8rem !important;
+        color: var(--medium-gray) !important;
+        white-space: nowrap !important;
+        margin: 0 !important;
     }
     
     .module-management-actions {
-        flex-direction: column;
-        gap: 0.5rem;
-        width: 100%;
+        flex-direction: row !important;
+        gap: 0.5rem !important;
+        width: 100% !important;
+        justify-content: space-between !important;
     }
     
     .module-management-actions .btn {
-        width: 100%;
-        justify-content: center;
+        width: 48% !important;
+        justify-content: center !important;
+        flex: 1 !important;
     }
     
     .checklist-item {
@@ -182,6 +223,16 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
+}
+
+.module-management-phase {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: #e3f2fd;
+    color: #1976d2;
 }
 
 .module-management-tasks {

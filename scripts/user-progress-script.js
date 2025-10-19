@@ -49,27 +49,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     
-    // Wait a bit for navbar to load first
-    setTimeout(async () => {
-        // Initialize the page
-        await initializePage();
-        
-        // Set up event listeners
-        setupEventListeners();
-        
-        // Initialize theme
-        initializeTheme();
-        
-        // Load progress data
-        await loadProgressData();
-    }, 200);
+    // Initialize the page
+    await initializePage();
+    
+    // Set up event listeners
+    setupEventListeners();
+    
+    // Initialize theme
+    initializeTheme();
+    
+    // Load progress data
+    await loadProgressData();
 });
 
 async function initializePage() {
     // Set up user info
     await updateUserInfo();
     
-    // Navigation is handled by navbar.js
+    // Navigation is handled by navbar component
 }
 
 async function updateUserInfo() {
@@ -156,7 +153,7 @@ function setupEventListeners() {
         });
     }
     
-    // Dropdown user info is handled by navbar.js
+    // Dropdown user info is handled by navbar component
     
     // Theme toggle button in dropdown
     const themeToggle = document.getElementById('themeToggle');
@@ -370,6 +367,12 @@ function updateProgressCards(data) {
     const totalTasks = document.getElementById('totalTasks');
     const achievements = document.getElementById('achievements');
     
+    // Mobile progress cards
+    const overallProgressMobile = document.getElementById('overallProgressMobile');
+    const completedTasksMobile = document.getElementById('completedTasksMobile');
+    const totalTasksMobile = document.getElementById('totalTasksMobile');
+    const achievementsMobile = document.getElementById('achievementsMobile');
+    
     if (overallProgress) {
         overallProgress.textContent = data.overallProgress + '%';
         console.log('Updated overall progress to:', data.overallProgress + '%');
@@ -386,6 +389,23 @@ function updateProgressCards(data) {
     
     if (achievements) {
         achievements.textContent = data.achievements;
+    }
+    
+    // Update mobile progress cards
+    if (overallProgressMobile) {
+        overallProgressMobile.textContent = data.overallProgress + '%';
+    }
+    
+    if (completedTasksMobile) {
+        completedTasksMobile.textContent = data.completedTasks;
+    }
+    
+    if (totalTasksMobile) {
+        totalTasksMobile.textContent = data.totalTasks;
+    }
+    
+    if (achievementsMobile) {
+        achievementsMobile.textContent = data.achievements;
     }
 }
 
@@ -566,6 +586,11 @@ async function openModuleModal(moduleTitle) {
     // Update modal title
     if (modalTitle) {
         modalTitle.textContent = moduleData.title;
+    }
+    
+    // Update module description
+    if (modalDescription) {
+        modalDescription.textContent = moduleData.description || 'No description available.';
     }
     
     // Update module metadata in header
