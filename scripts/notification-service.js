@@ -763,6 +763,23 @@ window.testInScreenNotification = function() {
     }
 };
 
+// Test the actual notification service
+window.testNotificationService = function() {
+    console.log('Testing notification service directly');
+    if (window.notificationService) {
+        // Test different notification types
+        window.notificationService.showSuccess('Success notification test', 'Success Test');
+        setTimeout(() => {
+            window.notificationService.showInfo('Info notification test', 'Info Test');
+        }, 1000);
+        setTimeout(() => {
+            window.notificationService.showWarning('Warning notification test', 'Warning Test');
+        }, 2000);
+    } else {
+        console.log('Notification service not available');
+    }
+};
+
 // Simple direct test function
 window.testDirectNotification = function() {
     console.log('Testing direct notification creation');
