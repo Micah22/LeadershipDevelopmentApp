@@ -75,15 +75,32 @@ class NotificationService {
             return;
         }
 
-        // Set up bell button click handler
+        // Set up bell button click handler (desktop and mobile)
         bellButton.addEventListener('click', (e) => {
+            e.preventDefault();
             e.stopPropagation();
+            console.log('Bell button clicked');
+            this.toggleNotificationCenter();
+        });
+        
+        // Add touch event for mobile
+        bellButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Bell button touched');
             this.toggleNotificationCenter();
         });
 
         // Set up clear all button
         if (clearAllBtn) {
             clearAllBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.clearAllNotifications();
+            });
+            
+            clearAllBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 this.clearAllNotifications();
             });
@@ -93,6 +110,13 @@ class NotificationService {
         const markAllAsReadBtn = document.getElementById('markAllAsRead');
         if (markAllAsReadBtn) {
             markAllAsReadBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.markAllAsRead();
+            });
+            
+            markAllAsReadBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 this.markAllAsRead();
             });
@@ -102,10 +126,23 @@ class NotificationService {
         notificationCenter.addEventListener('click', (e) => {
             e.stopPropagation();
         });
+        
+        // Prevent touch events inside notification center from closing it
+        notificationCenter.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+        });
 
         // Close notification center when clicking outside
         document.addEventListener('click', (e) => {
             // Only close if clicking outside both the bell button and notification center
+            if (!notificationCenter.contains(e.target) && !bellButton.contains(e.target)) {
+                this.hideNotificationCenter();
+            }
+        });
+        
+        // Close notification center when touching outside (mobile)
+        document.addEventListener('touchstart', (e) => {
+            // Only close if touching outside both the bell button and notification center
             if (!notificationCenter.contains(e.target) && !bellButton.contains(e.target)) {
                 this.hideNotificationCenter();
             }
@@ -118,12 +155,18 @@ class NotificationService {
     }
 
     toggleNotificationCenter() {
+        console.log('toggleNotificationCenter called');
         const notificationCenter = document.getElementById('notificationCenter');
-        if (!notificationCenter) return;
+        if (!notificationCenter) {
+            console.log('Notification center not found');
+            return;
+        }
 
         if (notificationCenter.classList.contains('show')) {
+            console.log('Hiding notification center');
             this.hideNotificationCenter();
         } else {
+            console.log('Showing notification center');
             this.showNotificationCenter();
         }
     }
