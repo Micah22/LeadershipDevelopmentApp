@@ -251,6 +251,11 @@ function getLeadershipPaths() {
 
 // Check if path is unlocked for user role
 function isPathUnlocked(path, userRole) {
+    // Add safety check for path object
+    if (!path || typeof path !== 'object' || !path.requiredRole) {
+        return false;
+    }
+    
     const roleHierarchy = {
         'Team Member': 1,
         'Trainer': 2,
@@ -527,13 +532,16 @@ function checkProgressReminders() {
     const leadershipPaths = getLeadershipPaths();
     const user = getCurrentUser();
     
-    if (!user) return;
+    if (!user || !leadershipPaths || !Array.isArray(leadershipPaths)) return;
     
     let totalCompleted = 0;
     let totalTasks = 0;
     let nextTask = '';
     
     leadershipPaths.forEach(path => {
+        // Add safety check for path object
+        if (!path || typeof path !== 'object') return;
+        
         if (isPathUnlocked(path, user.role)) {
             totalTasks += (path.checklist || []).length;
             const pathProgress = userProgress[path.title];
@@ -545,7 +553,7 @@ function checkProgressReminders() {
                 // Find next incomplete task
                 if (!nextTask) {
                     const incompleteIndex = pathProgress.checklist.findIndex(task => task === false);
-                    if (incompleteIndex !== -1) {
+                    if (incompleteIndex !== -1 && path.checklist && path.checklist[incompleteIndex]) {
                         nextTask = path.checklist[incompleteIndex];
                     }
                 }
