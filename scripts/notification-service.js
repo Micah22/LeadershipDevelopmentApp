@@ -51,7 +51,17 @@ class NotificationService {
         const container = document.createElement('div');
         container.id = 'notification-container';
         container.className = 'notification-container';
+        
+        // Add mobile-specific styles
+        container.style.position = 'fixed';
+        container.style.top = '10px';
+        container.style.right = '10px';
+        container.style.left = '10px';
+        container.style.zIndex = '10004';
+        container.style.pointerEvents = 'auto';
+        
         document.body.appendChild(container);
+        console.log('Notification container created with mobile styles');
     }
 
     setupNotificationCenter() {
@@ -378,6 +388,10 @@ class NotificationService {
         return notification;
     }
 
+    isMobile() {
+        return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
     showInAppNotification(notification) {
         console.log('showInAppNotification called for:', notification.title);
         const container = document.getElementById('notification-container');
@@ -390,6 +404,21 @@ class NotificationService {
         const notificationElement = document.createElement('div');
         notificationElement.className = `notification notification-${notification.type}`;
         notificationElement.id = `notification-${notification.id}`;
+        
+        // Apply mobile-specific styles immediately
+        if (this.isMobile()) {
+            console.log('Applying mobile-specific styles');
+            notificationElement.style.position = 'relative';
+            notificationElement.style.width = '100%';
+            notificationElement.style.marginBottom = '8px';
+            notificationElement.style.background = 'white';
+            notificationElement.style.border = '2px solid #d32f2f';
+            notificationElement.style.borderRadius = '8px';
+            notificationElement.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)';
+            notificationElement.style.opacity = '0';
+            notificationElement.style.transform = 'translateX(100%)';
+            notificationElement.style.transition = 'all 0.3s ease';
+        }
         
         notificationElement.innerHTML = `
             <div class="notification-content">
@@ -414,6 +443,19 @@ class NotificationService {
             console.log('Adding show class to notification');
             notificationElement.classList.add('show');
             console.log('Notification classes after show:', notificationElement.className);
+            
+            // Force visibility on mobile
+            notificationElement.style.opacity = '1';
+            notificationElement.style.visibility = 'visible';
+            notificationElement.style.transform = 'translateX(0)';
+            notificationElement.style.display = 'flex';
+            
+            console.log('Notification computed styles:', {
+                opacity: window.getComputedStyle(notificationElement).opacity,
+                visibility: window.getComputedStyle(notificationElement).visibility,
+                display: window.getComputedStyle(notificationElement).display,
+                transform: window.getComputedStyle(notificationElement).transform
+            });
         }, 100);
 
         // Auto-hide after delay (but keep in bell menu)
