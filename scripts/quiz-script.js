@@ -1749,11 +1749,17 @@ function previewQuiz(quizId) {
 
 // Toast notification system
 function showToast(type, title, message, duration = 5000) {
+    console.log('showToast called with:', { type, title, message, duration });
     const container = document.getElementById('toastContainer');
-    if (!container) return;
+    console.log('Toast container found:', !!container);
+    if (!container) {
+        console.error('Toast container not found!');
+        return;
+    }
     
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
+    console.log('Created toast element with class:', toast.className);
     
     const icon = getToastIcon(type);
     
@@ -1770,16 +1776,40 @@ function showToast(type, title, message, duration = 5000) {
     `;
     
     container.appendChild(toast);
+    console.log('Toast added to container, total toasts:', container.children.length);
     
     // Trigger animation
     setTimeout(() => {
         toast.classList.add('show');
+        console.log('Added show class to toast');
+        
+        // Debug computed styles
+        const computedStyle = window.getComputedStyle(toast);
+        console.log('Toast computed styles:', {
+            display: computedStyle.display,
+            position: computedStyle.position,
+            opacity: computedStyle.opacity,
+            transform: computedStyle.transform,
+            visibility: computedStyle.visibility,
+            zIndex: computedStyle.zIndex
+        });
+        
+        // Debug container styles
+        const containerStyle = window.getComputedStyle(container);
+        console.log('Container computed styles:', {
+            display: containerStyle.display,
+            position: containerStyle.position,
+            zIndex: containerStyle.zIndex,
+            top: containerStyle.top,
+            right: containerStyle.right
+        });
     }, 100);
     
     // Start progress bar animation
     const progressBar = toast.querySelector('.toast-progress-bar');
     if (progressBar) {
         progressBar.style.animation = `toast-progress ${duration}ms linear forwards`;
+        console.log('Started progress bar animation');
     }
     
     // Auto remove after duration
