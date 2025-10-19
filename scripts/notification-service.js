@@ -26,6 +26,16 @@ class NotificationService {
         // Load existing notifications
         this.loadNotifications();
         
+        // Show permission request notification if not granted
+        if (this.permission !== 'granted') {
+            setTimeout(() => {
+                this.showInfo(
+                    'Enable browser notifications to get alerts even when the app is closed.',
+                    'Enable Notifications'
+                );
+            }, 2000);
+        }
+        
         console.log('Notification Service initialized');
     }
 
@@ -775,6 +785,37 @@ window.testNotificationService = function() {
         setTimeout(() => {
             window.notificationService.showWarning('Warning notification test', 'Warning Test');
         }, 2000);
+    } else {
+        console.log('Notification service not available');
+    }
+};
+
+// Request browser notification permission
+window.requestNotificationPermission = function() {
+    console.log('Requesting browser notification permission');
+    if (window.notificationService) {
+        window.notificationService.requestPermission().then(() => {
+            if (window.notificationService.permission === 'granted') {
+                window.notificationService.showSuccess('Browser notifications enabled!', 'Permission Granted');
+            } else {
+                window.notificationService.showWarning('Browser notifications denied. You can enable them in your browser settings.', 'Permission Denied');
+            }
+        });
+    } else {
+        console.log('Notification service not available');
+    }
+};
+
+// Test browser notifications specifically
+window.testBrowserNotification = function() {
+    console.log('Testing browser notification');
+    if (window.notificationService) {
+        if (window.notificationService.permission === 'granted') {
+            window.notificationService.showSuccess('This is a browser notification!', 'Browser Test');
+        } else {
+            console.log('Browser notifications not enabled. Call requestNotificationPermission() first.');
+            window.notificationService.showWarning('Browser notifications not enabled. Call requestNotificationPermission() first.', 'Permission Required');
+        }
     } else {
         console.log('Notification service not available');
     }
