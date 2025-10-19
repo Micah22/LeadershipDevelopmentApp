@@ -1938,13 +1938,7 @@ header.header::before {
     color: #721C24;
 }
 
-/* Toast Notifications */
-.toast-container {
-    position: fixed;
-    top: 80px;
-    right: 20px;
-    z-index: 3000;
-}
+/* Toast Notifications - Removed duplicate definition */
 
 .toast {
     background: var(--white);

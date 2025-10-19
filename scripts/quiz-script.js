@@ -1759,17 +1759,6 @@ function showToast(type, title, message, duration = 5000) {
     
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    
-    // Add temporary debugging styles to make toast visible
-    toast.style.backgroundColor = '#ff0000';
-    toast.style.border = '5px solid #00ff00';
-    toast.style.color = '#ffffff';
-    toast.style.fontSize = '20px';
-    toast.style.fontWeight = 'bold';
-    toast.style.padding = '20px';
-    toast.style.margin = '10px';
-    toast.style.zIndex = '9999';
-    
     console.log('Created toast element with class:', toast.className);
     
     const icon = getToastIcon(type);
