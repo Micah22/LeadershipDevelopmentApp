@@ -563,3 +563,70 @@ function checkProgressReminders() {
         );
     }
 }
+
+// Toast Notification Functions
+function showToast(type, title, message, duration = 5000) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icon = getToastIcon(type);
+    
+    toast.innerHTML = `
+        <div class="toast-icon">${icon}</div>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="removeToast(this.parentElement)">×</button>
+        <div class="toast-progress">
+            <div class="toast-progress-bar"></div>
+        </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100);
+    
+    // Start progress bar animation
+    const progressBar = toast.querySelector('.toast-progress-bar');
+    if (progressBar) {
+        progressBar.style.animation = `toast-progress ${duration}ms linear forwards`;
+    }
+    
+    // Auto remove after duration
+    setTimeout(() => {
+        removeToast(toast);
+    }, duration);
+}
+
+function getToastIcon(type) {
+    switch (type) {
+        case 'success':
+            return '✓';
+        case 'error':
+            return '✕';
+        case 'warning':
+            return '⚠';
+        case 'info':
+            return 'ℹ';
+        default:
+            return 'ℹ';
+    }
+}
+
+function removeToast(toast) {
+    if (!toast) return;
+    
+    toast.classList.remove('show');
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 300);
+}

@@ -3023,6 +3023,7 @@ body {
     opacity: 0;
     transition: all 0.3s ease;
     position: relative;
+    overflow: hidden;
 }
 
 .toast.show {
@@ -3115,6 +3116,52 @@ body {
 
 [data-theme="dark"] .toast-close:hover {
     background: var(--background-light-dark);
+}
+
+/* Toast Progress Bar */
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+}
+
+.toast-progress-bar {
+    height: 100%;
+    background: var(--cfa-red);
+    width: 100%;
+    transform-origin: left;
+    animation: toast-progress 5000ms linear forwards;
+}
+
+@keyframes toast-progress {
+    from {
+        transform: scaleX(1);
+    }
+    to {
+        transform: scaleX(0);
+    }
+}
+
+/* Different colors for different toast types */
+.toast.success .toast-progress-bar {
+    background: #28a745;
+}
+
+.toast.error .toast-progress-bar {
+    background: #dc3545;
+}
+
+.toast.warning .toast-progress-bar {
+    background: #ffc107;
+}
+
+.toast.info .toast-progress-bar {
+    background: #17a2b8;
 }
 
 /* Module Rubric Styles */

@@ -2941,6 +2941,9 @@ function showToast(type, title, message, duration = 5000) {
             <div class="toast-message">${message}</div>
         </div>
         <button class="toast-close" onclick="removeToast(this.parentElement)">×</button>
+        <div class="toast-progress">
+            <div class="toast-progress-bar"></div>
+        </div>
     `;
     
     container.appendChild(toast);
@@ -2949,6 +2952,12 @@ function showToast(type, title, message, duration = 5000) {
     setTimeout(() => {
         toast.classList.add('show');
     }, 100);
+    
+    // Start progress bar animation
+    const progressBar = toast.querySelector('.toast-progress-bar');
+    if (progressBar) {
+        progressBar.style.animation = `toast-progress ${duration}ms linear forwards`;
+    }
     
     // Auto remove after duration
     setTimeout(() => {
@@ -4807,3 +4816,245 @@ function exportReport() {
         showToast('error', 'Export Failed', 'Failed to export report data');
     }
 }
+
+// ==================== SETTINGS MENU FUNCTIONS ====================
+
+// Account Settings Functions
+function editUsername() {
+    const usernameInput = document.getElementById('username');
+    usernameInput.removeAttribute('readonly');
+    usernameInput.focus();
+    usernameInput.style.backgroundColor = 'white';
+    usernameInput.style.color = 'var(--navy)';
+}
+
+function editEmail() {
+    const emailInput = document.getElementById('email');
+    emailInput.removeAttribute('readonly');
+    emailInput.focus();
+    emailInput.style.backgroundColor = 'white';
+    emailInput.style.color = 'var(--navy)';
+}
+
+function togglePassword(fieldId) {
+    const field = document.getElementById(fieldId);
+    const button = field.nextElementSibling;
+    const icon = button.querySelector('i');
+    
+    if (field.type === 'password') {
+        field.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        field.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+function updateAccount() {
+    const username = document.getElementById('username').value;
+    const email = document.getElementById('email').value;
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    // Validation
+    if (!username || !email) {
+        showToast('error', 'Validation Error', 'Username and email are required');
+        return;
+    }
+    
+    if (newPassword && newPassword !== confirmPassword) {
+        showToast('error', 'Password Mismatch', 'New passwords do not match');
+        return;
+    }
+    
+    if (newPassword && newPassword.length < 8) {
+        showToast('error', 'Password Too Short', 'Password must be at least 8 characters');
+        return;
+    }
+    
+    // Simulate API call
+    showToast('success', 'Account Updated', 'Your account information has been updated successfully');
+    
+    // Reset form
+    resetAccountForm();
+}
+
+function resetAccountForm() {
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+    
+    // Make fields readonly again
+    const usernameInput = document.getElementById('username');
+    const emailInput = document.getElementById('email');
+    usernameInput.setAttribute('readonly', 'true');
+    emailInput.setAttribute('readonly', 'true');
+    usernameInput.style.backgroundColor = '#f8f9fa';
+    usernameInput.style.color = '#6c757d';
+    emailInput.style.backgroundColor = '#f8f9fa';
+    emailInput.style.color = '#6c757d';
+}
+
+// Notification Settings Functions
+function saveNotificationSettings() {
+    const settings = {
+        emailNotifications: document.getElementById('emailNotifications').checked,
+        browserNotifications: document.getElementById('browserNotifications').checked,
+        deadlineWarnings: document.getElementById('deadlineWarnings').checked,
+        moduleAssignments: document.getElementById('moduleAssignments').checked,
+        progressReminders: document.getElementById('progressReminders').checked,
+        systemUpdates: document.getElementById('systemUpdates').checked,
+        loginNotifications: document.getElementById('loginNotifications').checked
+    };
+    
+    // Save to localStorage
+    localStorage.setItem('notificationSettings', JSON.stringify(settings));
+    
+    showToast('success', 'Settings Saved', 'Your notification preferences have been saved');
+}
+
+function testNotifications() {
+    if (window.notificationService) {
+        window.notificationService.showSuccess('Test notification from settings', 'Settings Test');
+        showToast('info', 'Test Sent', 'Check your notifications to see the test message');
+    } else {
+        showToast('error', 'Service Unavailable', 'Notification service is not available');
+    }
+}
+
+// Privacy & Security Functions
+function setupTwoFactor() {
+    showToast('info', '2FA Setup', 'Two-factor authentication setup will be implemented in a future update');
+}
+
+function exportData() {
+    const userData = {
+        username: document.getElementById('username').value,
+        email: document.getElementById('email').value,
+        settings: JSON.parse(localStorage.getItem('notificationSettings') || '{}'),
+        exportDate: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(userData, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(dataBlob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'user-data-export.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast('success', 'Data Exported', 'Your personal data has been downloaded');
+}
+
+function deleteAccount() {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        if (confirm('This will permanently delete all your data. Are you absolutely sure?')) {
+            showToast('error', 'Account Deletion', 'Account deletion will be implemented in a future update');
+        }
+    }
+}
+
+// Appearance Functions
+function changeTheme() {
+    const theme = document.getElementById('themeSelect').value;
+    
+    if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    } else if (theme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+        // Auto - follow system preference
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
+    }
+    
+    localStorage.setItem('theme', theme);
+    showToast('success', 'Theme Changed', `Theme changed to ${theme}`);
+}
+
+function changeLanguage() {
+    const language = document.getElementById('languageSelect').value;
+    localStorage.setItem('language', language);
+    showToast('info', 'Language Changed', `Language changed to ${language} (UI translation will be implemented in a future update)`);
+}
+
+function changeFontSize() {
+    const fontSize = document.getElementById('fontSize').value;
+    document.getElementById('fontSizeValue').textContent = fontSize + 'px';
+    
+    // Apply font size to body
+    document.body.style.fontSize = fontSize + 'px';
+    localStorage.setItem('fontSize', fontSize);
+    
+    showToast('success', 'Font Size Changed', `Font size changed to ${fontSize}px`);
+}
+
+// Initialize Settings
+function initializeSettings() {
+    // Load user data
+    const username = localStorage.getItem('username') || 'Current User';
+    const email = localStorage.getItem('email') || 'user@example.com';
+    
+    document.getElementById('username').value = username;
+    document.getElementById('email').value = email;
+    
+    // Load notification settings
+    const notificationSettings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
+    Object.keys(notificationSettings).forEach(key => {
+        const element = document.getElementById(key);
+        if (element) {
+            element.checked = notificationSettings[key];
+        }
+    });
+    
+    // Load theme
+    const savedTheme = localStorage.getItem('theme') || 'auto';
+    document.getElementById('themeSelect').value = savedTheme;
+    changeTheme();
+    
+    // Load language
+    const savedLanguage = localStorage.getItem('language') || 'en';
+    document.getElementById('languageSelect').value = savedLanguage;
+    
+    // Load font size
+    const savedFontSize = localStorage.getItem('fontSize') || '16';
+    document.getElementById('fontSize').value = savedFontSize;
+    document.getElementById('fontSizeValue').textContent = savedFontSize + 'px';
+    document.body.style.fontSize = savedFontSize + 'px';
+    
+    // Load system info
+    loadSystemInfo();
+}
+
+function loadSystemInfo() {
+    // Last login
+    const lastLogin = localStorage.getItem('lastLogin') || new Date().toISOString();
+    document.getElementById('lastLogin').textContent = new Date(lastLogin).toLocaleString();
+    
+    // Account created
+    const accountCreated = localStorage.getItem('accountCreated') || new Date().toISOString();
+    document.getElementById('accountCreated').textContent = new Date(accountCreated).toLocaleDateString();
+    
+    // Browser info
+    const browserInfo = navigator.userAgent.split(' ').slice(-2).join(' ');
+    document.getElementById('browserInfo').textContent = browserInfo;
+}
+
+// Initialize settings when settings tab is clicked
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click listener for settings tab
+    const settingsTab = document.getElementById('settings');
+    if (settingsTab) {
+        settingsTab.addEventListener('click', function() {
+            setTimeout(initializeSettings, 100);
+        });
+    }
+});

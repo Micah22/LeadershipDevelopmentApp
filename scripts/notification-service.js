@@ -417,7 +417,27 @@ class NotificationService {
 
     showInAppNotification(notification) {
         console.log('showInAppNotification called for:', notification.title);
+        console.log('Toast function available:', typeof window.showToast);
+        console.log('Toast container exists:', !!document.getElementById('toastContainer'));
         
+        // Use the existing toast system instead of custom notifications
+        if (typeof window.showToast === 'function') {
+            console.log('Using toast system for notification');
+            try {
+                window.showToast(notification.type, notification.title, notification.message, this.autoHideDelay);
+                console.log('Toast function called successfully');
+            } catch (error) {
+                console.error('Error calling showToast:', error);
+                this.showCustomNotification(notification);
+            }
+        } else {
+            console.log('Toast system not available, falling back to custom notification');
+            // Fallback to custom notification if toast system not available
+            this.showCustomNotification(notification);
+        }
+    }
+    
+    showCustomNotification(notification) {
         // Ensure container exists
         let container = document.getElementById('notification-container');
         if (!container) {

@@ -593,14 +593,308 @@
         <div class="tab-content" id="settingsContent">
             <div class="content-header">
                 <h1 class="page-title">Settings</h1>
-                <p class="page-subtitle">Configure system settings and preferences</p>
+                <p class="page-subtitle">Configure your account settings and preferences</p>
             </div>
+            
+            <!-- Account Settings -->
             <div class="section">
                 <div class="section-header">
-                    <h2>System Settings</h2>
+                    <h2><i class="fas fa-user"></i> Account Settings</h2>
                 </div>
                 <div class="section-content">
-                    <p>Settings content will be implemented here.</p>
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <div class="input-group">
+                                <input type="text" id="username" name="username" value="" readonly>
+                                <button class="edit-btn" onclick="editUsername()">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <div class="input-group">
+                                <input type="email" id="email" name="email" value="" readonly>
+                                <button class="edit-btn" onclick="editEmail()">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="currentPassword">Current Password</label>
+                            <div class="input-group">
+                                <input type="password" id="currentPassword" name="currentPassword" placeholder="Enter current password">
+                                <button class="toggle-password" onclick="togglePassword('currentPassword')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="newPassword">New Password</label>
+                            <div class="input-group">
+                                <input type="password" id="newPassword" name="newPassword" placeholder="Enter new password">
+                                <button class="toggle-password" onclick="togglePassword('newPassword')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm New Password</label>
+                            <div class="input-group">
+                                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm new password">
+                                <button class="toggle-password" onclick="togglePassword('confirmPassword')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button class="btn btn-primary" onclick="updateAccount()">
+                                <i class="fas fa-save"></i> Update Account
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetAccountForm()">
+                                <i class="fas fa-undo"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notification Settings -->
+            <div class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-bell"></i> Notification Preferences</h2>
+                </div>
+                <div class="section-content">
+                    <div class="notification-settings">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h3>Email Notifications</h3>
+                                <p>Receive notifications via email</p>
+                            </div>
+                            <div class="setting-control">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="emailNotifications" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h3>Browser Notifications</h3>
+                                <p>Receive notifications in your browser</p>
+                            </div>
+                            <div class="setting-control">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="browserNotifications" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h3>Deadline Warnings</h3>
+                                <p>Get notified about upcoming deadlines</p>
+                            </div>
+                            <div class="setting-control">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="deadlineWarnings" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h3>Module Assignments</h3>
+                                <p>Get notified when new modules are assigned</p>
+                            </div>
+                            <div class="setting-control">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="moduleAssignments" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h3>Progress Reminders</h3>
+                                <p>Get reminded to continue your learning</p>
+                            </div>
+                            <div class="setting-control">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="progressReminders" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h3>System Updates</h3>
+                                <p>Get notified about system updates and maintenance</p>
+                            </div>
+                            <div class="setting-control">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="systemUpdates" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-actions">
+                            <button class="btn btn-primary" onclick="saveNotificationSettings()">
+                                <i class="fas fa-save"></i> Save Notification Settings
+                            </button>
+                            <button class="btn btn-info" onclick="testNotifications()">
+                                <i class="fas fa-bell"></i> Test Notifications
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Privacy Settings -->
+            <div class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-shield-alt"></i> Privacy & Security</h2>
+                </div>
+                <div class="section-content">
+                    <div class="privacy-settings">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h3>Two-Factor Authentication</h3>
+                                <p>Add an extra layer of security to your account</p>
+                            </div>
+                            <div class="setting-control">
+                                <button class="btn btn-outline" onclick="setupTwoFactor()">
+                                    <i class="fas fa-key"></i> Setup 2FA
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h3>Login Notifications</h3>
+                                <p>Get notified when someone logs into your account</p>
+                            </div>
+                            <div class="setting-control">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="loginNotifications" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h3>Data Export</h3>
+                                <p>Download your personal data</p>
+                            </div>
+                            <div class="setting-control">
+                                <button class="btn btn-outline" onclick="exportData()">
+                                    <i class="fas fa-download"></i> Export Data
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h3>Account Deletion</h3>
+                                <p>Permanently delete your account and all data</p>
+                            </div>
+                            <div class="setting-control">
+                                <button class="btn btn-danger" onclick="deleteAccount()">
+                                    <i class="fas fa-trash"></i> Delete Account
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Appearance Settings -->
+            <div class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-palette"></i> Appearance</h2>
+                </div>
+                <div class="section-content">
+                    <div class="appearance-settings">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h3>Theme</h3>
+                                <p>Choose your preferred theme</p>
+                            </div>
+                            <div class="setting-control">
+                                <select id="themeSelect" onchange="changeTheme()">
+                                    <option value="light">Light</option>
+                                    <option value="dark">Dark</option>
+                                    <option value="auto">Auto (System)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h3>Language</h3>
+                                <p>Select your preferred language</p>
+                            </div>
+                            <div class="setting-control">
+                                <select id="languageSelect" onchange="changeLanguage()">
+                                    <option value="en">English</option>
+                                    <option value="es">Español</option>
+                                    <option value="fr">Français</option>
+                                    <option value="de">Deutsch</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h3>Font Size</h3>
+                                <p>Adjust the text size for better readability</p>
+                            </div>
+                            <div class="setting-control">
+                                <input type="range" id="fontSize" min="12" max="20" value="16" onchange="changeFontSize()">
+                                <span id="fontSizeValue">16px</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Information -->
+            <div class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-info-circle"></i> System Information</h2>
+                </div>
+                <div class="section-content">
+                    <div class="system-info">
+                        <div class="info-item">
+                            <span class="info-label">App Version:</span>
+                            <span class="info-value">1.0.0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Last Login:</span>
+                            <span class="info-value" id="lastLogin">Loading...</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Account Created:</span>
+                            <span class="info-value" id="accountCreated">Loading...</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Browser:</span>
+                            <span class="info-value" id="browserInfo">Loading...</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
