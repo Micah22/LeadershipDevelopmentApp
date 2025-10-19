@@ -4849,7 +4849,21 @@ function saveNotificationSettings() {
     showToast('success', 'Settings Saved', 'Your notification preferences have been saved');
 }
 
-// Test function removed - production ready
+// Test notifications function for settings page
+function testNotifications() {
+    if (window.notificationService) {
+        // Test different notification types
+        window.notificationService.showSuccess('Test notification from settings', 'Settings Test');
+        setTimeout(() => {
+            window.notificationService.showInfo('This is an info notification test', 'Info Test');
+        }, 1000);
+        setTimeout(() => {
+            window.notificationService.showWarning('This is a warning notification test', 'Warning Test');
+        }, 2000);
+    } else {
+        showToast('error', 'Service Unavailable', 'Notification service is not available');
+    }
+}
 
 // Privacy & Security Functions
 function setupTwoFactor() {
