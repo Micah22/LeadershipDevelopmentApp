@@ -61,6 +61,11 @@ class NotificationService {
         } else {
             this.initializeNotificationCenter();
         }
+        
+        // Also try to initialize after a delay for mobile devices
+        setTimeout(() => {
+            this.initializeNotificationCenter();
+        }, 1000);
     }
 
     initializeNotificationCenter() {
@@ -89,6 +94,24 @@ class NotificationService {
             e.stopPropagation();
             console.log('Bell button touched');
             this.toggleNotificationCenter();
+        });
+        
+        // Add touchend event for better mobile compatibility
+        bellButton.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Bell button touch ended');
+            this.toggleNotificationCenter();
+        });
+        
+        // Add pointer events for modern mobile browsers
+        bellButton.addEventListener('pointerdown', (e) => {
+            if (e.pointerType === 'touch') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Bell button pointer down (touch)');
+                this.toggleNotificationCenter();
+            }
         });
 
         // Set up clear all button
@@ -664,6 +687,35 @@ class NotificationService {
 
 // Initialize global notification service
 window.notificationService = new NotificationService();
+
+// Fallback for mobile devices - direct event handler
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        const bellButton = document.getElementById('notificationBell');
+        if (bellButton && !bellButton.hasAttribute('data-initialized')) {
+            console.log('Setting up fallback mobile handler');
+            bellButton.setAttribute('data-initialized', 'true');
+            
+            // Simple fallback handler
+            bellButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Fallback bell click handler triggered');
+                
+                const notificationCenter = document.getElementById('notificationCenter');
+                if (notificationCenter) {
+                    if (notificationCenter.classList.contains('show')) {
+                        notificationCenter.classList.remove('show');
+                        console.log('Fallback: hiding notification center');
+                    } else {
+                        notificationCenter.classList.add('show');
+                        console.log('Fallback: showing notification center');
+                    }
+                }
+            });
+        }
+    }, 2000);
+});
 
 // Export for module use
 if (typeof module !== 'undefined' && module.exports) {

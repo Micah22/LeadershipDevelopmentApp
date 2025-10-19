@@ -814,12 +814,18 @@ header.header {
         display: flex !important;
         visibility: visible !important;
         opacity: 1 !important;
-        width: 36px;
-        height: 36px;
+        width: 44px;
+        height: 44px;
         font-size: 1.1rem;
         background: var(--cfa-red) !important; /* Debug: make it obvious */
         color: white !important;
         border: 2px solid white !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: transparent !important;
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+        cursor: pointer !important;
     }
     
     .notification-center {
