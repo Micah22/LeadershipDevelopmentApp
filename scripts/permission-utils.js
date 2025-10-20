@@ -25,6 +25,20 @@ class PermissionManager {
         } else {
             this.roles = this.getDefaultRoles();
         }
+        
+        // Save default roles to localStorage if none exist
+        if (!storedRoles) {
+            localStorage.setItem('roles', JSON.stringify(this.roles));
+        }
+    }
+
+    /**
+     * Ensure roles are loaded
+     */
+    ensureRolesLoaded() {
+        if (!this.roles || this.roles.length === 0) {
+            this.loadRoles();
+        }
     }
 
     /**
@@ -122,8 +136,20 @@ class PermissionManager {
      * Get role definition by role name
      */
     getRoleByName(roleName) {
+        if (!roleName) {
+            console.warn('No role name provided');
+            return null;
+        }
+        
         const roleId = this.getRoleIdFromName(roleName);
-        return this.roles.find(role => role.id === roleId);
+        const role = this.roles.find(role => role.id === roleId);
+        
+        if (!role) {
+            console.warn(`Role not found for roleName: ${roleName}, roleId: ${roleId}`);
+            return null;
+        }
+        
+        return role;
     }
 
     /**
@@ -146,10 +172,25 @@ class PermissionManager {
      */
     hasPermission(permission) {
         const currentUser = this.getCurrentUser();
+        
+        // Ensure roles are loaded
+        this.ensureRolesLoaded();
+        
+        // If no roles are loaded yet, return false for safety
+        if (!this.roles || this.roles.length === 0) {
+            console.warn('No roles loaded yet, denying permission for safety');
+            return false;
+        }
+        
         const role = this.getRoleByName(currentUser.role);
         
         if (!role) {
             console.warn(`Role not found for user: ${currentUser.role}`);
+            return false;
+        }
+
+        if (!role.permissions || !Array.isArray(role.permissions)) {
+            console.warn(`Invalid permissions for role: ${role.name}`);
             return false;
         }
 
