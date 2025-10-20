@@ -326,7 +326,7 @@ class NavbarComponent {
     }
 
     /**
-     * Open settings modal
+     * Open settings page
      */
     openSettings() {
         // Close the dropdown first
@@ -335,32 +335,8 @@ class NavbarComponent {
             userDropdown.classList.remove('show');
         }
 
-        // Check if we're on the user overview page
-        const currentPath = window.location.pathname;
-        if (currentPath.includes('admin-user-overview.html')) {
-            // If on user overview page, switch to settings tab and scroll to it
-            const settingsTab = document.querySelector('[data-tab="settings"]');
-            if (settingsTab) {
-                // Click the settings tab to switch to it
-                settingsTab.click();
-                
-                // Scroll to the settings section
-                setTimeout(() => {
-                    const settingsSection = document.querySelector('.settings-section');
-                    if (settingsSection) {
-                        settingsSection.scrollIntoView({ behavior: 'smooth' });
-                    }
-                }, 200);
-            } else {
-                // If settings tab doesn't exist, show a message
-                if (window.showToast) {
-                    window.showToast('info', 'Settings', 'Settings tab not found on this page');
-                }
-            }
-        } else {
-            // If not on user overview page, navigate to it
-            window.location.href = 'admin-user-overview.html';
-        }
+        // Navigate to standalone settings page
+        window.location.href = 'settings.html';
     }
 
     /**
