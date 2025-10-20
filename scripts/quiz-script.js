@@ -435,17 +435,7 @@ function renderCurrentQuestion() {
     const question = currentQuiz.questions[currentQuestionIndex];
     currentQuestion.textContent = currentQuestionIndex + 1;
     
-    // console.log(`🔍 Rendering question ${currentQuestionIndex + 1}:`, {
-        question: question.question,
-        type: question.type,
-        hasImage: !!question.image,
-        image: question.image ? question.image.substring(0, 50) + '...' : null,
-        options: question.options.map(opt => ({
-            text: typeof opt === 'string' ? opt : opt.text,
-            hasImage: typeof opt === 'object' && !!opt.image,
-            image: typeof opt === 'object' && opt.image ? opt.image.substring(0, 50) + '...' : null
-        }))
-    });
+    // Rendering question
     
     const questionPoints = question.points || 1;
     let questionHtml = `<div class="question-text">${question.question}</div>`;
@@ -1207,12 +1197,7 @@ function handleQuestionImageUpload(questionNum, input) {
         const img = document.getElementById(`questionImageDisplay_${questionNum}`);
         const uploadBtn = input.previousElementSibling;
         
-        // console.log(`🔍 Question image upload for question ${questionNum}:`, {
-            preview: preview,
-            img: img,
-            uploadBtn: uploadBtn,
-            result: e.target.result.substring(0, 50) + '...'
-        });
+        // Question image upload
         
         if (preview && img) {
             img.src = e.target.result;
@@ -1266,12 +1251,7 @@ function handleOptionImageUpload(questionNum, optionIndex, input) {
         const img = document.getElementById(`optionImageDisplay_${questionNum}_${optionIndex}`);
         const uploadBtn = input.previousElementSibling;
         
-        // console.log(`🔍 Option image upload for question ${questionNum}, option ${optionIndex}:`, {
-            preview: preview,
-            img: img,
-            uploadBtn: uploadBtn,
-            result: e.target.result.substring(0, 50) + '...'
-        });
+        // Option image upload
         
         if (preview && img) {
             img.src = e.target.result;
@@ -1524,13 +1504,7 @@ async function saveQuiz(e) {
         const questionType = formData.get(`questionType_${questionNum}`);
         const questionPoints = parseInt(formData.get(`questionPoints_${questionNum}`)) || 1;
         
-        // console.log(`🔍 Processing question ${index + 1}/${questionElements.length}:`, {
-            questionNum: questionNum,
-            text: questionText,
-            type: questionType,
-            points: questionPoints,
-            element: element
-        });
+        // Processing question
         
         if (!questionText || !questionType) {
             // console.log(`⚠️ Skipping question ${questionNum} - missing text or type`);
@@ -1595,12 +1569,7 @@ async function saveQuiz(e) {
                     optionIndex++;
                 }
                 
-                // console.log(`🔍 Multiple Choice Question ${questionNum}:`, {
-                    correctAnswer,
-                    options,
-                    optionsLength: options.length,
-                    isValid: options.length >= 2 && !isNaN(correctAnswer) && correctAnswer >= 0 && correctAnswer < options.length
-                });
+                // Multiple Choice Question
                 
                 if (options.length >= 2 && !isNaN(correctAnswer) && correctAnswer >= 0 && correctAnswer < options.length) {
                     questionData.options = options;
@@ -1623,12 +1592,7 @@ async function saveQuiz(e) {
                     multiOptionIndex++;
                 }
                 
-                // console.log(`🔍 Multiple Answer Question ${questionNum}:`, {
-                    correctAnswers,
-                    multiOptions,
-                    optionsLength: multiOptions.length,
-                    isValid: multiOptions.length >= 2 && correctAnswers.length > 0 && correctAnswers.every(val => val >= 0 && val < multiOptions.length)
-                });
+                // Multiple Answer Question
                 
                 if (multiOptions.length >= 2 && correctAnswers.length > 0 && correctAnswers.every(val => val >= 0 && val < multiOptions.length)) {
                     questionData.options = multiOptions;
