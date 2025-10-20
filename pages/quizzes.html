@@ -1,39 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quizzes & Tests - CFA Leadership Development</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
     <!-- Load navbar component styles -->
     <link rel="stylesheet" href="../styles/navbar-component.css">
     <link rel="stylesheet" href="../styles/quiz-content.css">
     <link rel="stylesheet" href="../styles/toast-component.css">
+    <link rel="stylesheet" href="../styles/tabs-component.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+
     <!-- Load component scripts -->
     <script src="../components/navbar-component.js"></script>
     <script src="../components/toast-component.js"></script>
     <script src="../database/config.js"></script>
     <script src="../scripts/notification-service.js"></script>
+    <script src="../components/tabs-component.js"></script>
+
+
 </head>
+
 <body>
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Tabs Navigation -->
-        <div class="tabs">
-            <button class="tab active" id="availableQuizzes">
-                <i class="fas fa-list"></i>
-                Available Quizzes
-            </button>
-            <button class="tab" id="quizResults">
-                <i class="fas fa-chart-line"></i>
-                My Results
-            </button>
-            <button class="tab" id="createQuiz">
-                <i class="fas fa-plus"></i>
-                Create Quiz
-            </button>
+        <!-- Tabs Component -->
+        <div class="tabs-container" id="tabsContainer">
+            <!-- Tabs will be dynamically generated here -->
         </div>
 
         <!-- Tab Content -->
@@ -126,7 +122,7 @@
                     </tbody>
                 </table>
             </div>
-            
+
             <!-- Mobile Results Cards -->
             <div class="results-cards-mobile" id="resultsCardsMobile">
                 <!-- Mobile cards will be populated here -->
@@ -135,57 +131,60 @@
 
         <!-- Create Quiz Tab -->
         <div class="tab-content" id="createQuizContent">
-                <div class="content-header">
-                    <h1>Create New Quiz</h1>
-                    <p>Build custom quizzes for your team or organization</p>
-                </div>
+            <div class="content-header">
+                <h1>Create New Quiz</h1>
+                <p>Build custom quizzes for your team or organization</p>
+            </div>
 
-                <div class="create-quiz-form">
-                    <form id="quizForm">
-                        <div class="form-section">
-                            <h3>Quiz Information</h3>
-                            <div class="quiz-info-layout">
-                                <div class="quiz-left-section">
-                                    <div class="form-group">
-                                        <label for="quizTitle">Quiz Title</label>
-                                        <input type="text" id="quizTitle" name="quizTitle" placeholder="Enter quiz title" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="quizPassingScore">Passing Score (%)</label>
-                                        <input type="number" id="quizPassingScore" name="quizPassingScore" min="1" max="100" value="70" required>
-                                        <small class="form-help">Percentage needed to pass the quiz (1-100)</small>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="quizDescription">Description</label>
-                                        <textarea id="quizDescription" name="quizDescription" rows="6" placeholder="Enter quiz description"></textarea>
-                                    </div>
+            <div class="create-quiz-form">
+                <form id="quizForm">
+                    <div class="form-section">
+                        <h3>Quiz Information</h3>
+                        <div class="quiz-info-layout">
+                            <div class="quiz-left-section">
+                                <div class="form-group">
+                                    <label for="quizTitle">Quiz Title</label>
+                                    <input type="text" id="quizTitle" name="quizTitle" placeholder="Enter quiz title"
+                                        required>
                                 </div>
-                                <div class="quiz-right-section">
-                                    <div class="form-group">
-                                        <label for="quizDifficulty">Difficulty</label>
-                                        <select id="quizDifficulty" name="quizDifficulty">
-                                            <option value="">Select Difficulty</option>
-                                            <option value="beginner">Beginner</option>
-                                            <option value="intermediate">Intermediate</option>
-                                            <option value="advanced">Advanced</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="quizCategory">Category</label>
-                                        <select id="quizCategory" name="quizCategory">
-                                            <option value="">Select Category</option>
-                                            <option value="leadership">Leadership</option>
-                                            <option value="communication">Communication</option>
-                                            <option value="management">Management</option>
-                                            <option value="teamwork">Teamwork</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="quizTags">Tags</label>
-                                        <div class="tag-management-container">
-                                            <div class="quiz-tags" id="tagDisplay">
-                                                <!-- Tags will be displayed here -->
-                                            </div>
+                                <div class="form-group">
+                                    <label for="quizPassingScore">Passing Score (%)</label>
+                                    <input type="number" id="quizPassingScore" name="quizPassingScore" min="1" max="100"
+                                        value="70" required>
+                                    <small class="form-help">Percentage needed to pass the quiz (1-100)</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="quizDescription">Description</label>
+                                    <textarea id="quizDescription" name="quizDescription" rows="6"
+                                        placeholder="Enter quiz description"></textarea>
+                                </div>
+                            </div>
+                            <div class="quiz-right-section">
+                                <div class="form-group">
+                                    <label for="quizDifficulty">Difficulty</label>
+                                    <select id="quizDifficulty" name="quizDifficulty">
+                                        <option value="">Select Difficulty</option>
+                                        <option value="beginner">Beginner</option>
+                                        <option value="intermediate">Intermediate</option>
+                                        <option value="advanced">Advanced</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="quizCategory">Category</label>
+                                    <select id="quizCategory" name="quizCategory">
+                                        <option value="">Select Category</option>
+                                        <option value="leadership">Leadership</option>
+                                        <option value="communication">Communication</option>
+                                        <option value="management">Management</option>
+                                        <option value="teamwork">Teamwork</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="quizTags">Tags</label>
+                                    <div class="tag-management-container">
+                                        <div class="quiz-tags" id="tagDisplay">
+                                            <!-- Tags will be displayed here -->
+                                        </div>
                                         <div class="manage-tags-actions">
                                             <div class="manage-tags-link" onclick="openManageTagsModal()">
                                                 <i class="fas fa-cog"></i>
@@ -196,114 +195,115 @@
                                                 <span>Deselect All Tags</span>
                                             </div>
                                         </div>
-                                        </div>
-                                        <small class="form-help">Click on tags to select them for your quiz. Use "Manage Tags" to add new tags to the list.</small>
                                     </div>
+                                    <small class="form-help">Click on tags to select them for your quiz. Use "Manage
+                                        Tags" to add new tags to the list.</small>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="form-section">
-                            <h3>Questions</h3>
-                            <div id="questionsContainer">
-                                <!-- Questions will be added here -->
-                            </div>
-                            <button type="button" class="btn btn-secondary" id="addQuestion">
-                                <i class="fas fa-plus"></i>
-                                Add Question
-                            </button>
+                    <div class="form-section">
+                        <h3>Questions</h3>
+                        <div id="questionsContainer">
+                            <!-- Questions will be added here -->
                         </div>
+                        <button type="button" class="btn btn-secondary" id="addQuestion">
+                            <i class="fas fa-plus"></i>
+                            Add Question
+                        </button>
+                    </div>
 
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" id="previewQuiz">Preview Quiz</button>
-                            <button type="submit" class="btn btn-primary">Save Quiz</button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="previewQuiz">Preview Quiz</button>
+                        <button type="submit" class="btn btn-primary">Save Quiz</button>
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
-
-    <!-- Quiz Taking Modal -->
-    <div class="modal-overlay" id="quizModal">
-        <div class="modal-content quiz-modal">
-            <div class="modal-header">
-                <h2 id="quizModalTitle">Quiz Title</h2>
-                <div class="quiz-progress">
-                    <span id="currentQuestion">1</span> of <span id="totalQuestions">10</span>
-                </div>
-                <button class="modal-close" id="quizModalClose">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="quiz-question" id="quizQuestion">
-                    <!-- Question content will be populated here -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="prevQuestion" disabled>Previous</button>
-                <button class="btn btn-primary" id="nextQuestion">Next</button>
-                <button class="btn btn-success" id="submitQuiz" style="display: none;">Submit Quiz</button>
-            </div>
         </div>
-    </div>
+        </div>
 
-    <!-- Quiz Results Modal -->
-    <div class="modal-overlay" id="quizResultsModal">
-        <div class="modal-content results-modal">
-            <div class="modal-header">
-                <h2>Quiz Results</h2>
-                <button class="modal-close" id="resultsModalClose">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="results-content" id="resultsContent">
-                    <!-- Results will be populated here -->
+        <!-- Quiz Taking Modal -->
+        <div class="modal-overlay" id="quizModal">
+            <div class="modal-content quiz-modal">
+                <div class="modal-header">
+                    <h2 id="quizModalTitle">Quiz Title</h2>
+                    <div class="quiz-progress">
+                        <span id="currentQuestion">1</span> of <span id="totalQuestions">10</span>
+                    </div>
+                    <button class="modal-close" id="quizModalClose">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" id="closeResults">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
-
-    <!-- Image Modal -->
-    <div id="imageModal" class="image-modal">
-        <div class="image-modal-content">
-            <span class="image-modal-close">&times;</span>
-            <img id="modalImage" src="" alt="Enlarged Image">
-        </div>
-    </div>
-
-    <!-- Manage Tags Modal -->
-    <div id="manageTagsModal" class="manage-tags-modal">
-        <div class="manage-tags-modal-content">
-            <div class="manage-tags-header">
-                <h3>Manage Quiz Tags</h3>
-                <span class="manage-tags-close">&times;</span>
-            </div>
-            <div class="manage-tags-body">
-                <div class="existing-tags-section">
-                    <h4>Existing Tags</h4>
-                    <div id="existingTagsList" class="existing-tags-list">
-                        <!-- Existing tags will be displayed here -->
+                <div class="modal-body">
+                    <div class="quiz-question" id="quizQuestion">
+                        <!-- Question content will be populated here -->
                     </div>
                 </div>
-                <div class="add-tag-section">
-                    <h4>Add New Tag</h4>
-                    <div class="add-tag-input">
-                        <input type="text" id="newTagInput" placeholder="Enter new tag name">
-                        <button type="button" class="btn btn-primary" onclick="addNewTag()">Add Tag</button>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="prevQuestion" disabled>Previous</button>
+                    <button class="btn btn-primary" id="nextQuestion">Next</button>
+                    <button class="btn btn-success" id="submitQuiz" style="display: none;">Submit Quiz</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Results Modal -->
+        <div class="modal-overlay" id="quizResultsModal">
+            <div class="modal-content results-modal">
+                <div class="modal-header">
+                    <h2>Quiz Results</h2>
+                    <button class="modal-close" id="resultsModalClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="results-content" id="resultsContent">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="closeResults">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Container -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Image Modal -->
+        <div id="imageModal" class="image-modal">
+            <div class="image-modal-content">
+                <span class="image-modal-close">&times;</span>
+                <img id="modalImage" src="" alt="Enlarged Image">
+            </div>
+        </div>
+
+        <!-- Manage Tags Modal -->
+        <div id="manageTagsModal" class="manage-tags-modal">
+            <div class="manage-tags-modal-content">
+                <div class="manage-tags-header">
+                    <h3>Manage Quiz Tags</h3>
+                    <span class="manage-tags-close">&times;</span>
+                </div>
+                <div class="manage-tags-body">
+                    <div class="existing-tags-section">
+                        <h4>Existing Tags</h4>
+                        <div id="existingTagsList" class="existing-tags-list">
+                            <!-- Existing tags will be displayed here -->
+                        </div>
+                    </div>
+                    <div class="add-tag-section">
+                        <h4>Add New Tag</h4>
+                        <div class="add-tag-input">
+                            <input type="text" id="newTagInput" placeholder="Enter new tag name">
+                            <button type="button" class="btn btn-primary" onclick="addNewTag()">Add Tag</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     </main>
 
     <script src="../scripts/quiz-script.js?v=43"></script>
@@ -314,11 +314,67 @@
 
     <script>
         // Initialize navbar when page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             if (typeof loadNavbar === 'function') {
                 loadNavbar();
             }
+            
+            // Initialize tabs component
+            initializeQuizTabs();
         });
+        
+        // Initialize quiz tabs
+        function initializeQuizTabs() {
+            if (typeof TabsComponent === 'undefined' || !tabsComponent) {
+                console.error('TabsComponent not available');
+                return;
+            }
+
+            // Define quiz tabs configuration
+            const tabsConfig = [
+                {
+                    id: 'availableQuizzes',
+                    label: 'Available Quizzes',
+                    icon: 'fas fa-list'
+                },
+                {
+                    id: 'quizResults',
+                    label: 'My Results',
+                    icon: 'fas fa-chart-line'
+                },
+                {
+                    id: 'createQuiz',
+                    label: 'Create Quiz',
+                    icon: 'fas fa-plus'
+                }
+            ];
+
+            // Configure the tabs component
+            tabsComponent.options.showRefresh = false; // No refresh button needed for quizzes
+            tabsComponent.options.tabChangeCallback = handleQuizTabChange;
+
+            // Create the tabs
+            tabsComponent.createTabs(tabsConfig);
+        }
+        
+        // Handle quiz tab changes
+        function handleQuizTabChange(tabId) {
+            console.log('Switched to quiz tab:', tabId);
+            
+            // Add specific logic for each tab if needed
+            switch(tabId) {
+                case 'availableQuizzes':
+                    // Load available quizzes if needed
+                    break;
+                case 'quizResults':
+                    // Load quiz results if needed
+                    break;
+                case 'createQuiz':
+                    // Initialize create quiz form if needed
+                    break;
+            }
+        }
     </script>
 </body>
+
 </html>

@@ -277,51 +277,18 @@ function saveQuizResults() {
     localStorage.setItem('quizResults', JSON.stringify(quizResults));
 }
 
-// Setup navigation
+// Setup navigation - Now handled by TabsComponent
 function setupNavigation() {
-    const tabs = document.querySelectorAll('.tab');
-    
-    tabs.forEach(tab => {
-        tab.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Remove active class from all tabs
-            tabs.forEach(t => t.classList.remove('active'));
-            
-            // Add active class to clicked tab
-            this.classList.add('active');
-            
-            // Show corresponding content
-            const targetId = this.id;
-            showContentSection(targetId);
-        });
-    });
+    // Tab navigation is now handled by TabsComponent
+    // This function is kept for compatibility but does nothing
+    console.log('Tab navigation handled by TabsComponent');
 }
 
-// Show content section
+// Show content section - Now handled by TabsComponent
 function showContentSection(sectionId) {
-    // Hide all tab content
-    const tabContents = document.querySelectorAll('.tab-content');
-    tabContents.forEach(content => content.classList.remove('active'));
-    
-    // Show target tab content
-    const targetContent = document.getElementById(sectionId + 'Content');
-    if (targetContent) {
-        targetContent.classList.add('active');
-        
-        // Load section-specific data
-        switch(sectionId) {
-            case 'availableQuizzes':
-                renderAvailableQuizzes();
-                break;
-            case 'quizResults':
-                renderQuizResults();
-                break;
-            case 'createQuiz':
-                // Form is already set up
-                break;
-        }
-    }
+    // Content switching is now handled by TabsComponent
+    // This function is kept for compatibility but does nothing
+    console.log('Content switching handled by TabsComponent');
 }
 
 // Setup quiz filters
