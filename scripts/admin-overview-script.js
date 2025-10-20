@@ -2,10 +2,7 @@
 
 // Admin Overview Script loaded
 
-// Test function to verify script is working
-window.testScript = function() {
-    return 'Script is functional';
-};
+// Test script removed - no longer needed
 
 document.addEventListener('DOMContentLoaded', async function() {
     try {
@@ -78,16 +75,16 @@ function setupRoleBasedUI() {
     const currentUser = window.currentUser;
     const userRole = currentUser.role || 'Team Member';
     
-    console.log('🔍 Setting up UI for role:', userRole);
+    // Setting up UI for role
     
     // Get the role ID for permission checking
     const roleId = reverseRoleMapping[userRole] || 'team-member';
-    console.log('🔍 Role ID for permissions:', roleId);
+    // Role ID for permissions
     
     // Find the role definition to get page access
     const roleDefinition = roles.find(r => r.id === roleId);
     const userPageAccess = roleDefinition ? (roleDefinition.pageAccess || []) : pageAccessLevels[1];
-    console.log('🔍 User page access from role definition:', userPageAccess);
+    // User page access from role definition
     
     // Update sidebar header based on role
     const sidebarHeader = document.querySelector('.sidebar-header h2');
@@ -114,7 +111,7 @@ function setupRoleBasedUI() {
         const item = document.getElementById(itemId);
         if (item) {
             const hasAccess = userPageAccess.includes(sidebarItems[itemId]);
-            console.log(`🔍 ${itemId}: ${hasAccess ? 'show' : 'hide'} (${sidebarItems[itemId]} in ${userPageAccess})`);
+            // Show/hide sidebar items based on permissions
             if (hasAccess) {
                 item.style.display = 'flex';
             } else {
@@ -150,7 +147,7 @@ function setupRoleBasedUI() {
 
 // Refresh role-based UI after role changes
 function refreshRoleBasedUI() {
-    console.log('🔍 Refreshing role-based UI after role changes...');
+    // Refreshing role-based UI after role changes
     setupRoleBasedUI();
 }
 
@@ -387,7 +384,7 @@ async function loadUserData() {
     }
     // Admins can see all users (no filtering)
     
-    console.log('🔍 Filtered users for role', userRole, ':', filteredUsers.length, 'out of', users.length);
+    // Filtered users for role
     
     // Cache users data to avoid redundant queries
     window.cachedUsers = filteredUsers;
@@ -744,7 +741,7 @@ async function openUserDetailsModal(username) {
         localStorage.setItem(userProgressKey, JSON.stringify(testModuleProgress));
         userProgress = testModuleProgress;
         
-        console.log('Added test module progress for admin user:', testModuleProgress);
+        // Added test module progress for admin user
     }
     
     // Calculate module progress statistics
@@ -2849,25 +2846,7 @@ async function refreshDataFromDatabase() {
 // Make refresh function available globally
 window.refreshDataFromDatabase = refreshDataFromDatabase;
 
-// Test function for debugging modals
-window.testModal = function() {
-    console.log('Testing modal functionality...');
-    const modal = document.getElementById('userModal');
-    const newUserBtn = document.getElementById('newUserBtn');
-    
-    console.log('Modal found:', !!modal);
-    
-    if (modal) {
-        modal.classList.add('show');
-        console.log('Modal should now be visible');
-    }
-    
-    if (newUserBtn) {
-        console.log('New User button element:', newUserBtn);
-        console.log('Button onclick:', newUserBtn.onclick);
-        console.log('Button event listeners:', newUserBtn.addEventListener ? 'Has addEventListener' : 'No addEventListener');
-    }
-};
+// Test modal function removed - no longer needed
 
 // Module Assignment Functions
 let moduleAssignments = [];
@@ -3655,13 +3634,13 @@ const pageAccessLevels = {
 // Load role management data
 async function loadRoleManagementData() {
     try {
-        console.log('🔍 Loading role management data...');
+        // Loading role management data
         
         // Load roles from localStorage (in a real app, this would come from the database)
         const storedRoles = localStorage.getItem('roles');
         if (storedRoles) {
             roles = JSON.parse(storedRoles);
-            console.log('🔍 Loaded roles from localStorage:', roles);
+            // Loaded roles from localStorage
         } else {
             // Default roles if none exist
             roles = [
@@ -3671,21 +3650,13 @@ async function loadRoleManagementData() {
                 { id: 'team-member', name: 'Team Member', description: 'Basic access', level: 1, pageAccess: pageAccessLevels[1] }
             ];
             localStorage.setItem('roles', JSON.stringify(roles));
-            console.log('🔍 Created default roles:', roles);
+            // Created default roles
         }
         
         // Render role management content
-        console.log('🔍 Rendering role overview cards...');
         renderRoleOverviewCards();
-        
-        console.log('🔍 Rendering roles grid...');
         renderRolesGrid();
-        
-        
-        console.log('🔍 Setting up event listeners...');
         setupRoleManagementEventListeners();
-        
-        console.log('🔍 Role management data loaded successfully!');
         
     } catch (error) {
         console.error('❌ Error loading role management data:', error);
@@ -3707,7 +3678,7 @@ function renderRoleOverviewCards() {
 // Render roles grid
 function renderRolesGrid() {
     const rolesGrid = document.getElementById('rolesGrid');
-    console.log('🔍 renderRolesGrid - rolesGrid element:', rolesGrid);
+    // Render roles grid
     if (!rolesGrid) {
         console.error('❌ rolesGrid element not found!');
         return;
@@ -3829,18 +3800,18 @@ function closeRoleModal() {
 
 // Populate role page access
 function populateRolePageAccess(selectedPageAccess) {
-    console.log('🔍 populateRolePageAccess called with:', selectedPageAccess);
+    // Populate role page access
     const rolePermissionsGrid = document.getElementById('rolePermissionsGrid');
-    console.log('🔍 rolePermissionsGrid element:', rolePermissionsGrid);
+    // Role permissions grid element
     if (!rolePermissionsGrid) {
         console.error('❌ rolePermissionsGrid element not found!');
         return;
     }
     
-    console.log('🔍 Available page permissions:', pagePermissions);
+    // Available page permissions
     const permissionsHTML = Object.entries(pagePermissions).map(([pageName, pageInfo]) => {
         const isChecked = selectedPageAccess.includes(pageInfo.id);
-        console.log(`🔍 Page ${pageInfo.name} (${pageInfo.id}): ${isChecked ? 'checked' : 'unchecked'}`);
+        // Page permission status
         return `
         <div class="permission-item">
             <input type="checkbox" 
@@ -3918,7 +3889,7 @@ function saveRole(e) {
 function getSelectedPageAccess() {
     const checkboxes = document.querySelectorAll('#rolePermissionsGrid input[type="checkbox"]:checked');
     const selectedAccess = Array.from(checkboxes).map(cb => cb.value);
-    console.log('🔍 getSelectedPageAccess - Selected checkboxes:', selectedAccess);
+    // Get selected page access
     return selectedAccess;
 }
 
@@ -3929,13 +3900,9 @@ function generateRoleId() {
 
 // Edit role
 function editRole(roleId) {
-    console.log('🔍 editRole called with ID:', roleId);
-    console.log('🔍 Available roles:', roles);
+    // Edit role functionality
     const role = roles.find(r => r.id === roleId);
-    console.log('🔍 Found role:', role);
-    if (role) {
-        console.log('🔍 Role page access:', role.pageAccess);
-    }
+    // Found role
     openRoleModal(roleId);
 }
 
@@ -4750,21 +4717,7 @@ function saveNotificationSettings() {
     showToast('success', 'Settings Saved', 'Your notification preferences have been saved');
 }
 
-// Test notifications function for settings page
-function testNotifications() {
-    if (window.notificationService) {
-        // Test different notification types
-        window.notificationService.showSuccess('Test notification from settings', 'Settings Test');
-        setTimeout(() => {
-            window.notificationService.showInfo('This is an info notification test', 'Info Test');
-        }, 1000);
-        setTimeout(() => {
-            window.notificationService.showWarning('This is a warning notification test', 'Warning Test');
-        }, 2000);
-    } else {
-        showToast('error', 'Service Unavailable', 'Notification service is not available');
-    }
-}
+// Test notifications function removed - no longer needed
 
 // Privacy & Security Functions
 function setupTwoFactor() {

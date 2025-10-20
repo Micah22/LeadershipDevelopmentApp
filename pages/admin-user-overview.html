@@ -736,9 +736,6 @@
                             <button class="btn btn-primary" onclick="saveNotificationSettings()">
                                 <i class="fas fa-save"></i> Save Notification Settings
                             </button>
-                            <button class="btn btn-info" onclick="testNotifications()">
-                                <i class="fas fa-bell"></i> Test Notifications
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -1166,27 +1163,14 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
-        console.log('🔍 HTML: About to load admin-overview-script.js');
+        // Loading admin-overview-script.js
     </script>
     
-    <!-- Initialize Navbar Component -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔍 Initializing navbar component...');
-            if (window.NavbarComponent) {
-                console.log('🔍 NavbarComponent found, creating instance...');
-                const navbar = new window.NavbarComponent();
-                console.log('🔍 Navbar component initialized');
-            } else {
-                console.error('❌ NavbarComponent not found');
-            }
-        });
-    </script>
+    <!-- Navbar Component is auto-initialized by navbar-component.js -->
     
     <script src="../scripts/admin-overview-script.js?v=105"></script>
     <script>
-        console.log('🔍 HTML: admin-overview-script.js should be loaded now');
-        console.log('🔍 HTML: testScript available?', typeof window.testScript);
+        // admin-overview-script.js loaded
     </script>
 </body>
 </html>

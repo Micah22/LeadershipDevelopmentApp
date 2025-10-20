@@ -33,8 +33,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Set up event listeners
     setupEventListeners();
     
-    // Initialize theme
-    initializeTheme();
+    // Theme initialization is handled by navbar-component.js
     
     // Load progress data
     await loadProgressData();
