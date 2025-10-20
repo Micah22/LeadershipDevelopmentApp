@@ -40,16 +40,16 @@ body {
 
 /* Header Styles */
 header.header {
-    background: var(--white) !important;
-    color: var(--navy) !important;
-    padding: 0 !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-    position: sticky !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    z-index: 1000 !important;
+    background: var(--navy) ;
+    color: var(--white) ;
+    padding: 0 ;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) ;
+    position: sticky ;
+    top: 0 ;
+    left: 0 ;
+    right: 0 ;
+    width: 100% ;
+    z-index: 1000 ;
 }
 
 
@@ -57,7 +57,7 @@ header.header {
 .header-content {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 1rem 2rem !important;
+    padding: 1rem 2rem ;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -76,9 +76,9 @@ header.header {
 }
 
 .logo-text {
-    font-size: 1.5rem !important;
-    font-weight: 700 !important;
-    color: var(--navy) !important;
+    font-size: 1.5rem ;
+    font-weight: 700 ;
+    color: var(--white) ;
     white-space: nowrap;
 }
 
@@ -90,25 +90,25 @@ header.header {
 }
 
 .nav-link {
-    color: #666 !important;
-    text-decoration: none !important;
-    font-weight: 500 !important;
-    padding: 0.5rem 1rem !important;
-    border-radius: 6px !important;
-    transition: all 0.3s ease !important;
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
+    color: #ffffff ;
+    text-decoration: none ;
+    font-weight: 500 ;
+    padding: 0.5rem 1rem ;
+    border-radius: 6px ;
+    transition: all 0.3s ease ;
+    white-space: nowrap ;
+    flex-shrink: 0 ;
 }
 
 .nav-link:hover {
-    color: var(--navy) !important;
-    background-color: rgba(0, 0, 0, 0.05) !important;
+    color: var(--light-gray) ;
+    background-color: var(--cfa-blue, #00295c) ;
 }
 
 .nav-link.active {
-    background-color: #e3f2fd !important;
-    color: var(--cfa-red) !important;
-    border-bottom: 2px solid var(--cfa-red) !important;
+    background-color: #ffffff ;
+    color: var(--cfa-red) ;
+    border-bottom: 2px solid var(--cfa-red) ;
 }
 
 .user-info {
@@ -142,7 +142,7 @@ header.header {
 .hamburger-line {
     width: 20px;
     height: 2px;
-    background-color: var(--navy);
+    background-color: var(--white);
     margin: 2px 0;
     transition: all 0.3s ease;
     border-radius: 1px;
@@ -199,14 +199,14 @@ header.header {
     visibility: hidden;
     transform: translateY(-10px);
     transition: all 0.3s ease;
-    display: block !important;
+    display: block ;
 }
 
 .user-dropdown.show {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transform: translateY(0) !important;
-    display: block !important;
+    opacity: 1 ;
+    visibility: visible ;
+    transform: translateY(0) ;
+    display: block ;
 }
 
 .dropdown-header {
@@ -260,7 +260,7 @@ header.header {
 
 /* Hide mobile user options on desktop */
 .mobile-user-option {
-    display: none !important;
+    display: none ;
 }
 
 /* Mobile Styles */
@@ -280,7 +280,7 @@ header.header {
     }
     
     .logo-text {
-        font-size: 1rem !important;
+        font-size: 1rem ;
         white-space: nowrap;
     }
     
@@ -292,17 +292,17 @@ header.header {
     
     /* Hide user info on mobile */
     .user-info {
-        display: none !important;
+        display: none ;
     }
     
     /* Show hamburger menu on mobile */
     .hamburger-menu {
-        display: flex !important;
+        display: flex ;
     }
     
     /* Hide hamburger menu when nav is open */
     .hamburger-menu.hidden {
-        display: none !important;
+        display: none ;
     }
     
     /* Hide regular nav links on mobile */
@@ -310,6 +310,7 @@ header.header {
         position: fixed;
         top: 0;
         right: -100%;
+        color: var(--cfa-blue, #00295c) ;
         width: 85%;
         max-width: 350px;
         height: 100vh;
@@ -353,8 +354,9 @@ header.header {
     }
     
     .nav-link {
-        padding: 0.8rem 1.5rem !important;
-        font-size: 1rem !important;
+        padding: 0.8rem 1.5rem ;
+        font-size: 1rem ;
+        color: var(--black);
         white-space: nowrap;
         border-bottom: 1px solid var(--border-color);
         text-align: left;
@@ -377,10 +379,10 @@ header.header {
     }
     
     .mobile-user-option {
-        display: flex !important;
+        display: flex ;
         align-items: center;
         gap: 0.75rem;
-        color: var(--navy) !important;
+        color: var(--navy) ;
         font-weight: 500;
         padding: 0.8rem 1.5rem;
         font-size: 1rem;
@@ -390,8 +392,8 @@ header.header {
     }
     
     .mobile-user-option:hover {
-        background: var(--light-gray) !important;
-        color: var(--cfa-red) !important;
+        background: var(--light-gray) ;
+        color: var(--cfa-red) ;
     }
     
     .mobile-user-option i {
@@ -404,35 +406,35 @@ header.header {
     }
     
     .nav-link.active {
-        background-color: #e3f2fd !important;
-        color: var(--cfa-red) !important;
+        background-color: #e3f2fd ;
+        color: var(--cfa-red) ;
         border-left: 4px solid var(--cfa-red);
     }
 }
 
 /* Apps Page Special Styling */
 .apps-page-navbar .header-content {
-    justify-content: space-between !important;
+    justify-content: space-between ;
 }
 
 .apps-page-navbar .nav-links {
-    display: none !important;
+    display: none ;
 }
 
 .apps-page-navbar .hamburger-menu {
-    display: none !important;
+    display: none ;
 }
 
 .apps-page-navbar .header-right {
-    display: flex !important;
+    display: flex ;
 }
 
 .apps-page-navbar .user-info {
-    display: flex !important;
+    display: flex ;
 }
 
 .apps-page-navbar .notification-bell-container {
-    display: flex !important;
+    display: flex ;
 }
 
 /* Notification Bell Styles */
@@ -446,7 +448,7 @@ header.header {
 .notification-bell {
     background: none;
     border: none;
-    color: var(--navy);
+    color: var(--white);
     font-size: 1.2rem;
     cursor: pointer;
     padding: 0.5rem;
@@ -803,29 +805,29 @@ header.header {
 @media (max-width: 768px) {
     /* Ensure bell is always visible on mobile */
     .notification-bell-container {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+        display: flex ;
+        visibility: visible ;
+        opacity: 1 ;
         margin-right: 0.5rem;
         order: 1; /* Show before user info */
     }
     
     .notification-bell {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+        display: flex ;
+        visibility: visible ;
+        opacity: 1 ;
         width: 44px;
         height: 44px;
         font-size: 1.1rem;
-        background: var(--cfa-red) !important; /* Debug: make it obvious */
-        color: white !important;
-        border: 2px solid white !important;
-        touch-action: manipulation !important;
-        -webkit-tap-highlight-color: transparent !important;
-        -webkit-touch-callout: none !important;
-        -webkit-user-select: none !important;
-        user-select: none !important;
-        cursor: pointer !important;
+        background: var(--cfa-red) ; /* Debug: make it obvious */
+        color: white ;
+        border: 2px solid white ;
+        touch-action: manipulation ;
+        -webkit-tap-highlight-color: transparent ;
+        -webkit-touch-callout: none ;
+        -webkit-user-select: none ;
+        user-select: none ;
+        cursor: pointer ;
     }
     
     .notification-center {
@@ -835,8 +837,8 @@ header.header {
         left: auto;
         position: fixed;
         z-index: 10003;
-        top: 70px !important; /* Ensure it's below navbar */
-        transform: none !important; /* Remove any transforms that might hide it */
+        top: 70px ; /* Ensure it's below navbar */
+        transform: none ; /* Remove any transforms that might hide it */
     }
     
     .notification-badge {
@@ -889,12 +891,12 @@ header.header {
     
     /* Ensure bell menu is visible on mobile */
     .notification-center.show {
-        opacity: 1 !important;
-        visibility: visible !important;
-        transform: none !important;
-        display: block !important;
-        background: yellow !important; /* Debug: make it obvious */
-        border: 3px solid red !important; /* Debug: make it obvious */
+        opacity: 1 ;
+        visibility: visible ;
+        transform: none ;
+        display: block ;
+        background: yellow ; /* Debug: make it obvious */
+        border: 3px solid red ; /* Debug: make it obvious */
     }
     
     /* Touch-friendly buttons */
@@ -921,15 +923,15 @@ header.header {
     
     /* Force header-right to show bell on mobile */
     .header-right {
-        display: flex !important;
-        align-items: center !important;
-        gap: 0.5rem !important;
+        display: flex ;
+        align-items: center ;
+        gap: 0.5rem ;
     }
     
     /* Ensure bell is not hidden by other elements */
     .notification-bell-container {
-        position: relative !important;
-        z-index: 1000 !important;
+        position: relative ;
+        z-index: 1000 ;
     }
 }
 

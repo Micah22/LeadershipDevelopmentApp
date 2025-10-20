@@ -318,11 +318,11 @@
             if (typeof loadNavbar === 'function') {
                 loadNavbar();
             }
-            
+
             // Initialize tabs component
             initializeQuizTabs();
         });
-        
+
         // Initialize quiz tabs
         function initializeQuizTabs() {
             if (typeof TabsComponent === 'undefined' || !tabsComponent) {
@@ -356,13 +356,13 @@
             // Create the tabs
             tabsComponent.createTabs(tabsConfig);
         }
-        
+
         // Handle quiz tab changes
         function handleQuizTabChange(tabId) {
             console.log('Switched to quiz tab:', tabId);
-            
+
             // Add specific logic for each tab if needed
-            switch(tabId) {
+            switch (tabId) {
                 case 'availableQuizzes':
                     // Load available quizzes if needed
                     break;

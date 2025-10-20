@@ -2,7 +2,7 @@
 
 :root {
     --cfa-red: #E51636;
-    --navy: #002A5C;
+    --navy: #1B365D;
     --light-gray: #F8F9FA;
     --medium-gray: #6C757D;
     --dark-gray: #343A40;
@@ -27,11 +27,6 @@
     --info: #3742fa;
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;

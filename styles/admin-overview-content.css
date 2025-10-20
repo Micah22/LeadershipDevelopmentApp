@@ -42,74 +42,6 @@ body {
     width: 100%;
 }
 
-/* Admin Tools Tabs */
-.admin-tabs {
-    display: flex;
-    border-bottom: 2px solid var(--border-color);
-    margin-bottom: 2rem;
-    align-items: center;
-    gap: 0.25rem;
-    position: sticky;
-    top: 72px;
-    background: var(--white);
-    z-index: 100;
-    padding: 0.75rem 1rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    flex-wrap: nowrap;
-    overflow-x: auto;
-}
-
-.admin-tab {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.5rem 0.75rem;
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    border-bottom: 3px solid transparent;
-    position: relative;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-.admin-tab:hover {
-    color: var(--text-dark);
-    background: var(--light-gray);
-}
-
-.admin-tab.active {
-    color: var(--cfa-red);
-    border-bottom-color: var(--cfa-red);
-    background: var(--white);
-}
-
-.admin-tab i {
-    font-size: 1.1rem;
-}
-
-.refresh-btn {
-    margin-left: auto;
-    background: var(--cfa-red);
-    color: var(--white);
-    border: none;
-    padding: 0.5rem 0.75rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-}
-
-.refresh-btn:hover {
-    background: #d32f2f;
-    transform: translateY(-1px);
-}
-
 /* Tab Content */
 .tab-content {
     display: none;
@@ -263,18 +195,6 @@ body {
     gap: 0.75rem;
 }
 
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--cfa-red);
-    color: var(--white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 1rem;
-}
 
 .user-details h4 {
     color: var(--navy);
