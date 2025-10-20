@@ -23,6 +23,7 @@ class NavbarComponent {
             setTimeout(() => {
                 this.setupEventListeners();
                 this.updateNavigation();
+                this.updateUserInfo();
                 this.setupAppsPageStyling();
                 this.isLoaded = true;
                 console.log('Navbar component initialized successfully');
@@ -369,6 +370,46 @@ class NavbarComponent {
     refresh() {
         this.user = this.getCurrentUser();
         this.updateNavigation();
+        this.updateUserInfo();
+    }
+
+    /**
+     * Update user information in the navbar
+     */
+    updateUserInfo() {
+        try {
+            // Get current user data
+            const currentUser = this.getCurrentUser();
+            
+            // Debug: Log current user data
+            console.log('Navbar updateUserInfo - currentUser:', currentUser);
+            console.log('Navbar updateUserInfo - localStorage currentUser:', localStorage.getItem('currentUser'));
+            
+            // Update avatar
+            const userAvatar = document.getElementById('userAvatar');
+            if (userAvatar) {
+                const firstLetter = currentUser.username ? currentUser.username.charAt(0).toUpperCase() : 'U';
+                userAvatar.textContent = firstLetter;
+                console.log('Navbar updateUserInfo - Updated avatar to:', firstLetter);
+            }
+            
+            // Update dropdown user name
+            const dropdownUserName = document.getElementById('dropdownUserName');
+            if (dropdownUserName) {
+                dropdownUserName.textContent = currentUser.username || 'Guest';
+                console.log('Navbar updateUserInfo - Updated dropdown name to:', currentUser.username || 'Guest');
+            }
+            
+            // Update dropdown user role
+            const dropdownUserRole = document.getElementById('dropdownUserRole');
+            if (dropdownUserRole) {
+                dropdownUserRole.textContent = currentUser.role || 'User';
+                console.log('Navbar updateUserInfo - Updated dropdown role to:', currentUser.role || 'User');
+            }
+            
+        } catch (error) {
+            console.error('Error updating user info in navbar:', error);
+        }
     }
 
     /**
