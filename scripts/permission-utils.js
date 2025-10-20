@@ -173,6 +173,16 @@ class PermissionManager {
     hasPermission(permission) {
         const currentUser = this.getCurrentUser();
         
+        // Debug logging
+        console.log('Permission check - currentUser:', currentUser);
+        console.log('Permission check - requested permission:', permission);
+        
+        // Admin bypass - if user is admin, grant all permissions
+        if (currentUser.role === 'Admin' || currentUser.role === 'admin') {
+            console.log('Admin user detected, granting permission');
+            return true;
+        }
+        
         // Ensure roles are loaded
         this.ensureRolesLoaded();
         
@@ -181,6 +191,8 @@ class PermissionManager {
             console.warn('No roles loaded yet, denying permission for safety');
             return false;
         }
+        
+        console.log('Available roles:', this.roles.map(r => ({ id: r.id, name: r.name })));
         
         const role = this.getRoleByName(currentUser.role);
         
@@ -194,7 +206,9 @@ class PermissionManager {
             return false;
         }
 
-        return role.permissions.includes(permission);
+        const hasPermission = role.permissions.includes(permission);
+        console.log(`Permission result: ${hasPermission} for ${permission}`);
+        return hasPermission;
     }
 
     /**
