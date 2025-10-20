@@ -2,6 +2,8 @@
 
 // Toast notification function - Now handled by ToastComponent
 
+// Load permission utilities
+
 // Default roles and permissions
 const defaultRoles = [
     {
@@ -109,7 +111,7 @@ let editingRole = null;
 
 document.addEventListener('DOMContentLoaded', async function() {
     
-    // Check if user is logged in and is admin
+    // Check if user is logged in
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     const currentUserData = localStorage.getItem('currentUser');
     
@@ -118,21 +120,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
     
-    // Parse the user data
-    let username;
-    try {
-        const userObj = JSON.parse(currentUserData);
-        username = userObj.username;
-    } catch (e) {
-        username = currentUserData;
-    }
-    
-    // Check if user is admin
-    const users = getUsers();
-    const user = users.find(u => u.username === username);
-    if (!user || user.role !== 'Admin') {
-        alert('Access denied. Admin privileges required.');
-        window.location.href = 'user-dashboard.html';
+    // Check if user has permission to manage roles
+    if (!window.permissionManager || !window.permissionManager.requirePermission('manage_roles')) {
         return;
     }
     
@@ -146,6 +135,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // Initialize theme
         initializeTheme();
+        
+        // Apply role-based UI restrictions
+        if (window.permissionManager) {
+            window.permissionManager.applyRoleBasedUI();
+        }
         
         // Load role data
         await loadRoleData();
@@ -331,15 +325,17 @@ function renderRoles() {
                     </div>
                 </div>
                 <div class="role-actions">
-                    <button class="btn btn-primary" onclick="editRole('${role.id}')">
-                        <i class="fas fa-edit"></i>
-                        Edit
-                    </button>
+                    ${window.permissionManager && window.permissionManager.hasPermission('manage_roles') ? `
+                        <button class="btn btn-primary" onclick="editRole('${role.id}')">
+                            <i class="fas fa-edit"></i>
+                            Edit
+                        </button>
+                    ` : ''}
                     <button class="btn btn-secondary" onclick="viewRoleDetails('${role.id}')">
                         <i class="fas fa-eye"></i>
                         View
                     </button>
-                    ${role.id !== 'admin' ? `
+                    ${role.id !== 'admin' && window.permissionManager && window.permissionManager.hasPermission('manage_roles') ? `
                         <button class="btn btn-danger" onclick="deleteRole('${role.id}')">
                             <i class="fas fa-trash"></i>
                             Delete
@@ -388,6 +384,7 @@ function renderPermissionMatrix() {
                         <td>
                             <input type="checkbox" class="permission-checkbox" 
                                    ${role.permissions.includes(permission) ? 'checked' : ''}
+                                   ${window.permissionManager && window.permissionManager.hasPermission('manage_roles') ? '' : 'disabled'}
                                    onchange="updateRolePermission('${role.id}', '${permission}', this.checked)">
                         </td>
                     `).join('')}

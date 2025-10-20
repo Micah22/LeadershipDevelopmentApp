@@ -13,6 +13,7 @@
     <script src="../components/toast-component.js"></script>
     <script src="../database/config.js"></script>
     <script src="../scripts/notification-service.js"></script>
+    <script src="../scripts/permission-utils.js"></script>
 </head>
 <body>
     <!-- Navbar will be loaded by navbar-component.js -->
@@ -99,7 +100,7 @@
             <div class="role-management-section">
                 <div class="section-header">
                     <h2>Role Definitions</h2>
-                    <button class="btn btn-primary" onclick="openRoleModal()">
+                    <button class="btn btn-primary admin-only" onclick="openRoleModal()" style="display: none;">
                         <i class="fas fa-plus"></i>
                         Add New Role
                     </button>

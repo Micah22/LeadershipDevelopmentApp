@@ -54,6 +54,13 @@ async function initializePage() {
         return;
     }
     
+    // Check if user has permission to view users
+    if (!window.permissionManager || !window.permissionManager.hasPermission('view_users')) {
+        alert('Access denied. You do not have permission to view user management.');
+        window.location.href = 'user-dashboard.html';
+        return;
+    }
+    
     // Store current user info for role-based functionality
     window.currentUser = currentUser;
     
