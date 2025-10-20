@@ -90,10 +90,12 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
+    .tabs-container {
+        top: 40px;
+    }
     .admin-tabs {
         padding: 0.5rem;
         gap: 0.125rem;
-        top: 60px;
     }
 
     .admin-tab {

@@ -48,23 +48,7 @@ function updateUserInfo() {
     const user = users.find(u => u.username === username);
     
     if (user) {
-        // Update avatar
-        const avatar = document.getElementById('userAvatar');
-        if (avatar) {
-            avatar.textContent = user.fullName.charAt(0).toUpperCase();
-        }
-        
-        // Update name
-        const userName = document.getElementById('userName');
-        if (userName) {
-            userName.textContent = user.fullName;
-        }
-        
-        // Update role
-        const userRole = document.getElementById('userRole');
-        if (userRole) {
-            userRole.textContent = user.role;
-        }
+        // User info display is handled by navbar-component.js
     }
 }
 
@@ -97,18 +81,7 @@ function updateNavigation() {
 }
 
 function setupEventListeners() {
-    // Sign out button
-    const signOutBtn = document.getElementById('signOutBtn');
-    if (signOutBtn) {
-        signOutBtn.addEventListener('click', function() {
-            if (confirm('Are you sure you want to sign out?')) {
-                localStorage.removeItem('currentUser');
-                localStorage.removeItem('isLoggedIn');
-                localStorage.removeItem('username');
-                window.location.href = 'index.html';
-            }
-        });
-    }
+    // Sign out functionality is handled by navbar-component.js
     
     // Add module button
     const addModuleBtn = document.getElementById('addModuleBtn');

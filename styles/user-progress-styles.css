@@ -73,11 +73,6 @@
     --warning-orange: #ffa502;
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -291,12 +286,6 @@ body {
 }
 
 @media (max-width: 480px) {
-    .header-content {
-        padding: 0 0.5rem;
-    }
-    
-    
-    
     .main-content {
         padding: 0.5rem;
     }
@@ -356,34 +345,6 @@ body {
 }
 
 
-
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-
-.sign-out-btn {
-    background: none;
-    border: none;
-    color: var(--white);
-    padding: 0.5rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 1.1rem;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.sign-out-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-1px);
-}
 
 /* Main Content */
 .main-content {

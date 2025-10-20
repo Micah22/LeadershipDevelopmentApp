@@ -194,7 +194,7 @@ header.header {
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     min-width: 200px;
-    z-index: 1001;
+    z-index: 1003;
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
@@ -203,7 +203,8 @@ header.header {
 }
 
 .user-dropdown.show {
-    opacity: 1 ;
+    opacity: 100;
+    z-index: 1003;
     visibility: visible ;
     transform: translateY(0) ;
     display: block ;

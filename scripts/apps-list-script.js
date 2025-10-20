@@ -1,140 +1,30 @@
-// Apps List Script
-
-// Toast notification function - Now handled by ToastComponent
-
-document.addEventListener('DOMContentLoaded', async function() {
-    
-    // Check if user is logged in
+document.addEventListener('DOMContentLoaded', async () => {
+    // If you have a global auth gate, remove this block.
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    const currentUserData = localStorage.getItem('currentUser');
-    
-    if (!isLoggedIn || !currentUserData) {
-        window.location.href = 'index.html';
-        return;
-    }
-    
-    // Parse the user data - it might be a JSON string or just a username
-    let username;
-    try {
-        const userObj = JSON.parse(currentUserData);
-        username = userObj.username;
-    } catch (e) {
-        // If it's not JSON, assume it's just the username string
-        username = currentUserData;
-    }
-    
-    // Wait a bit for navbar to load first
-    setTimeout(async () => {
-        // Initialize the page
-        await initializePage();
-        
-        // Set up event listeners
-        setupEventListeners();
-        
-        // Initialize theme
-        initializeTheme();
-    }, 200);
+    if (!isLoggedIn) { window.location.href = 'index.html'; return; }
+
+    await initializePage();   // page-specific data only
+    setupEventListeners();    // coming soon cards, etc.
 });
 
+// Page-specific only
 async function initializePage() {
-    // Set up user info
-    await updateUserInfo();
-    
-    // Navigation is handled by navbar.js
-}
-
-async function updateUserInfo() {
-    const currentUserData = localStorage.getItem('currentUser');
-    
-    // Parse the user data - it might be a JSON string or just a username
-    let username;
-    try {
-        const userObj = JSON.parse(currentUserData);
-        username = userObj.username;
-    } catch (e) {
-        // If it's not JSON, assume it's just the username string
-        username = currentUserData;
-    }
-    
-    // Load users from database
-    let users = [];
-    try {
-        if (window.dbService && window.dbService.isConfigured) {
-            users = await window.dbService.getUsers();
-        } else {
-            console.warn('Database service not configured, using localStorage fallback');
-            showToast('warning', 'Database Unavailable', 'Using offline mode - some features may not be available');
-        }
-    } catch (error) {
-        console.error('Failed to load users from database:', error);
-        showToast('error', 'Database Error', `Failed to load user data: ${error.message || 'Unknown error'}`);
-        
-        // Fallback to localStorage
-        const localUsers = localStorage.getItem('users');
-        if (localUsers) {
-            try {
-                users = JSON.parse(localUsers);
-            } catch (e) {
-                console.error('Failed to parse localStorage users:', e);
-            }
-        }
-    }
-    
-    const user = users.find(u => u.username === username);
-    if (user) {
-        // Update navbar with user info
-        const userAvatar = document.querySelector('.user-avatar');
-        const userName = document.querySelector('.user-name');
-        
-        if (userAvatar) {
-            userAvatar.textContent = user.full_name ? user.full_name.charAt(0).toUpperCase() : username.charAt(0).toUpperCase();
-        }
-        
-        if (userName) {
-            userName.textContent = user.full_name || username;
-        }
-    }
+    // Populate apps list/grid for this page (no navbar/avatar/theme work here)
 }
 
 function setupEventListeners() {
-    // Add click handlers for coming soon cards
-    const comingSoonCards = document.querySelectorAll('.app-card.coming-soon');
-    comingSoonCards.forEach(card => {
-        card.addEventListener('click', function(e) {
-            e.preventDefault();
-            showToast('info', 'Coming Soon', 'This application is currently in development and will be available soon!');
-        });
-    });
+    document.querySelectorAll('.app-card.coming-soon')
+      .forEach(card => card.addEventListener('click', (e) => {
+          e.preventDefault();
+          showToast('info', 'Coming Soon', 'This application is currently in development and will be available soon!');
+      }));
 }
 
-function initializeTheme() {
-    // Check for saved theme preference or default to light mode
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    
-    // Update theme toggle if it exists
-    const themeToggle = document.querySelector('.theme-toggle');
-    if (themeToggle) {
-        const icon = themeToggle.querySelector('i');
-        if (icon) {
-            icon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        }
-    }
-}
-
-// Function to open an app
 function openApp(appName) {
-    switch (appName) {
-        case 'leadership-development':
-            // Redirect to user dashboard (the main entry point for leadership development)
-            window.location.href = 'user-dashboard.html';
-            break;
-        default:
-            showToast('error', 'App Not Found', 'The requested application could not be found.');
-            break;
+    if (appName === 'leadership-development') {
+        window.location.href = 'user-dashboard.html';
+        return;
     }
+    showToast('error', 'App Not Found', 'The requested application could not be found.');
 }
-
-// Export functions for global access
 window.openApp = openApp;
-

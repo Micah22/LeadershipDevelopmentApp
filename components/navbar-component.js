@@ -133,40 +133,53 @@ class NavbarComponent {
      * Setup user dropdown functionality
      */
     setupUserDropdown() {
-        const userAvatar = document.getElementById('userAvatar');
-        const userDropdown = document.getElementById('userDropdown');
-        
-        console.log('Setting up user dropdown:', { userAvatar, userDropdown });
-        
-        if (!userAvatar || !userDropdown) {
-            console.error('User dropdown elements not found:', { userAvatar, userDropdown });
-            // Try again after a short delay
-            setTimeout(() => {
-                this.setupUserDropdown();
-            }, 200);
-            return;
-        }
-
-        // Remove any existing event listeners
-        userAvatar.removeEventListener('click', this.handleAvatarClick);
-        
-        // Create bound method for event listener
-        this.handleAvatarClick = (e) => {
-            console.log('Avatar clicked, toggling dropdown');
-            e.preventDefault();
-            e.stopPropagation();
-            userDropdown.classList.toggle('show');
-            console.log('Dropdown classes after toggle:', userDropdown.className);
+        const bind = () => {
+            const userAvatar = document.getElementById('userAvatar');
+            const userDropdown = document.getElementById('userDropdown');
+            if (!userAvatar || !userDropdown) return false;
+    
+            // Prevent duplicate bindings
+            if (this._avatarBound) return true;
+    
+            // Store bound handlers on the instance to allow cleanup
+            this._handleAvatarClick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                userDropdown.classList.toggle('show');
+            };
+            this._handleDocClick = (e) => {
+                if (!userAvatar.contains(e.target) && !userDropdown.contains(e.target)) {
+                    userDropdown.classList.remove('show');
+                }
+            };
+    
+            userAvatar.addEventListener('click', this._handleAvatarClick);
+            document.addEventListener('click', this._handleDocClick);
+            this._avatarBound = true;
+            return true;
         };
-
-        userAvatar.addEventListener('click', this.handleAvatarClick);
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!userAvatar.contains(e.target) && !userDropdown.contains(e.target)) {
-                userDropdown.classList.remove('show');
+    
+        // Try now; if not ready, retry a few times
+        if (!bind()) {
+            let tries = 0;
+            const timer = setInterval(() => {
+                if (bind() || ++tries >= 20) clearInterval(timer);
+            }, 100);
+        }
+    
+        // Re-bind if header contents change (e.g., other code updates navbar)
+        if (!this._dropdownObserver) {
+            const header = document.getElementById('navbar') || document.querySelector('header');
+            if (header) {
+                this._dropdownObserver = new MutationObserver(() => {
+                    if (!document.getElementById('userAvatar') || !this._avatarBound) {
+                        this._avatarBound = false;
+                        bind();
+                    }
+                });
+                this._dropdownObserver.observe(header, { childList: true, subtree: true });
             }
-        });
+        }
     }
 
     /**

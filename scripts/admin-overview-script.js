@@ -25,8 +25,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Load user data
     await loadUserData();
     
-    // Initialize theme
-    initializeTheme();
+    // Theme initialization is handled by navbar-component.js
     
     // Ensure content is visible after everything is loaded
     setTimeout(() => {
@@ -161,24 +160,7 @@ async function updateUserInfo() {
     const user = users.find(u => u.username === username);
     
     if (user) {
-        // Update avatar
-        const avatar = document.getElementById('userAvatar');
-        if (avatar) {
-            const fullName = user.full_name || user.fullName || user.username || 'U';
-            avatar.textContent = fullName.charAt(0).toUpperCase();
-        }
-        
-        // Update name
-        const userName = document.getElementById('userName');
-        if (userName) {
-            userName.textContent = user.full_name || user.fullName || user.username || 'Unknown User';
-        }
-        
-        // Update role
-        const userRole = document.getElementById('userRole');
-        if (userRole) {
-            userRole.textContent = user.role;
-        }
+        // User info display is handled by navbar-component.js
     }
 }
 
@@ -242,49 +224,10 @@ function setupEventListeners() {
         console.error('New User button not found!');
     }
     
-    // Avatar dropdown functionality
-    const userAvatar = document.getElementById('userAvatar');
-    const userDropdown = document.getElementById('userDropdown');
     
-    if (userAvatar && userDropdown) {
-        userAvatar.addEventListener('click', function(e) {
-            e.stopPropagation();
-            userDropdown.classList.toggle('show');
-        });
-        
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!userAvatar.contains(e.target) && !userDropdown.contains(e.target)) {
-                userDropdown.classList.remove('show');
-            }
-        });
-    }
+    // User info is handled by navbar-component.js
     
-    // Update dropdown user info
-    updateDropdownUserInfo();
-    
-    // Theme toggle button in dropdown
-    const themeToggle = document.getElementById('themeToggle');
-    if (themeToggle) {
-        themeToggle.addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleTheme();
-        });
-    }
-    
-    // Sign out button in dropdown
-    const signOutBtn = document.getElementById('signOutBtn');
-    if (signOutBtn) {
-        signOutBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            if (confirm('Are you sure you want to sign out?')) {
-                localStorage.removeItem('currentUser');
-                localStorage.removeItem('isLoggedIn');
-                localStorage.removeItem('username');
-                window.location.href = 'index.html';
-            }
-        });
-    }
+    // Theme toggle and sign out functionality is handled by navbar-component.js
     
     
     // Navigation items
@@ -2866,65 +2809,7 @@ function getTaskIndex(checklistItem) {
     return Array.from(items).indexOf(checklistItem);
 }
 
-// Theme toggle functionality
-function toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    
-    // Set the new theme
-    document.documentElement.setAttribute('data-theme', newTheme);
-    
-    // Update the icon
-    const themeIcon = document.getElementById('themeIcon');
-    if (themeIcon) {
-        themeIcon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-    }
-    
-    // Update the text
-    const themeText = document.getElementById('themeText');
-    if (themeText) {
-        themeText.textContent = newTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
-    }
-    
-    // Save theme preference
-    localStorage.setItem('theme', newTheme);
-    
-    console.log('Theme switched to:', newTheme);
-}
-
-// Initialize theme on page load
-function initializeTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    
-    const themeIcon = document.getElementById('themeIcon');
-    if (themeIcon) {
-        themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-    }
-    
-    const themeText = document.getElementById('themeText');
-    if (themeText) {
-        themeText.textContent = savedTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
-    }
-}
-
-// Update dropdown user info
-function updateDropdownUserInfo() {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    const username = currentUser.username || 'Admin';
-    const role = currentUser.role || 'Admin';
-    
-    const dropdownUserName = document.getElementById('dropdownUserName');
-    const dropdownUserRole = document.getElementById('dropdownUserRole');
-    
-    if (dropdownUserName) {
-        dropdownUserName.textContent = username;
-    }
-    
-    if (dropdownUserRole) {
-        dropdownUserRole.textContent = role;
-    }
-}
+// Theme, dropdown, and user info functionality is handled by navbar-component.js
 
 // Export functions for potential use in other scripts
 window.adminOverview = {

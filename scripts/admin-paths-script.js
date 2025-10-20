@@ -10,8 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up navigation
     updateNavigation();
     
-    // Set up sign out functionality
-    setupSignOut();
+    // Sign out functionality is handled by navbar-component.js
     
     // Set up admin controls
     setupAdminControls();
@@ -454,19 +453,4 @@ function createPathElement(pathName, pathData) {
     return pathDiv;
 }
 
-// Setup sign out functionality
-function setupSignOut() {
-    const signOutBtn = document.getElementById('signOutBtn');
-    
-    if (signOutBtn) {
-        signOutBtn.addEventListener('click', () => {
-            // Clear user data
-            localStorage.removeItem('userEmail');
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('currentUser');
-            
-            // Redirect to login
-            window.location.href = 'index.html';
-        });
-    }
-}
+// Sign out functionality is handled by navbar-component.js
