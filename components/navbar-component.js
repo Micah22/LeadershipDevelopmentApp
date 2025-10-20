@@ -184,16 +184,24 @@ class NavbarComponent {
     }
 
     /**
-     * Setup mobile user options (Dark Mode, Sign Out)
+     * Setup mobile user options (Dark Mode, Settings, Sign Out)
      */
     setupMobileUserOptions() {
         const darkModeToggle = document.getElementById('darkModeToggle');
+        const settingsBtn = document.getElementById('settingsBtn');
         const signOutBtn = document.getElementById('signOutBtn');
 
         if (darkModeToggle) {
             darkModeToggle.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.toggleDarkMode();
+            });
+        }
+
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.openSettings();
             });
         }
 
@@ -315,6 +323,44 @@ class NavbarComponent {
         localStorage.removeItem('username');
         localStorage.removeItem('currentUser');
         window.location.href = 'index.html';
+    }
+
+    /**
+     * Open settings modal
+     */
+    openSettings() {
+        // Close the dropdown first
+        const userDropdown = document.getElementById('userDropdown');
+        if (userDropdown) {
+            userDropdown.classList.remove('show');
+        }
+
+        // Check if we're on the user overview page
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('admin-user-overview.html')) {
+            // If on user overview page, switch to settings tab and scroll to it
+            const settingsTab = document.querySelector('[data-tab="settings"]');
+            if (settingsTab) {
+                // Click the settings tab to switch to it
+                settingsTab.click();
+                
+                // Scroll to the settings section
+                setTimeout(() => {
+                    const settingsSection = document.querySelector('.settings-section');
+                    if (settingsSection) {
+                        settingsSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }, 200);
+            } else {
+                // If settings tab doesn't exist, show a message
+                if (window.showToast) {
+                    window.showToast('info', 'Settings', 'Settings tab not found on this page');
+                }
+            }
+        } else {
+            // If not on user overview page, navigate to it
+            window.location.href = 'admin-user-overview.html';
+        }
     }
 
     /**
