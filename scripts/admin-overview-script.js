@@ -1641,52 +1641,68 @@ function getModuleData(moduleTitle) {
     };
 }
 
-// Tab navigation setup
+// Tab navigation setup using TabsComponent
 function setupTabNavigation() {
-    const tabs = document.querySelectorAll('.admin-tab');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Remove active class from all tabs
-            tabs.forEach(t => t.classList.remove('active'));
-            
-            // Add active class to clicked tab
-            this.classList.add('active');
-            
-            // Hide all tab content
-            const allTabContents = document.querySelectorAll('.tab-content');
-            allTabContents.forEach(content => content.classList.remove('active'));
-            
-            // Show the corresponding tab content
-            const tabId = this.id;
-            const contentId = tabId + 'Content';
-            const targetContent = document.getElementById(contentId);
-            
-            if (targetContent) {
-                targetContent.classList.add('active');
-                
-                // Load specific content based on tab
-                switch(tabId) {
-                    case 'userManagement':
-                        showUserManagementContent();
-                        break;
-                    case 'pathManagement':
-                        showPathManagementContent();
-                        break;
-                    case 'roleManagement':
-                        showRoleManagementContent();
-                        break;
-                    case 'reports':
-                        showReportsContent();
-                        break;
-                    case 'settings':
-                        // Settings content is already in HTML
-                        break;
-                }
-            }
-        });
-    });
+    if (typeof TabsComponent === 'undefined' || !tabsComponent) {
+        console.error('TabsComponent not available');
+        return;
+    }
+
+    // Define tabs configuration
+    const tabsConfig = [
+        {
+            id: 'userManagement',
+            label: 'User Management',
+            icon: 'fas fa-users'
+        },
+        {
+            id: 'pathManagement',
+            label: 'Path Management',
+            icon: 'fas fa-cogs'
+        },
+        {
+            id: 'roleManagement',
+            label: 'Role Management',
+            icon: 'fas fa-user-shield'
+        },
+        {
+            id: 'reports',
+            label: 'Reports',
+            icon: 'fas fa-chart-bar'
+        },
+        {
+            id: 'settings',
+            label: 'Settings',
+            icon: 'fas fa-cog'
+        }
+    ];
+
+    // Create tabs with callbacks
+    tabsComponent.options.showRefresh = true;
+    tabsComponent.options.refreshCallback = refreshDataFromDatabase;
+    tabsComponent.options.tabChangeCallback = handleTabChange;
+    tabsComponent.createTabs(tabsConfig);
+}
+
+// Handle tab change events
+function handleTabChange(tabId) {
+    switch(tabId) {
+        case 'userManagement':
+            showUserManagementContent();
+            break;
+        case 'pathManagement':
+            showPathManagementContent();
+            break;
+        case 'roleManagement':
+            showRoleManagementContent();
+            break;
+        case 'reports':
+            showReportsContent();
+            break;
+        case 'settings':
+            // Settings content is already in HTML
+            break;
+    }
 }
 
 // Content switching functions

@@ -10,14 +10,18 @@
     <link rel="stylesheet" href="../styles/admin-overview-content.css">
     <link rel="stylesheet" href="../styles/admin-path-management-styles.css?v=8">
     <link rel="stylesheet" href="../styles/toast-component.css">
+    <link rel="stylesheet" href="../styles/admin-overview-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../styles/tabs-component.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Load component scripts -->
     <script src="../components/navbar-component.js?v=2"></script>
     <script src="../components/toast-component.js"></script>
+    <script src="../components/tabs-component.js"></script>
     <script src="../database/config.js"></script>
     <script src="../scripts/notification-service.js"></script>
+
 </head>
 <body>
     <!-- Navbar Container -->
@@ -33,31 +37,9 @@
 
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Admin Tools Tabs -->
-        <div class="admin-tabs">
-            <button class="admin-tab active" id="userManagement">
-                <i class="fas fa-users"></i>
-                User Management
-            </button>
-            <button class="admin-tab" id="pathManagement">
-                <i class="fas fa-cogs"></i>
-                Path Management
-            </button>
-            <button class="admin-tab" id="roleManagement">
-                <i class="fas fa-user-shield"></i>
-                Role Management
-            </button>
-            <button class="admin-tab" id="reports">
-                <i class="fas fa-chart-bar"></i>
-                Reports
-            </button>
-            <button class="admin-tab" id="settings">
-                <i class="fas fa-cog"></i>
-                Settings
-            </button>
-            <button class="refresh-btn" onclick="refreshDataFromDatabase()" title="Refresh data from database">
-                <i class="fas fa-sync-alt"></i>
-            </button>
+        <!-- Tabs Component -->
+        <div class="tabs-container" id="tabsContainer">
+            <!-- Tabs will be dynamically generated here -->
         </div>
 
         <!-- Tab Content -->
