@@ -74,7 +74,7 @@ class NotificationService {
         container.style.pointerEvents = 'auto';
         
         document.body.appendChild(container);
-        console.log('Notification container created with mobile styles');
+        // console.log('Notification container created with mobile styles');
     }
 
     setupNotificationCenter() {
@@ -98,7 +98,7 @@ class NotificationService {
         const badge = document.getElementById('notificationBadge');
 
         if (!bellButton || !notificationCenter) {
-            console.log('Notification center elements not found, retrying...');
+            // console.log('Notification center elements not found, retrying...');
             setTimeout(() => this.initializeNotificationCenter(), 100);
             return;
         }
@@ -107,7 +107,7 @@ class NotificationService {
         bellButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Bell button clicked');
+            // console.log('Bell button clicked');
             this.toggleNotificationCenter();
         });
         
@@ -115,7 +115,7 @@ class NotificationService {
         bellButton.addEventListener('touchstart', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Bell button touched');
+            // console.log('Bell button touched');
             this.toggleNotificationCenter();
         });
         
@@ -123,7 +123,7 @@ class NotificationService {
         bellButton.addEventListener('touchend', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Bell button touch ended');
+            // console.log('Bell button touch ended');
             this.toggleNotificationCenter();
         });
         
@@ -132,7 +132,7 @@ class NotificationService {
             if (e.pointerType === 'touch') {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Bell button pointer down (touch)');
+                // console.log('Bell button pointer down (touch)');
                 this.toggleNotificationCenter();
             }
         });
@@ -197,14 +197,14 @@ class NotificationService {
         // Update notification center content
         this.updateNotificationCenter();
         
-        console.log('Notification center initialized');
+        // console.log('Notification center initialized');
     }
 
     toggleNotificationCenter() {
-        console.log('toggleNotificationCenter called');
+        // console.log('toggleNotificationCenter called');
         const notificationCenter = document.getElementById('notificationCenter');
         if (!notificationCenter) {
-            console.log('Notification center not found');
+            // console.log('Notification center not found');
             return;
         }
 
@@ -220,7 +220,7 @@ class NotificationService {
     showNotificationCenter() {
         const notificationCenter = document.getElementById('notificationCenter');
         if (!notificationCenter) {
-            console.log('Notification center element not found');
+            // console.log('Notification center element not found');
             return;
         }
 
@@ -749,14 +749,14 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         const bellButton = document.getElementById('notificationBell');
         if (bellButton && !bellButton.hasAttribute('data-initialized')) {
-            console.log('Setting up fallback mobile handler');
+            // console.log('Setting up fallback mobile handler');
             bellButton.setAttribute('data-initialized', 'true');
             
             // Simple fallback handler
             bellButton.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Fallback bell click handler triggered');
+                // console.log('Fallback bell click handler triggered');
                 
                 const notificationCenter = document.getElementById('notificationCenter');
                 if (notificationCenter) {

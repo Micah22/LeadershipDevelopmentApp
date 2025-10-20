@@ -2,7 +2,7 @@
 
 // Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Admin Paths page loaded');
+    // console.log('Admin Paths page loaded');
     
     // Set up user info
     updateUserInfo();

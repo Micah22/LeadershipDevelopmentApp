@@ -1,7 +1,7 @@
 // Admin Path Management Script
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Admin Path Management page loaded');
+    // console.log('Admin Path Management page loaded');
     
     // Check if user is logged in and is admin
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -248,9 +248,9 @@ function initializeGlobalModules() {
         
         // Save default modules to global storage
         localStorage.setItem('globalModules', JSON.stringify(defaultModules));
-        console.log('Initialized default global modules');
+        // console.log('Initialized default global modules');
     } else {
-        console.log('Existing modules found, preserving data');
+        // console.log('Existing modules found, preserving data');
     }
 }
 
@@ -595,7 +595,7 @@ function saveModuleChanges() {
     // Save updated modules to global storage
     localStorage.setItem('globalModules', JSON.stringify(modules));
     
-    console.log('Module saved to global storage:', {
+    // console.log('Module saved to global storage:', {
         title,
         description,
         status,
@@ -654,7 +654,7 @@ function deleteModule(moduleTitle) {
     // Save updated modules to global storage
     localStorage.setItem('globalModules', JSON.stringify(modules));
     
-    console.log(`Module "${moduleTitle}" deleted successfully`);
+    // console.log(`Module "${moduleTitle}" deleted successfully`);
     
     // Reload modules data
     loadModulesData();

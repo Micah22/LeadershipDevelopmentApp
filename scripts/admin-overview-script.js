@@ -403,7 +403,7 @@ async function loadUserData() {
     
     // Wait for all user progress data to load in parallel
     const userProgressData = await Promise.all(userProgressPromises);
-    console.log('Admin Overview - Loaded progress data for all users:', userProgressData.length);
+    // Loaded progress data for all users
     
     // Update summary cards
     updateSummaryCards(filteredUsers);
@@ -607,7 +607,7 @@ async function resetUserProgress(username) {
         // Delete all user progress from database
         if (window.dbService && window.dbService.isConfigured) {
             await window.dbService.deleteUserProgress(user.id);
-            console.log(`Progress reset for user: ${username} (ID: ${user.id})`);
+            // Progress reset for user
         }
         
         // Clear from localStorage as well
@@ -1496,7 +1496,7 @@ async function getUserProgress(username) {
     // Initialize userProgress object
     let userProgress = {};
     
-    console.log('Admin Overview - getUserProgress called with username:', username);
+    // Getting user progress
     
     try {
         if (window.dbService && window.dbService.isConfigured) {
@@ -1511,7 +1511,7 @@ async function getUserProgress(username) {
             if (user) {
                 // Get progress from database
                 const dbProgress = await window.dbService.getUserProgress(user.id);
-                console.log('Admin Overview - Database progress for user:', user.username, dbProgress);
+                // Database progress for user
                 
                 // Get modules from database
                 const modules = await window.dbService.getModules();
@@ -1533,7 +1533,7 @@ async function getUserProgress(username) {
                 const userProgressKey = `userProgress_${username}`;
                 localStorage.setItem(userProgressKey, JSON.stringify(userProgress));
                 
-                console.log('Admin Overview - Final userProgress object:', userProgress);
+                // Final userProgress object
             }
         } else {
             // Fallback to localStorage
@@ -1649,13 +1649,13 @@ function handleTabChange(tabId) {
 function showUserManagementContent() {
     // User management content is now handled by tab switching
     // This function can be used for any additional setup needed
-    console.log('User Management content shown');
+    // User Management content shown
 }
 
 async function showPathManagementContent() {
     try {
         // Path management content is now handled by tab switching
-        console.log('Path Management content shown');
+        // Path Management content shown
         
         // Load modules data when showing path management
         try {
@@ -1674,7 +1674,7 @@ async function showPathManagementContent() {
 async function showRoleManagementContent() {
     try {
         // Role management content is now handled by tab switching
-        console.log('Role Management content shown');
+        // Role Management content shown
             
             // Load role management data
             try {
@@ -1864,15 +1864,15 @@ function renderModulesGrid(modules) {
 // Path Management Functions (copied from admin-path-management-script.js)
 async function loadModulesData() {
     try {
-        console.log('🔄 Loading modules data...');
+        // Loading modules data
         
         // Try to load from database first
         let modules = [];
         try {
             if (window.dbService && window.dbService.isConfigured) {
-                console.log('📡 Fetching modules from database...');
+                // Fetching modules from database
                 const dbModules = await window.dbService.getModules();
-                console.log('📡 Database modules received:', dbModules);
+                // Database modules received
                 if (dbModules && dbModules.length > 0) {
                     // Load checklist items for each module
                     for (let module of dbModules) {
@@ -1892,7 +1892,7 @@ async function loadModulesData() {
                                     if (storedFileData) {
                                         try {
                                             taskObj.files = JSON.parse(storedFileData);
-                                            console.log(`📁 Restored file data from localStorage: ${fileDataKey}`);
+                                            // Restored file data from localStorage
                                         } catch (error) {
                                             console.warn('Failed to parse file data from localStorage:', error);
                                         }
@@ -1913,7 +1913,7 @@ async function loadModulesData() {
                     
                     // Store in localStorage for compatibility
                     localStorage.setItem('globalModules', JSON.stringify(dbModules));
-                    console.log('💾 Modules with checklists stored in localStorage');
+                    // Modules with checklists stored in localStorage
                 }
             }
         } catch (error) {
@@ -1922,11 +1922,11 @@ async function loadModulesData() {
         
         // Fallback to localStorage if database failed
         if (modules.length === 0) {
-            console.log('📦 Using localStorage fallback...');
+            // Using localStorage fallback
             // Initialize global modules if they don't exist
             initializeGlobalModules();
             modules = getAllModules();
-            console.log('📦 localStorage modules:', modules);
+            // localStorage modules
         }
         
         // Store modules in global variables for search/filter
@@ -1935,7 +1935,7 @@ async function loadModulesData() {
         
         // Render modules using the new function
         renderModulesGrid(modules);
-        console.log('📊 Total modules loaded:', modules.length);
+        // Total modules loaded
     } catch (error) {
         console.error('Error in loadModulesData:', error);
     }
@@ -2241,18 +2241,7 @@ async function saveModuleChanges() {
     const author = document.getElementById('editModuleAuthor').value;
     const version = document.getElementById('editModuleVersion').value;
     
-    // Debug rubric data
-    console.log('📊 Rubric data collected:', {
-        qualityUnsatisfactory,
-        qualityAverage,
-        qualityExcellent,
-        speedUnsatisfactory,
-        speedAverage,
-        speedExcellent,
-        communicationUnsatisfactory,
-        communicationAverage,
-        communicationExcellent
-    });
+    // Rubric data collected
     
     // Get checklist data
     const checklistItems = document.querySelectorAll('.checklist-item');
@@ -2406,7 +2395,7 @@ async function saveModuleChanges() {
         if (moduleIndex >= 0) {
             // Update existing module
             const updatedModule = modules[moduleIndex];
-            console.log('Updating module:', updatedModule.title, 'with ID:', updatedModule.id);
+            // Updating module
             
             // Update the module with form data including rubric fields
             updatedModule.title = title;
@@ -2460,24 +2449,13 @@ async function saveModuleChanges() {
             delete dbModule.lastUpdated;
             delete dbModule.createdAt;
             
-            console.log('Sending to database:', dbModule);
-            console.log('📊 Rubric fields in database object:', {
-                quality_unsatisfactory: dbModule.quality_unsatisfactory,
-                quality_average: dbModule.quality_average,
-                quality_excellent: dbModule.quality_excellent,
-                speed_unsatisfactory: dbModule.speed_unsatisfactory,
-                speed_average: dbModule.speed_average,
-                speed_excellent: dbModule.speed_excellent,
-                communication_unsatisfactory: dbModule.communication_unsatisfactory,
-                communication_average: dbModule.communication_average,
-                communication_excellent: dbModule.communication_excellent
-            });
+            // Sending to database
             const result = await window.dbService.updateModule(updatedModule.id || updatedModule.title, dbModule);
-            console.log('Database update result:', result);
+            // Database update result
             
             // Save checklist items to module_checklist table
             if (checklist && checklist.length > 0) {
-                console.log('💾 Saving checklist items:', checklist);
+                // Saving checklist items
                 try {
                     // First, delete existing checklist items for this module
                     await window.dbService.deleteModuleChecklist(updatedModule.id);
@@ -2495,11 +2473,11 @@ async function saveModuleChanges() {
                         if (typeof task === 'object' && task.files && task.files.length > 0) {
                             const fileDataKey = `module_${updatedModule.id}_task_${i}_files`;
                             localStorage.setItem(fileDataKey, JSON.stringify(task.files));
-                            console.log(`💾 Stored file data in localStorage: ${fileDataKey}`);
+                            // Stored file data in localStorage
                         }
                         await window.dbService.createModuleChecklistItem(taskData);
                     }
-                    console.log('✅ Checklist items saved successfully');
+                    // Checklist items saved successfully
                 } catch (error) {
                     console.error('❌ Failed to save checklist items:', error);
                 }
@@ -2507,7 +2485,7 @@ async function saveModuleChanges() {
         } else {
             // Create new module
             const newModule = modules[modules.length - 1];
-            console.log('Creating new module:', newModule.title);
+            // Creating new module
             
             // Remove checklist from database creation - it's handled separately
             const { checklist, ...moduleForDatabase } = newModule;
@@ -2541,14 +2519,14 @@ async function saveModuleChanges() {
             delete dbModule.lastUpdated;
             delete dbModule.createdAt;
             
-            console.log('Sending to database:', dbModule);
+            // Sending to database
             const result = await window.dbService.createModule(dbModule);
-            console.log('Database create result:', result);
+            // Database create result
             
             // Save checklist items to module_checklist table
             if (checklist && checklist.length > 0 && result && result.length > 0) {
                 const createdModule = result[0];
-                console.log('💾 Saving checklist items for new module:', checklist);
+                // Saving checklist items for new module
                 try {
                     // Add the new checklist items
                     for (let i = 0; i < checklist.length; i++) {
@@ -2563,11 +2541,11 @@ async function saveModuleChanges() {
                         if (typeof task === 'object' && task.files && task.files.length > 0) {
                             const fileDataKey = `module_${createdModule.id}_task_${i}_files`;
                             localStorage.setItem(fileDataKey, JSON.stringify(task.files));
-                            console.log(`💾 Stored file data in localStorage: ${fileDataKey}`);
+                            // Stored file data in localStorage
                         }
                         await window.dbService.createModuleChecklistItem(taskData);
                     }
-                    console.log('✅ Checklist items saved successfully for new module');
+                    // Checklist items saved successfully for new module
                 } catch (error) {
                     console.error('❌ Failed to save checklist items for new module:', error);
                 }
@@ -2576,13 +2554,13 @@ async function saveModuleChanges() {
         
         // Sync to localStorage after successful database save
         localStorage.setItem('globalModules', JSON.stringify(modules));
-        console.log('Module saved successfully to both database and localStorage');
+        // Module saved successfully to both database and localStorage
     } catch (error) {
         console.error('Failed to save module to database:', error);
         showToast('error', 'Save Failed', `Failed to save module: ${error.message || 'Unknown error'}`);
         // Fallback to localStorage only
         localStorage.setItem('globalModules', JSON.stringify(modules));
-        console.log('Module saved to localStorage only (database unavailable)');
+        // Module saved to localStorage only (database unavailable)
     }
 
 
@@ -2593,7 +2571,7 @@ async function saveModuleChanges() {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Reload modules data
-    console.log('🔄 Reloading modules data after save...');
+    // Reloading modules data after save
     await loadModulesData();
 
     // Show success message
@@ -2826,7 +2804,7 @@ window.adminOverview = {
 
 // Force refresh data from database
 async function refreshDataFromDatabase() {
-    console.log('Force refreshing data from database...');
+    // Force refreshing data from database
     showToast('info', 'Refreshing Data', 'Loading latest data from database...');
     
     try {
@@ -2900,12 +2878,12 @@ async function loadModuleAssignments() {
         let dbAssignments = [];
         if (window.dbService && window.dbService.isConfigured) {
             dbAssignments = await window.dbService.getModuleAssignments();
-            console.log('Loaded module assignments from database:', dbAssignments.length);
+            // Loaded module assignments from database
         }
         
         // Also load existing assignments from user progress data
         const existingAssignments = await loadExistingAssignmentsFromProgress();
-        console.log('Loaded existing assignments from user progress:', existingAssignments.length);
+        // Loaded existing assignments from user progress
         
         // Combine database assignments with existing assignments
         moduleAssignments = [...dbAssignments, ...existingAssignments];
@@ -2923,7 +2901,7 @@ async function loadModuleAssignments() {
         });
         
         moduleAssignments = uniqueAssignments;
-        console.log('Total unique module assignments:', moduleAssignments.length);
+        // Total unique module assignments
         
         await updateAssignmentsTable();
         await updateAssignmentFilters();
@@ -3311,9 +3289,9 @@ async function unassignModule(assignmentId) {
         // Try to delete from database first (only if it's not an existing assignment)
         if (!assignment.is_existing) {
             await window.dbService.removeModuleAssignment(assignmentId);
-            console.log('Assignment removed from database successfully');
+            // Assignment removed from database successfully
         } else {
-            console.log('Skipping database deletion for existing/role-based assignment');
+            // Skipping database deletion for existing/role-based assignment
         }
     } catch (error) {
         console.error('Failed to remove assignment from database:', error);
@@ -3328,14 +3306,14 @@ async function unassignModule(assignmentId) {
             delete userProgress[assignment.module_title];
             const userProgressKey = `userProgress_${assignment.user_name}`;
             localStorage.setItem(userProgressKey, JSON.stringify(userProgress));
-            console.log(`Cleared progress for ${assignment.user_name} on ${assignment.module_title}`);
+            // Cleared progress for user on module
         }
         
         // Track unassigned role-based assignments to prevent them from reappearing
         if (assignment.notes === 'Role-based assignment') {
             try {
                 await window.dbService.addUnassignedRoleAssignment(assignment.user_id, assignment.module_id);
-                console.log(`Tracked unassigned role-based assignment in database: ${assignment.user_id}-${assignment.module_id}`);
+                // Tracked unassigned role-based assignment in database
             } catch (error) {
                 console.error('Failed to track unassigned role-based assignment in database:', error);
                 // Fallback to localStorage if database fails
@@ -3344,7 +3322,7 @@ async function unassignModule(assignmentId) {
                 if (!unassignedRoleBased.includes(unassignedKey)) {
                     unassignedRoleBased.push(unassignedKey);
                     localStorage.setItem('unassignedRoleBased', JSON.stringify(unassignedRoleBased));
-                    console.log(`Tracked unassigned role-based assignment in localStorage: ${unassignedKey}`);
+                    // Tracked unassigned role-based assignment in localStorage
                 }
             }
         }
@@ -3532,14 +3510,14 @@ async function bulkUnassignModules() {
                 delete userProgress[assignment.module_title];
                 const userProgressKey = `userProgress_${assignment.user_name}`;
                 localStorage.setItem(userProgressKey, JSON.stringify(userProgress));
-                console.log(`Cleared progress for ${assignment.user_name} on ${assignment.module_title}`);
+                // Cleared progress for user on module
             }
             
             // Track unassigned role-based assignments to prevent them from reappearing
             if (assignment.notes === 'Role-based assignment') {
                 try {
                     await window.dbService.addUnassignedRoleAssignment(assignment.user_id, assignment.module_id);
-                    console.log(`Tracked unassigned role-based assignment in database: ${assignment.user_id}-${assignment.module_id}`);
+                    // Tracked unassigned role-based assignment in database
                 } catch (error) {
                     console.error('Failed to track unassigned role-based assignment in database:', error);
                     // Fallback to localStorage if database fails
@@ -3548,7 +3526,7 @@ async function bulkUnassignModules() {
                     if (!unassignedRoleBased.includes(unassignedKey)) {
                         unassignedRoleBased.push(unassignedKey);
                         localStorage.setItem('unassignedRoleBased', JSON.stringify(unassignedRoleBased));
-                        console.log(`Tracked unassigned role-based assignment in localStorage: ${unassignedKey}`);
+                        // Tracked unassigned role-based assignment in localStorage
                     }
                 }
             }
@@ -3830,7 +3808,7 @@ function populateRolePageAccess(selectedPageAccess) {
     }).join('');
     
     rolePermissionsGrid.innerHTML = permissionsHTML;
-    console.log('✅ Role permissions grid populated');
+    // Role permissions grid populated
 }
 
 // Apply permission level
@@ -3908,7 +3886,7 @@ function editRole(roleId) {
 
 // Delete role
 function deleteRole(roleId) {
-    console.log('🔍 deleteRole called with ID:', roleId);
+    // Delete role called
     const role = roles.find(r => r.id === roleId);
     if (!role) return;
     
@@ -3951,7 +3929,7 @@ window.closeRoleModal = closeRoleModal;
 
 // Show reports content
 function showReportsContent() {
-    console.log('🔍 Showing reports content...');
+    // Showing reports content
     
     // Clean up any existing charts first
     cleanupCharts();
@@ -3969,7 +3947,7 @@ function showReportsContent() {
     // Show reports content
     const reportsContent = document.getElementById('reportsContent');
     if (reportsContent) {
-        console.log('🔍 Reports content found, showing...');
+        // Reports content found, showing
         reportsContent.style.display = 'block';
         reportsContent.style.visibility = 'visible';
         reportsContent.style.opacity = '1';
@@ -4003,7 +3981,7 @@ function cleanupCharts() {
 // Load reports data
 async function loadReportsData() {
     try {
-        console.log('🔍 Loading reports data...');
+        // Loading reports data
         
         // Load user data
         await loadUserData();
@@ -4020,7 +3998,7 @@ async function loadReportsData() {
         // Load quiz results table
         loadQuizResultsTable();
         
-        console.log('✅ Reports data loaded successfully');
+        // Reports data loaded successfully
     } catch (error) {
         console.error('❌ Error loading reports data:', error);
         showToast('error', 'Error', 'Failed to load reports data');
@@ -4046,10 +4024,7 @@ async function loadQuizData() {
             window.quizzes = [];
         }
         
-        console.log('📊 Loaded quiz data:', {
-            results: window.quizResults.length,
-            quizzes: window.quizzes.length
-        });
+        // Loaded quiz data
     } catch (error) {
         console.error('❌ Error loading quiz data:', error);
         window.quizResults = [];
@@ -4059,7 +4034,7 @@ async function loadQuizData() {
 
 // Generate analytics data
 function generateAnalytics() {
-    console.log('🔍 Generating analytics...');
+    // Generating analytics
     
     // Calculate metrics
     const metrics = calculateMetrics();
@@ -4433,7 +4408,7 @@ function renderHeatmap() {
 
 // Load and display quiz results table
 function loadQuizResultsTable() {
-    console.log('🔍 Loading quiz results table...');
+    // Loading quiz results table
     
     const quizResults = window.quizResults || [];
     const quizzes = window.quizzes || [];
@@ -4514,7 +4489,7 @@ function loadQuizResultsTable() {
         `;
     }).join('');
     
-    console.log(`✅ Loaded ${sortedResults.length} quiz results`);
+    // Loaded quiz results
 }
 
 // Format time in minutes and seconds
@@ -4573,10 +4548,10 @@ function setupReportsEventListeners() {
             const chartType = e.target.dataset.chart;
             if (chartType === 'completions') {
                 // Switch to completions view
-                console.log('Switching to completions view');
+                // Switching to completions view
             } else {
                 // Switch to progress view
-                console.log('Switching to progress view');
+                // Switching to progress view
             }
         });
     });

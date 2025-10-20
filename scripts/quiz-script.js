@@ -1,5 +1,5 @@
 // Quiz System JavaScript
-console.log('🔍 Loading quiz script...');
+// Loading quiz script
 
 // Global variables
 let currentQuizzes = [];
@@ -148,7 +148,7 @@ const sampleQuizzes = [
 
 // Initialize the quiz system
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔍 Quiz system initializing...');
+    // Quiz system initializing
     
     // Ensure modals are hidden on page load
     const quizModal = document.getElementById('quizModal');
@@ -157,15 +157,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (quizModal) {
         quizModal.classList.remove('show');
-        console.log('✅ Quiz modal hidden on load');
+        // Quiz modal hidden on load
     }
     if (resultsModal) {
         resultsModal.classList.remove('show');
-        console.log('✅ Results modal hidden on load');
+        // console.log('✅ Results modal hidden on load');
     }
     if (manageTagsModal) {
         manageTagsModal.classList.remove('show');
-        console.log('✅ Manage tags modal hidden on load');
+        // console.log('✅ Manage tags modal hidden on load');
     }
     
     // Load data from localStorage or use sample data
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
     renderAvailableQuizzes();
     renderQuizResults();
     
-    console.log('✅ Quiz system initialized successfully');
+    // console.log('✅ Quiz system initialized successfully');
 });
 
 // Load quiz data
@@ -201,7 +201,7 @@ function loadQuizData() {
             // Remove quizzes with null or missing essential fields
             if (!quiz.title || !quiz.category || !quiz.difficulty || 
                 quiz.title === 'null' || quiz.category === 'null' || quiz.difficulty === 'null') {
-                console.log('🗑️ Removing malformed quiz:', quiz);
+                // console.log('🗑️ Removing malformed quiz:', quiz);
                 return false;
             }
             return true;
@@ -210,14 +210,14 @@ function loadQuizData() {
         // Save cleaned data back to localStorage if any were removed
         if (currentQuizzes.length !== originalLength) {
             saveQuizData();
-            console.log(`🧹 Cleaned up ${originalLength - currentQuizzes.length} malformed quizzes`);
+            // console.log(`🧹 Cleaned up ${originalLength - currentQuizzes.length} malformed quizzes`);
         }
         
-        console.log('📚 Loaded quizzes from localStorage:', currentQuizzes.length);
+        // console.log('📚 Loaded quizzes from localStorage:', currentQuizzes.length);
     } else {
         currentQuizzes = [...sampleQuizzes];
         saveQuizData();
-        console.log('📚 Using sample quizzes:', currentQuizzes.length);
+        // console.log('📚 Using sample quizzes:', currentQuizzes.length);
     }
 }
 
@@ -225,17 +225,17 @@ function loadQuizData() {
 function saveQuizData() {
     try {
         localStorage.setItem('quizzes', JSON.stringify(currentQuizzes));
-        console.log('✅ Quiz data saved successfully');
+        // console.log('✅ Quiz data saved successfully');
     } catch (error) {
         console.error('❌ Failed to save quiz data:', error);
         if (error.name === 'QuotaExceededError') {
             // Clear old quiz results to free up space
             localStorage.removeItem('quizResults');
-            console.log('🧹 Cleared old quiz results to free up space');
+            // console.log('🧹 Cleared old quiz results to free up space');
             
             try {
                 localStorage.setItem('quizzes', JSON.stringify(currentQuizzes));
-                console.log('✅ Quiz data saved after clearing old data');
+                // console.log('✅ Quiz data saved after clearing old data');
                 showToast('warning', 'Storage Cleared', 'Old quiz results were cleared to make space. Quiz saved successfully.');
             } catch (retryError) {
                 console.error('❌ Still failed to save after clearing:', retryError);
@@ -252,7 +252,7 @@ function loadQuizResults() {
     const savedResults = localStorage.getItem('quizResults');
     if (savedResults) {
         quizResults = JSON.parse(savedResults);
-        console.log('📊 Loaded quiz results:', quizResults.length);
+        // console.log('📊 Loaded quiz results:', quizResults.length);
     } else {
         quizResults = [];
     }
@@ -281,14 +281,14 @@ function saveQuizResults() {
 function setupNavigation() {
     // Tab navigation is now handled by TabsComponent
     // This function is kept for compatibility but does nothing
-    console.log('Tab navigation handled by TabsComponent');
+    // console.log('Tab navigation handled by TabsComponent');
 }
 
 // Show content section - Now handled by TabsComponent
 function showContentSection(sectionId) {
     // Content switching is now handled by TabsComponent
     // This function is kept for compatibility but does nothing
-    console.log('Content switching handled by TabsComponent');
+    // console.log('Content switching handled by TabsComponent');
 }
 
 // Setup quiz filters
@@ -435,7 +435,7 @@ function renderCurrentQuestion() {
     const question = currentQuiz.questions[currentQuestionIndex];
     currentQuestion.textContent = currentQuestionIndex + 1;
     
-    console.log(`🔍 Rendering question ${currentQuestionIndex + 1}:`, {
+    // console.log(`🔍 Rendering question ${currentQuestionIndex + 1}:`, {
         question: question.question,
         type: question.type,
         hasImage: !!question.image,
@@ -948,7 +948,7 @@ function setupQuizForm() {
 // Add question to form
 function addQuestion() {
     questionCounter++;
-    console.log(`🔍 Adding question ${questionCounter}. Current questions in container:`, document.querySelectorAll('.question-item').length);
+    // console.log(`🔍 Adding question ${questionCounter}. Current questions in container:`, document.querySelectorAll('.question-item').length);
     const container = document.getElementById('questionsContainer');
     
     const questionHtml = `
@@ -1109,7 +1109,7 @@ function removeQuestion(questionNum) {
 
 // Duplicate question
 function duplicateQuestion(questionNum) {
-    console.log(`🔍 Duplicating question ${questionNum}`);
+    // console.log(`🔍 Duplicating question ${questionNum}`);
     const questionElement = document.querySelector(`[data-question="${questionNum}"]`);
     if (!questionElement) {
         console.error('Question element not found');
@@ -1158,7 +1158,7 @@ function duplicateQuestion(questionNum) {
         const clonedQuestionTypeSelect = clonedQuestion.querySelector(`select[name="questionType_${questionCounter}"]`);
         if (clonedQuestionTypeSelect) {
             clonedQuestionTypeSelect.value = originalType;
-            console.log(`🔍 Copied question type: ${originalType} to question ${questionCounter}`);
+            // console.log(`🔍 Copied question type: ${originalType} to question ${questionCounter}`);
         }
     }
     
@@ -1168,7 +1168,7 @@ function duplicateQuestion(questionNum) {
         const clonedCorrectInput = clonedQuestion.querySelector(`input[name^="correct_${questionCounter}"][value="${originalValue}"]`);
         if (clonedCorrectInput) {
             clonedCorrectInput.checked = true;
-            console.log(`🔍 Copied correct answer: ${originalValue} to question ${questionCounter}`);
+            // console.log(`🔍 Copied correct answer: ${originalValue} to question ${questionCounter}`);
         }
     });
     
@@ -1207,7 +1207,7 @@ function handleQuestionImageUpload(questionNum, input) {
         const img = document.getElementById(`questionImageDisplay_${questionNum}`);
         const uploadBtn = input.previousElementSibling;
         
-        console.log(`🔍 Question image upload for question ${questionNum}:`, {
+        // console.log(`🔍 Question image upload for question ${questionNum}:`, {
             preview: preview,
             img: img,
             uploadBtn: uploadBtn,
@@ -1217,9 +1217,9 @@ function handleQuestionImageUpload(questionNum, input) {
         if (preview && img) {
             img.src = e.target.result;
             preview.style.display = 'block';
-            console.log(`✅ Question image preview set for question ${questionNum}`);
+            // console.log(`✅ Question image preview set for question ${questionNum}`);
         } else {
-            console.log(`❌ Missing elements for question image ${questionNum}`);
+            // console.log(`❌ Missing elements for question image ${questionNum}`);
         }
         
         // Hide the upload button
@@ -1266,7 +1266,7 @@ function handleOptionImageUpload(questionNum, optionIndex, input) {
         const img = document.getElementById(`optionImageDisplay_${questionNum}_${optionIndex}`);
         const uploadBtn = input.previousElementSibling;
         
-        console.log(`🔍 Option image upload for question ${questionNum}, option ${optionIndex}:`, {
+        // console.log(`🔍 Option image upload for question ${questionNum}, option ${optionIndex}:`, {
             preview: preview,
             img: img,
             uploadBtn: uploadBtn,
@@ -1276,9 +1276,9 @@ function handleOptionImageUpload(questionNum, optionIndex, input) {
         if (preview && img) {
             img.src = e.target.result;
             preview.style.display = 'block';
-            console.log(`✅ Option image preview set for question ${questionNum}, option ${optionIndex}`);
+            // console.log(`✅ Option image preview set for question ${questionNum}, option ${optionIndex}`);
         } else {
-            console.log(`❌ Missing elements for option image ${questionNum}_${optionIndex}`);
+            // console.log(`❌ Missing elements for option image ${questionNum}_${optionIndex}`);
         }
         
         // Hide the upload button
@@ -1514,7 +1514,7 @@ async function saveQuiz(e) {
     
     // Extract questions
     const questionElements = document.querySelectorAll('.question-item');
-    console.log('🔍 Found question elements:', questionElements.length);
+    // console.log('🔍 Found question elements:', questionElements.length);
     
     // Process questions asynchronously
     for (let index = 0; index < questionElements.length; index++) {
@@ -1524,7 +1524,7 @@ async function saveQuiz(e) {
         const questionType = formData.get(`questionType_${questionNum}`);
         const questionPoints = parseInt(formData.get(`questionPoints_${questionNum}`)) || 1;
         
-        console.log(`🔍 Processing question ${index + 1}/${questionElements.length}:`, {
+        // console.log(`🔍 Processing question ${index + 1}/${questionElements.length}:`, {
             questionNum: questionNum,
             text: questionText,
             type: questionType,
@@ -1533,7 +1533,7 @@ async function saveQuiz(e) {
         });
         
         if (!questionText || !questionType) {
-            console.log(`⚠️ Skipping question ${questionNum} - missing text or type`);
+            // console.log(`⚠️ Skipping question ${questionNum} - missing text or type`);
             continue;
         }
         
@@ -1554,7 +1554,7 @@ async function saveQuiz(e) {
             
             if (uploadResult.success) {
                 questionData.image = uploadResult.url;
-                console.log(`🔍 Question image uploaded for question ${questionNum}:`, uploadResult.url);
+                // console.log(`🔍 Question image uploaded for question ${questionNum}:`, uploadResult.url);
             } else {
                 console.error(`❌ Failed to upload question image for question ${questionNum}:`, uploadResult.error);
                 showToast('error', 'Upload Error', `Failed to upload question image: ${uploadResult.error}`);
@@ -1584,7 +1584,7 @@ async function saveQuiz(e) {
                         
                         if (uploadResult.success) {
                             optionData.image = uploadResult.url;
-                            console.log(`🔍 Option image uploaded for question ${questionNum}, option ${optionIndex}:`, uploadResult.url);
+                            // console.log(`🔍 Option image uploaded for question ${questionNum}, option ${optionIndex}:`, uploadResult.url);
                         } else {
                             console.error(`❌ Failed to upload option image for question ${questionNum}, option ${optionIndex}:`, uploadResult.error);
                             showToast('error', 'Upload Error', `Failed to upload option image: ${uploadResult.error}`);
@@ -1595,7 +1595,7 @@ async function saveQuiz(e) {
                     optionIndex++;
                 }
                 
-                console.log(`🔍 Multiple Choice Question ${questionNum}:`, {
+                // console.log(`🔍 Multiple Choice Question ${questionNum}:`, {
                     correctAnswer,
                     options,
                     optionsLength: options.length,
@@ -1606,9 +1606,9 @@ async function saveQuiz(e) {
                     questionData.options = options;
                     questionData.correct = correctAnswer;
                     quizData.questions.push(questionData);
-                    console.log(`✅ Added multiple choice question ${questionNum}. Total questions in quizData: ${quizData.questions.length}`);
+                    // console.log(`✅ Added multiple choice question ${questionNum}. Total questions in quizData: ${quizData.questions.length}`);
                 } else {
-                    console.log(`❌ Skipped multiple choice question ${questionNum} - validation failed`);
+                    // console.log(`❌ Skipped multiple choice question ${questionNum} - validation failed`);
                 }
                 break;
                 
@@ -1623,7 +1623,7 @@ async function saveQuiz(e) {
                     multiOptionIndex++;
                 }
                 
-                console.log(`🔍 Multiple Answer Question ${questionNum}:`, {
+                // console.log(`🔍 Multiple Answer Question ${questionNum}:`, {
                     correctAnswers,
                     multiOptions,
                     optionsLength: multiOptions.length,
@@ -1634,9 +1634,9 @@ async function saveQuiz(e) {
                     questionData.options = multiOptions;
                     questionData.correct = correctAnswers;
                     quizData.questions.push(questionData);
-                    console.log(`✅ Added multiple answer question ${questionNum}. Total questions in quizData: ${quizData.questions.length}`);
+                    // console.log(`✅ Added multiple answer question ${questionNum}. Total questions in quizData: ${quizData.questions.length}`);
                 } else {
-                    console.log(`❌ Skipped multiple answer question ${questionNum} - validation failed`);
+                    // console.log(`❌ Skipped multiple answer question ${questionNum} - validation failed`);
                 }
                 break;
                 
@@ -1653,16 +1653,16 @@ async function saveQuiz(e) {
                 if (correctAnswersText.length > 0) {
                     questionData.correctAnswers = correctAnswersText;
                     quizData.questions.push(questionData);
-                    console.log(`✅ Added short answer question ${questionNum}. Total questions in quizData: ${quizData.questions.length}`);
+                    // console.log(`✅ Added short answer question ${questionNum}. Total questions in quizData: ${quizData.questions.length}`);
                 } else {
-                    console.log(`❌ Skipped short answer question ${questionNum} - no correct answers`);
+                    // console.log(`❌ Skipped short answer question ${questionNum} - no correct answers`);
                 }
                 break;
         }
     }
     
-    console.log('🔍 Final quiz data questions:', quizData.questions.length);
-    console.log('🔍 Questions data:', quizData.questions);
+    // console.log('🔍 Final quiz data questions:', quizData.questions.length);
+    // console.log('🔍 Questions data:', quizData.questions);
     
     if (quizData.questions.length === 0) {
         showToast('error', 'Error', 'Please add at least one question.');
@@ -1692,7 +1692,7 @@ async function saveQuiz(e) {
     e.target.reset();
     document.getElementById('questionsContainer').innerHTML = '';
     questionCounter = 0;
-    console.log('🔍 Form reset - questionCounter set to 0, questions container cleared');
+    // console.log('🔍 Form reset - questionCounter set to 0, questions container cleared');
     delete e.target.dataset.editingQuizId;
     
     // Reset form title
@@ -2243,4 +2243,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-console.log('✅ Quiz script loaded successfully');
+// console.log('✅ Quiz script loaded successfully');

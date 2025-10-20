@@ -64,7 +64,7 @@ function initializeUsers() {
         ];
         
         localStorage.setItem('users', JSON.stringify(defaultUsers));
-        console.log('Default users initialized');
+        // console.log('Default users initialized');
     }
 }
 
@@ -80,7 +80,7 @@ function getUsers() {
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Login page loaded');
+    // console.log('Login page loaded');
     
     // Initialize users
     initializeUsers();
@@ -109,7 +109,7 @@ function setupLoginForm() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             
-            console.log('Login attempt:', { email, password });
+            // console.log('Login attempt:', { email, password });
             
             // Validate inputs
             if (!email || !password) {
@@ -119,10 +119,10 @@ function setupLoginForm() {
             
             // Get users and attempt login
             const users = getUsers();
-            console.log('Available users:', users);
+            // console.log('Available users:', users);
             
             const user = users.find(u => u.username === email && u.password === password);
-            console.log('Found user:', user);
+            // console.log('Found user:', user);
             
             if (user) {
                 // Store current user data

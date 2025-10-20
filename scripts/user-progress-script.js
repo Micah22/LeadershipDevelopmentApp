@@ -182,8 +182,8 @@ async function loadProgressData() {
         username = currentUserData;
     }
     
-    console.log('Current user data from localStorage:', currentUserData);
-    console.log('Extracted username:', username);
+    // Current user data from localStorage
+    // Extracted username
 
     // Get user's role from database
     let users = [];
@@ -203,8 +203,8 @@ async function loadProgressData() {
     const overallProgress = await calculateUserOverallProgress(username);
     const userProgress = await getUserProgress(username);
     
-    console.log('Overall progress calculated:', overallProgress);
-    console.log('User progress data:', userProgress);
+    // Overall progress calculated
+    // User progress data
 
     // Load modules from database - only assigned modules for this user
     let moduleTitles = [];
@@ -229,7 +229,7 @@ async function loadProgressData() {
     
     // If no modules are assigned, show empty state (don't fallback to all modules)
     if (moduleTitles.length === 0) {
-        console.log('No modules assigned to user, showing empty state');
+        // No modules assigned to user, showing empty state
     }
     
     let achievements = 0;
@@ -298,7 +298,7 @@ async function loadProgressData() {
 
 
 function updateProgressCards(data) {
-    console.log('Updating progress cards with data:', data);
+    // Updating progress cards with data
     
     const overallProgress = document.getElementById('overallProgress');
     const completedTasks = document.getElementById('completedTasks');
@@ -313,12 +313,12 @@ function updateProgressCards(data) {
     
     if (overallProgress) {
         overallProgress.textContent = data.overallProgress + '%';
-        console.log('Updated overall progress to:', data.overallProgress + '%');
+        // Updated overall progress
     }
     
     if (completedTasks) {
         completedTasks.textContent = data.completedTasks;
-        console.log('Updated completed tasks to:', data.completedTasks);
+        // Updated completed tasks
     }
     
     if (totalTasks) {
@@ -777,7 +777,7 @@ async function toggleChecklistItem(moduleTitle, itemIndex) {
             const totalCount = userProgress[moduleTitle].checklist.length;
             const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
             
-            console.log(`Saving progress for ${moduleTitle}: ${completedCount}/${totalCount} (${progressPercentage}%)`);
+            // Saving progress for module
             
             await window.dbService.updateUserProgress(
                 user.id,
@@ -800,7 +800,7 @@ async function toggleChecklistItem(moduleTitle, itemIndex) {
     
     // Refresh main page data with a small delay to ensure database is updated
     setTimeout(async () => {
-        console.log('Refreshing progress data after toggle...');
+        // Refreshing progress data after toggle
         await loadProgressData();
     }, 500);
 }
@@ -902,7 +902,7 @@ async function getModuleData(moduleTitle) {
                     if (storedFileData) {
                         try {
                             taskObj.files = JSON.parse(storedFileData);
-                            console.log(`📁 User Progress - Restored file data from localStorage: ${fileDataKey}`);
+                            // User Progress - Restored file data from localStorage
                         } catch (error) {
                             console.warn('Failed to parse file data from localStorage:', error);
                         }
@@ -912,7 +912,7 @@ async function getModuleData(moduleTitle) {
                 });
             } else {
                 // If no database checklist items, try to restore from localStorage
-                console.log(`📁 User Progress - No database checklist items, checking localStorage for module ${module.id}`);
+                // User Progress - No database checklist items, checking localStorage
                 const restoredItems = [];
                 let index = 0;
                 while (true) {
@@ -930,7 +930,7 @@ async function getModuleData(moduleTitle) {
                                 task: taskText,
                                 files: files
                             });
-                            console.log(`📁 User Progress - Restored task ${index} with files from localStorage`);
+                            // User Progress - Restored task with files from localStorage
                         } catch (error) {
                             console.warn('Failed to parse file data from localStorage:', error);
                         }
@@ -1254,25 +1254,25 @@ async function getUserProgress(username) {
     // Initialize userProgress object
     let userProgress = {};
     
-    console.log('getUserProgress called with username:', username);
+    // Getting user progress
     
     try {
         if (window.dbService && window.dbService.isConfigured) {
             // Get user ID
             const users = await window.dbService.getUsers();
-            console.log('All users from database:', users);
-            console.log('Looking for username:', username);
+            // All users from database
+            // Looking for username
             const user = users.find(u => u.username === username);
-            console.log('Found user:', user);
+            // Found user
             
             if (user) {
                 // Get progress from database
                 const dbProgress = await window.dbService.getUserProgress(user.id);
-                console.log('Database progress for user:', user.username, dbProgress);
+                // Database progress for user
                 
                 // Get modules from database instead of localStorage
                 const modules = await window.dbService.getModules();
-                console.log('Modules from database:', modules.length);
+                // Modules from database
                 
                 dbProgress.forEach(p => {
                     // Find module title by ID
@@ -1288,12 +1288,12 @@ async function getUserProgress(username) {
                 const userProgressKey = `userProgress_${username}`;
                 localStorage.setItem(userProgressKey, JSON.stringify(userProgress));
                 
-                console.log('Final userProgress object:', userProgress);
+                // Final userProgress object
             } else {
-                console.log('User not found:', username);
+                // User not found
             }
         } else {
-            console.log('Database service not configured');
+            // Database service not configured
         }
     } catch (error) {
         console.error('Failed to load user progress from database:', error);

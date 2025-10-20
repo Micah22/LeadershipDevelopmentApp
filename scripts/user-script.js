@@ -2,7 +2,7 @@
 
 // Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('User Dashboard page loaded');
+    // console.log('User Dashboard page loaded');
     
     // Check if user is logged in
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -34,7 +34,7 @@ async function initializeDashboard() {
         
         // Refresh navbar after user info is updated
         if (typeof window.refreshNavbar === 'function') {
-            console.log('User Script - Refreshing navbar after user info updated');
+            // console.log('User Script - Refreshing navbar after user info updated');
             window.refreshNavbar();
         }
         
@@ -78,13 +78,13 @@ function updateUserInfo() {
     const username = localStorage.getItem('username');
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     
-    console.log('User Script - updateUserInfo() called:', { username, isLoggedIn });
+    // console.log('User Script - updateUserInfo() called:', { username, isLoggedIn });
     
     if (username && isLoggedIn) {
         const users = getUsers();
         const user = users.find(u => u.username === username);
         
-        console.log('User Script - updateUserInfo() - users found:', users.length, 'user match:', !!user);
+        // console.log('User Script - updateUserInfo() - users found:', users.length, 'user match:', !!user);
         
         if (user) {
             // Update avatar
@@ -133,35 +133,35 @@ function setupSignOut() {
 
 // Ensure users data is available
 async function ensureUsersData() {
-    console.log('User Script - ensureUsersData() called');
+    // console.log('User Script - ensureUsersData() called');
     
     const existingUsers = localStorage.getItem('users');
-    console.log('User Script - Raw users data from localStorage:', existingUsers);
+    // console.log('User Script - Raw users data from localStorage:', existingUsers);
     
     let users = [];
     let needsInitialization = false;
     
     if (!existingUsers) {
-        console.log('User Script - No users data found in localStorage');
+        // console.log('User Script - No users data found in localStorage');
         needsInitialization = true;
     } else {
         try {
             users = JSON.parse(existingUsers);
-            console.log('User Script - Parsed users:', users);
+            // console.log('User Script - Parsed users:', users);
             if (!Array.isArray(users) || users.length === 0) {
-                console.log('User Script - Users data is invalid or empty array');
+                // console.log('User Script - Users data is invalid or empty array');
                 needsInitialization = true;
             } else {
-                console.log('User Script - Valid users data found:', users.length, 'users');
+                // console.log('User Script - Valid users data found:', users.length, 'users');
             }
         } catch (error) {
-            console.log('User Script - Error parsing users data:', error.message);
+            // console.log('User Script - Error parsing users data:', error.message);
             needsInitialization = true;
         }
     }
     
     if (needsInitialization) {
-        console.log('User Script - Initializing default users...');
+        // console.log('User Script - Initializing default users...');
         
         // Create default users (same as in index.html)
         const defaultUsers = [
@@ -203,12 +203,12 @@ async function ensureUsersData() {
         ];
         
         localStorage.setItem('users', JSON.stringify(defaultUsers));
-        console.log('User Script - Default users initialized:', defaultUsers.length);
+        // console.log('User Script - Default users initialized:', defaultUsers.length);
     }
     
     // Refresh navbar after users data is available
     if (typeof window.refreshNavbar === 'function') {
-        console.log('User Script - Refreshing navbar after users data loaded');
+        // console.log('User Script - Refreshing navbar after users data loaded');
         window.refreshNavbar();
     }
 }
@@ -217,7 +217,7 @@ async function ensureUsersData() {
 function getUsers() {
     const usersData = localStorage.getItem('users');
     const users = usersData ? JSON.parse(usersData) : [];
-    console.log('User Script - getUsers() called, returning:', users.length, 'users');
+    // console.log('User Script - getUsers() called, returning:', users.length, 'users');
     return users;
 }
 
@@ -227,10 +227,10 @@ function getCurrentUser() {
     const users = getUsers();
     const user = users.find(u => u.username === username);
     
-    console.log('User Script - getCurrentUser() called:', { username, usersCount: users.length, userFound: !!user });
+    // console.log('User Script - getCurrentUser() called:', { username, usersCount: users.length, userFound: !!user });
     
     if (!user) {
-        console.log('User Script - User not found for username:', username);
+        // console.log('User Script - User not found for username:', username);
     }
     
     return user;
@@ -277,13 +277,13 @@ async function initializeDefaultLeadershipPaths() {
         // Try to get modules from database first
         const dbModules = await window.dbService.getModules();
         if (dbModules && dbModules.length > 0) {
-            console.log('Modules loaded from database:', dbModules.length);
+            // console.log('Modules loaded from database:', dbModules.length);
             // Store in localStorage for compatibility
             localStorage.setItem('globalModules', JSON.stringify(dbModules));
             return;
         }
     } catch (error) {
-        console.log('Database not available, checking localStorage');
+        // console.log('Database not available, checking localStorage');
     }
     
     // Fallback to localStorage
@@ -329,9 +329,9 @@ async function initializeDefaultLeadershipPaths() {
         ];
         
         localStorage.setItem('globalModules', JSON.stringify(defaultModules));
-        console.log('Initialized default global modules');
+        // console.log('Initialized default global modules');
     } else {
-        console.log('Existing modules found, preserving data');
+        // console.log('Existing modules found, preserving data');
     }
 }
 
@@ -392,7 +392,7 @@ async function loadDashboardData() {
     // Update progress items
     updateProgressItems(leadershipPaths, userProgress, user.role);
     
-    console.log('User Script - Dashboard data loaded successfully');
+    // console.log('User Script - Dashboard data loaded successfully');
 }
 
 // Update progress items
