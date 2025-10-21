@@ -192,8 +192,11 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load quiz data
 function loadQuizData() {
     const savedQuizzes = localStorage.getItem('quizzes');
+    console.log('🔍 Loading quiz data from localStorage:', savedQuizzes);
+    
     if (savedQuizzes) {
         currentQuizzes = JSON.parse(savedQuizzes);
+        console.log('🔍 Parsed quizzes from localStorage:', currentQuizzes.length, currentQuizzes);
         
         // Clean up any malformed quiz data
         const originalLength = currentQuizzes.length;
@@ -201,7 +204,7 @@ function loadQuizData() {
             // Remove quizzes with null or missing essential fields
             if (!quiz.title || !quiz.category || !quiz.difficulty || 
                 quiz.title === 'null' || quiz.category === 'null' || quiz.difficulty === 'null') {
-                // console.log('🗑️ Removing malformed quiz:', quiz);
+                console.log('🗑️ Removing malformed quiz:', quiz);
                 return false;
             }
             return true;
@@ -210,32 +213,33 @@ function loadQuizData() {
         // Save cleaned data back to localStorage if any were removed
         if (currentQuizzes.length !== originalLength) {
             saveQuizData();
-            // console.log(`🧹 Cleaned up ${originalLength - currentQuizzes.length} malformed quizzes`);
+            console.log(`🧹 Cleaned up ${originalLength - currentQuizzes.length} malformed quizzes`);
         }
         
-        // console.log('📚 Loaded quizzes from localStorage:', currentQuizzes.length);
+        console.log('📚 Loaded quizzes from localStorage:', currentQuizzes.length);
     } else {
         currentQuizzes = [...sampleQuizzes];
         saveQuizData();
-        // console.log('📚 Using sample quizzes:', currentQuizzes.length);
+        console.log('📚 Using sample quizzes:', currentQuizzes.length);
     }
 }
 
 // Save quiz data
 function saveQuizData() {
     try {
+        console.log('🔍 Saving quiz data:', currentQuizzes.length, currentQuizzes);
         localStorage.setItem('quizzes', JSON.stringify(currentQuizzes));
-        // console.log('✅ Quiz data saved successfully');
+        console.log('✅ Quiz data saved successfully');
     } catch (error) {
         console.error('❌ Failed to save quiz data:', error);
         if (error.name === 'QuotaExceededError') {
             // Clear old quiz results to free up space
             localStorage.removeItem('quizResults');
-            // console.log('🧹 Cleared old quiz results to free up space');
+            console.log('🧹 Cleared old quiz results to free up space');
             
             try {
                 localStorage.setItem('quizzes', JSON.stringify(currentQuizzes));
-                // console.log('✅ Quiz data saved after clearing old data');
+                console.log('✅ Quiz data saved after clearing old data');
                 showToast('warning', 'Storage Cleared', 'Old quiz results were cleared to make space. Quiz saved successfully.');
             } catch (retryError) {
                 console.error('❌ Still failed to save after clearing:', retryError);
@@ -326,7 +330,12 @@ function debounce(func, wait) {
 // Render available quizzes
 function renderAvailableQuizzes() {
     const grid = document.getElementById('quizzesGrid');
-    if (!grid) return;
+    if (!grid) {
+        console.error('❌ quizzesGrid element not found!');
+        return;
+    }
+    
+    console.log('🔍 Current quizzes:', currentQuizzes.length, currentQuizzes);
     
     const searchTerm = document.getElementById('quizSearch')?.value.toLowerCase() || '';
     const categoryFilter = document.getElementById('categoryFilter')?.value || '';
@@ -348,6 +357,8 @@ function renderAvailableQuizzes() {
         
         return matchesSearch && matchesCategory && matchesDifficulty;
     });
+    
+    console.log('🔍 Filtered quizzes:', filteredQuizzes.length, filteredQuizzes);
     
     // Render quiz cards
     grid.innerHTML = filteredQuizzes.map(quiz => `
@@ -1646,11 +1657,14 @@ async function saveQuiz(e) {
         }
     } else {
         // Create new quiz
+        console.log('🔍 Adding new quiz:', quizData);
         currentQuizzes.push(quizData);
+        console.log('🔍 Current quizzes after adding:', currentQuizzes.length, currentQuizzes);
         showToast('success', 'Success', 'Quiz created successfully!');
     }
     
     saveQuizData();
+    console.log('🔍 Quiz data saved, current quizzes count:', currentQuizzes.length);
     
     // Reset form
     e.target.reset();
