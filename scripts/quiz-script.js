@@ -1923,8 +1923,9 @@ function populateEditForm(quiz) {
             
             // Fill answer options based on type
             setTimeout(() => {
+                console.log(`🔍 Filling answer options for question ${questionCounter}:`, question);
                 fillAnswerOptions(questionCounter, question);
-            }, 50);
+            }, 100);
         }
     });
     
@@ -1943,7 +1944,12 @@ function populateEditForm(quiz) {
 // Fill answer options for a question
 function fillAnswerOptions(questionNum, question) {
     const answerOptionsContainer = document.getElementById(`answerOptions_${questionNum}`);
-    if (!answerOptionsContainer) return;
+    if (!answerOptionsContainer) {
+        console.error(`❌ Answer options container not found for question ${questionNum}`);
+        return;
+    }
+    
+    console.log(`🔍 Filling answer options for question ${questionNum}, type: ${question.type}, correct:`, question.correct);
     
     // Clear existing options
     answerOptionsContainer.innerHTML = '';
@@ -1985,15 +1991,23 @@ function fillAnswerOptions(questionNum, question) {
         
         // Set correct answers
         if (question.type === 'multiple_choice') {
+            console.log(`🔍 Setting correct answer for multiple choice question ${questionNum}:`, question.correct);
             const correctRadio = answerOptionsContainer.querySelector(`input[type="radio"][value="${question.correct}"]`);
             if (correctRadio) {
                 correctRadio.checked = true;
+                console.log(`✅ Set correct answer for question ${questionNum}`);
+            } else {
+                console.error(`❌ Could not find radio button for correct answer ${question.correct} in question ${questionNum}`);
             }
         } else if (question.type === 'multiple_answer') {
+            console.log(`🔍 Setting correct answers for multiple answer question ${questionNum}:`, question.correct);
             question.correct.forEach(correctIndex => {
                 const correctCheckbox = answerOptionsContainer.querySelector(`input[type="checkbox"][value="${correctIndex}"]`);
                 if (correctCheckbox) {
                     correctCheckbox.checked = true;
+                    console.log(`✅ Set correct answer ${correctIndex} for question ${questionNum}`);
+                } else {
+                    console.error(`❌ Could not find checkbox for correct answer ${correctIndex} in question ${questionNum}`);
                 }
             });
         }
