@@ -1949,7 +1949,7 @@ function fillAnswerOptions(questionNum, question) {
         return;
     }
     
-    console.log(`🔍 Filling answer options for question ${questionNum}, type: ${question.type}, correct:`, question.correct);
+    console.log(`🔍 Filling answer options for question ${questionNum}, type: ${question.type}, correct:`, question.correct, 'correctAnswers:', question.correctAnswers);
     
     // Clear existing options
     answerOptionsContainer.innerHTML = '';
@@ -2022,7 +2022,9 @@ function fillAnswerOptions(questionNum, question) {
         
     } else if (question.type === 'short_answer') {
         // Add short answer options
-        question.correctAnswers.forEach((answer, index) => {
+        console.log(`🔍 Processing short answer question ${questionNum}, correctAnswers:`, question.correctAnswers);
+        if (question.correctAnswers && Array.isArray(question.correctAnswers)) {
+            question.correctAnswers.forEach((answer, index) => {
             const answerHtml = `
                 <div class="short-answer-option">
                     <input type="text" name="correctAnswer_${questionNum}_${index}" placeholder="Correct answer ${index + 1}" value="${answer}" required>
@@ -2032,7 +2034,10 @@ function fillAnswerOptions(questionNum, question) {
                 </div>
             `;
             answerOptionsContainer.insertAdjacentHTML('beforeend', answerHtml);
-        });
+            });
+        } else {
+            console.warn(`⚠️ No correct answers found for short answer question ${questionNum}`);
+        }
         
         // Add "Add Answer" button
         const addButtonHtml = `
