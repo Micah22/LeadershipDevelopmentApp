@@ -202,8 +202,10 @@ function loadQuizData() {
         const originalLength = currentQuizzes.length;
         currentQuizzes = currentQuizzes.filter(quiz => {
             // Remove quizzes with null or missing essential fields
-            if (!quiz.title || !quiz.category || !quiz.difficulty || 
-                quiz.title === 'null' || quiz.category === 'null' || quiz.difficulty === 'null') {
+            // Allow empty strings for category and difficulty, but not null or 'null' string
+            if (!quiz.title || quiz.title === 'null' || 
+                quiz.category === null || quiz.category === 'null' ||
+                quiz.difficulty === null || quiz.difficulty === 'null') {
                 console.log('🗑️ Removing malformed quiz:', quiz);
                 return false;
             }
