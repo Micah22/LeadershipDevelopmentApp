@@ -1950,9 +1950,12 @@ function fillAnswerOptions(questionNum, question) {
     }
     
     console.log(`🔍 Filling answer options for question ${questionNum}, type: ${question.type}, correct:`, question.correct, 'correctAnswers:', question.correctAnswers);
+    console.log(`🔍 Answer options container found:`, answerOptionsContainer);
+    console.log(`🔍 Container innerHTML before clearing:`, answerOptionsContainer.innerHTML);
     
     // Clear existing options
     answerOptionsContainer.innerHTML = '';
+    console.log(`🔍 Container innerHTML after clearing:`, answerOptionsContainer.innerHTML);
     
     if (question.type === 'multiple_choice' || question.type === 'multiple_answer') {
         // Add options
@@ -2024,16 +2027,20 @@ function fillAnswerOptions(questionNum, question) {
         // Add short answer options
         console.log(`🔍 Processing short answer question ${questionNum}, correctAnswers:`, question.correctAnswers);
         if (question.correctAnswers && Array.isArray(question.correctAnswers)) {
+            console.log(`🔍 Adding ${question.correctAnswers.length} correct answers for question ${questionNum}`);
             question.correctAnswers.forEach((answer, index) => {
-            const answerHtml = `
-                <div class="short-answer-option">
-                    <input type="text" name="correctAnswer_${questionNum}_${index}" placeholder="Correct answer ${index + 1}" value="${answer}" required>
-                    <button type="button" class="remove-answer-btn" onclick="removeShortAnswer(this)">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            `;
-            answerOptionsContainer.insertAdjacentHTML('beforeend', answerHtml);
+                console.log(`🔍 Adding answer ${index + 1}: "${answer}" for question ${questionNum}`);
+                const answerHtml = `
+                    <div class="short-answer-option">
+                        <input type="text" name="correctAnswer_${questionNum}_${index}" placeholder="Correct answer ${index + 1}" value="${answer}" required>
+                        <button type="button" class="remove-answer-btn" onclick="removeShortAnswer(this)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                console.log(`🔍 Generated HTML for answer ${index + 1}:`, answerHtml);
+                answerOptionsContainer.insertAdjacentHTML('beforeend', answerHtml);
+                console.log(`✅ Inserted answer ${index + 1} into DOM`);
             });
         } else {
             console.warn(`⚠️ No correct answers found for short answer question ${questionNum}`);
@@ -2046,6 +2053,10 @@ function fillAnswerOptions(questionNum, question) {
             </button>
         `;
         answerOptionsContainer.insertAdjacentHTML('afterend', addButtonHtml);
+        
+        // Debug: Check final container state
+        console.log(`🔍 Final container innerHTML for question ${questionNum}:`, answerOptionsContainer.innerHTML);
+        console.log(`🔍 Final container children count:`, answerOptionsContainer.children.length);
     }
 }
 
