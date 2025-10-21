@@ -1232,11 +1232,23 @@ function handleQuestionImageUpload(questionNum, input) {
 function removeQuestionImage(questionNum) {
     const input = document.getElementById(`questionImage_${questionNum}`);
     const preview = document.getElementById(`questionImagePreview_${questionNum}`);
+    
+    if (!input) {
+        console.warn(`Question image input not found for question ${questionNum}`);
+        return;
+    }
+    
     const uploadBtn = input.previousElementSibling;
     
     input.value = '';
-    preview.style.display = 'none';
-    uploadBtn.style.display = 'block';
+    
+    if (preview) {
+        preview.style.display = 'none';
+    }
+    
+    if (uploadBtn) {
+        uploadBtn.style.display = 'block';
+    }
 }
 
 // Handle option image upload
