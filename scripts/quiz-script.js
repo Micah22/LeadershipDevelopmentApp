@@ -1665,8 +1665,9 @@ async function saveQuiz(e) {
         formTitle.textContent = 'Create New Quiz';
     }
     
-    // Switch to available quizzes
+    // Switch to available quizzes and refresh the display
     document.getElementById('availableQuizzes').click();
+    renderAvailableQuizzes();
 }
 
 // Preview quiz

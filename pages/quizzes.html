@@ -321,6 +321,13 @@
 
             // Initialize tabs component
             initializeQuizTabs();
+            
+            // Refresh quizzes display after a short delay to ensure all scripts are loaded
+            setTimeout(() => {
+                if (typeof renderAvailableQuizzes === 'function') {
+                    renderAvailableQuizzes();
+                }
+            }, 500);
         });
 
         // Initialize quiz tabs
@@ -364,10 +371,16 @@
             // Add specific logic for each tab if needed
             switch (tabId) {
                 case 'availableQuizzes':
-                    // Load available quizzes if needed
+                    // Load available quizzes
+                    if (typeof renderAvailableQuizzes === 'function') {
+                        renderAvailableQuizzes();
+                    }
                     break;
                 case 'quizResults':
-                    // Load quiz results if needed
+                    // Load quiz results
+                    if (typeof renderQuizResults === 'function') {
+                        renderQuizResults();
+                    }
                     break;
                 case 'createQuiz':
                     // Initialize create quiz form if needed
