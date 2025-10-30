@@ -968,7 +968,11 @@ body {
 .image-preview {
     position: relative;
     margin-top: 0.5rem;
-    display: inline-block;
+    display: none !important;
+}
+
+.image-preview.show {
+    display: inline-block !important;
 }
 
 .image-preview img {
@@ -1014,6 +1018,22 @@ body {
     gap: 0.5rem;
 }
 
+
+/* Alternative approach - hide container when preview is hidden */
+.option-image-container > .option-image-preview[style*="display: none"],
+.option-image-container > .option-image-preview[style*="display: none !important"] {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+}
+
 .option-image-btn {
     display: flex;
     align-items: center;
@@ -1037,7 +1057,15 @@ body {
 
 .option-image-preview {
     position: relative;
-    display: inline-block;
+    display: none !important; /* Hidden by default, shown only when image exists */
+}
+
+.option-image-preview.show {
+    display: inline-block !important;
+}
+
+.option-image-preview[style*="display: block"] {
+    display: inline-block !important;
 }
 
 .option-image-preview img {
@@ -1046,6 +1074,45 @@ body {
     object-fit: cover;
     border-radius: 4px;
     border: 1px solid var(--border-color);
+}
+
+/* Hide images with empty or invalid src to prevent broken image icons */
+.option-image-preview img[src=""],
+.option-image-preview img:not([src]),
+.option-image-preview[style*="display: none"] img {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Completely hide the preview container when it has display: none - prevent any content from showing */
+.option-image-preview[style*="display: none"],
+.option-image-preview[style*="display: none !important"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    position: absolute !important;
+    left: -9999px !important;
+}
+
+/* Hide ALL content inside hidden preview containers */
+.option-image-preview[style*="display: none"] *,
+.option-image-preview[style*="display: none !important"] *,
+.option-image-preview[style*="visibility: hidden"] * {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    content: none !important;
 }
 
 .remove-option-image-btn {
@@ -1101,13 +1168,25 @@ body {
     transition: transform 0.2s ease;
 }
 
+/* Hide option images that fail to load or have invalid src */
+.quiz-option .option-image[src=""],
+.quiz-option .option-image:not([src]),
+.quiz-option .option-image[src="null"],
+.quiz-option .option-image[src="undefined"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
 .quiz-option .option-image:hover {
     transform: scale(1.05);
 }
 
 /* Image Modal Styles */
 .image-modal {
-    display: none;
+    display: none !important;
     position: fixed;
     z-index: 10000;
     left: 0;
@@ -1116,6 +1195,16 @@ body {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.9);
     animation: fadeIn 0.3s ease;
+    align-items: center;
+    justify-content: center;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+.image-modal.show {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .image-modal-content {
@@ -1124,16 +1213,21 @@ body {
     padding: 20px;
     width: 90%;
     max-width: 800px;
-    top: 50%;
-    transform: translateY(-50%);
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .image-modal-content img {
     max-width: 100%;
-    max-height: 80vh;
+    max-height: 85vh;
+    width: auto;
+    height: auto;
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    object-fit: contain;
 }
 
 .image-modal-close {
@@ -1146,10 +1240,20 @@ body {
     cursor: pointer;
     z-index: 10001;
     transition: color 0.2s ease;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    touch-action: manipulation;
 }
 
 .image-modal-close:hover {
     color: #ff6b6b;
+    background: rgba(0, 0, 0, 0.7);
 }
 
 @keyframes fadeIn {
@@ -1323,6 +1427,10 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     background: var(--white);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .quiz-option:hover {
@@ -1341,6 +1449,9 @@ body {
     height: 18px;
     margin: 0;
     flex-shrink: 0;
+    cursor: pointer;
+    pointer-events: auto;
+    touch-action: manipulation;
 }
 
 .quiz-option label {
@@ -1348,6 +1459,16 @@ body {
     cursor: pointer;
     flex: 1;
     font-size: 1rem;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.quiz-option .option-image {
+    cursor: pointer;
+    pointer-events: auto;
+    touch-action: manipulation;
     line-height: 1.4;
 }
 
@@ -1386,6 +1507,60 @@ body {
     padding: 0.5rem 1rem;
     border-radius: 20px;
     font-weight: 500;
+}
+
+.quiz-timer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--cfa-light-blue);
+    color: var(--cfa-navy);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 1rem;
+    font-family: 'Courier New', monospace;
+    transition: all 0.3s ease;
+}
+
+.quiz-timer i {
+    font-size: 1rem;
+}
+
+.quiz-timer.timer-warning {
+    background: #fff3cd;
+    color: #856404;
+    animation: pulse 1s infinite;
+}
+
+.quiz-timer.timer-critical {
+    background: #f8d7da;
+    color: #721c24;
+    animation: pulse 0.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.quiz-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.optional-label {
+    color: var(--text-light);
+    font-size: 0.85rem;
+    font-weight: normal;
+    font-style: italic;
 }
 
 .modal-close {
@@ -1523,7 +1698,29 @@ body {
 .score-text {
     font-size: 1.5rem;
     color: var(--cfa-navy);
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
+}
+
+.quiz-time-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--cfa-light-blue);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    color: var(--cfa-navy);
+    font-size: 1rem;
+}
+
+.quiz-time-info i {
+    font-size: 1.1rem;
+    color: var(--info);
+}
+
+.quiz-time-info strong {
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
 }
 
 .results-breakdown {
@@ -1701,6 +1898,472 @@ body {
 
     .create-quiz-form {
         padding: 1.5rem;
+    }
+}
+
+/* Mobile Optimizations for Quiz Modal */
+@media (max-width: 768px) {
+    /* Quiz Modal - Full screen on mobile */
+    .quiz-modal {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+    
+    /* Quiz Modal Header */
+    .quiz-modal .modal-header {
+        padding: 1rem !important;
+        flex-wrap: nowrap !important;
+        gap: 0.5rem !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+    
+    .quiz-modal .modal-header h2 {
+        font-size: 1.1rem !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+        order: 1 !important;
+    }
+    
+    .quiz-progress {
+        font-size: 0.9rem !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        order: 2 !important;
+        margin: 0 !important;
+    }
+    
+    /* Quiz Timer */
+    .quiz-timer {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.9rem !important;
+        min-width: 70px !important;
+        flex-shrink: 0 !important;
+        order: 3 !important;
+        margin: 0 !important;
+    }
+    
+    .quiz-timer i {
+        font-size: 0.85rem !important;
+    }
+    
+    .modal-close {
+        min-width: 44px !important;
+        min-height: 44px !important;
+        padding: 0.5rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
+        order: 4 !important;
+        margin: 0 !important;
+    }
+    
+    /* Quiz Modal Body */
+    .quiz-modal .modal-body {
+        padding: 1rem 0.75rem !important;
+        max-height: none !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+    }
+    
+    /* Quiz Question */
+    .quiz-question {
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .question-text {
+        font-size: 1.1rem !important;
+        margin-bottom: 1rem !important;
+        line-height: 1.4 !important;
+    }
+    
+    .question-points {
+        font-size: 0.85rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    
+    /* Quiz Options - Touch-friendly */
+    .quiz-options {
+        gap: 0.75rem !important;
+    }
+    
+    .quiz-option {
+        padding: 1rem !important;
+        min-height: 44px !important;
+        border-width: 2px !important;
+        gap: 0.75rem !important;
+        cursor: pointer !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1) !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        position: relative !important;
+    }
+    
+    .quiz-option input[type="radio"],
+    .quiz-option input[type="checkbox"] {
+        width: 22px !important;
+        height: 22px !important;
+        min-width: 22px !important;
+        min-height: 22px !important;
+        cursor: pointer !important;
+        pointer-events: auto !important;
+        touch-action: manipulation !important;
+        z-index: 1 !important;
+    }
+    
+    .quiz-option label {
+        font-size: 1rem !important;
+        line-height: 1.5 !important;
+        cursor: pointer !important;
+        flex: 1 !important;
+        pointer-events: auto !important;
+        touch-action: manipulation !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+        z-index: 1 !important;
+    }
+    
+    /* Ensure image clicks don't interfere but image still opens modal */
+    .quiz-option .option-image {
+        cursor: pointer !important;
+        pointer-events: auto !important;
+        touch-action: manipulation !important;
+        max-width: 100% !important;
+        z-index: 2 !important;
+    }
+    
+    /* Quiz Option Images */
+    .quiz-option img,
+    .quiz-option .option-image {
+        max-width: 60px !important;
+        max-height: 60px !important;
+        width: auto !important;
+        height: auto !important;
+        object-fit: cover !important;
+    }
+    
+    /* Question Images */
+    .question-image {
+        margin: 0.75rem 0 !important;
+    }
+    
+    .question-image-display {
+        max-width: 100% !important;
+        max-height: 200px !important;
+        width: auto !important;
+        height: auto !important;
+    }
+    
+    /* Quiz Modal Footer */
+    .quiz-modal .modal-footer {
+        padding: 1rem 0.75rem !important;
+        flex-direction: row !important;
+        gap: 0.5rem !important;
+        flex-wrap: wrap !important;
+        position: sticky !important;
+        bottom: 0 !important;
+        z-index: 10 !important;
+    }
+    
+    .quiz-modal .modal-footer .btn {
+        flex: 1 1 auto !important;
+        min-height: 44px !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 1rem !important;
+    }
+    
+    /* Results Modal */
+    .results-modal {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+    
+    .results-summary {
+        padding: 1rem !important;
+    }
+    
+    .results-score {
+        font-size: 2rem !important;
+    }
+    
+    .results-message {
+        font-size: 1.1rem !important;
+    }
+    
+    /* Image Modal Mobile */
+    .image-modal {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .image-modal-content {
+        width: 95% !important;
+        max-width: 95% !important;
+        padding: 1rem !important;
+        margin: 0 !important;
+        top: 0 !important;
+        transform: none !important;
+    }
+    
+    .image-modal-content img {
+        max-width: 100% !important;
+        max-height: 80vh !important;
+        width: auto !important;
+        height: auto !important;
+    }
+    
+    .image-modal-close {
+        top: 1rem !important;
+        right: 1rem !important;
+        font-size: 2rem !important;
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        background: rgba(0, 0, 0, 0.7) !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        touch-action: manipulation !important;
+        z-index: 10001 !important;
+    }
+    
+    /* Quiz Images - Mobile Sizing */
+    .question-image {
+        margin: 0.75rem 0 !important;
+        text-align: center !important;
+    }
+    
+    .question-image-display {
+        max-width: 100% !important;
+        max-height: 200px !important;
+        width: auto !important;
+        height: auto !important;
+    }
+    
+    .quiz-option .option-image {
+        max-width: 60px !important;
+        max-height: 60px !important;
+        width: auto !important;
+        height: auto !important;
+    }
+    
+    /* Quiz Form Mobile Responsiveness */
+    .create-quiz-form {
+        padding: 1rem !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    
+    .form-section {
+        margin-bottom: 1.5rem !important;
+        padding: 0 !important;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem !important;
+    }
+    
+    .form-group label {
+        font-size: 0.9rem !important;
+        margin-bottom: 0.5rem !important;
+        display: block !important;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100% !important;
+        min-height: 44px !important;
+        padding: 0.75rem !important;
+        font-size: 1rem !important;
+        border-radius: 6px !important;
+        border: 1px solid var(--border-color) !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Question Container Mobile */
+    .question-container {
+        padding: 1rem !important;
+        margin-bottom: 1rem !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        background: #f8f9fa !important;
+    }
+    
+    .question-type-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem !important;
+    }
+    
+    .points-input {
+        width: 100% !important;
+    }
+    
+    /* Answer Options Mobile Layout */
+    .answer-options-container {
+        width: 100% !important;
+        overflow-x: visible !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .answer-option {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem !important;
+        padding: 1rem !important;
+        margin-bottom: 1rem !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        background: var(--white) !important;
+        position: relative !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .answer-option input[type="radio"],
+    .answer-option input[type="checkbox"] {
+        width: 22px !important;
+        height: 22px !important;
+        min-width: 22px !important;
+        min-height: 22px !important;
+        margin: 0 !important;
+        flex-shrink: 0 !important;
+        align-self: flex-start !important;
+    }
+    
+    .option-content {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem !important;
+        width: 100% !important;
+        flex: 1 !important;
+    }
+    
+    .answer-option input[type="text"] {
+        width: 100% !important;
+        min-height: 44px !important;
+        padding: 0.75rem !important;
+        font-size: 1rem !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 6px !important;
+        box-sizing: border-box !important;
+        flex: none !important;
+    }
+    
+    .option-image-container {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 0.5rem !important;
+        width: 100% !important;
+        margin-top: 0.5rem !important;
+    }
+    
+    .option-image-btn {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1rem !important;
+        border-radius: 6px !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .remove-option-btn {
+        position: absolute !important;
+        top: 0.5rem !important;
+        right: 0.5rem !important;
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 0.9rem !important;
+        z-index: 10 !important;
+    }
+    
+    .add-option-btn {
+        width: 100% !important;
+        min-height: 44px !important;
+        padding: 0.75rem !important;
+        font-size: 1rem !important;
+        border-radius: 6px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.5rem !important;
+        margin-top: 1rem !important;
+    }
+    
+    /* Form Actions Mobile */
+    .form-actions {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+        padding: 1rem 0 !important;
+        margin-top: 1rem !important;
+    }
+    
+    .form-actions .btn {
+        width: 100% !important;
+        min-height: 44px !important;
+        padding: 0.75rem !important;
+        font-size: 1rem !important;
+        border-radius: 6px !important;
+    }
+    
+    /* Question Image Upload Mobile */
+    .question-image-upload {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+        width: 100% !important;
+    }
+    
+    .question-image-upload input[type="file"] {
+        width: 100% !important;
+        min-height: 44px !important;
+        padding: 0.75rem !important;
+        font-size: 1rem !important;
+    }
+    
+    .question-image-upload .btn {
+        width: 100% !important;
+        min-height: 44px !important;
+        padding: 0.75rem !important;
+        font-size: 1rem !important;
     }
 }
 

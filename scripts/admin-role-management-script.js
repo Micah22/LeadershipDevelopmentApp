@@ -579,10 +579,152 @@ function getUsers() {
     return usersData ? JSON.parse(usersData) : [];
 }
 
+// Element Access Control System
+let selectedElementId = null;
+let elementAccessData = JSON.parse(localStorage.getItem('elementAccessData') || '{}');
+
+// Define website elements that can be controlled
+const websiteElements = [
+    { id: 'navbar', name: 'Navigation Bar', description: 'Top navigation menu' },
+    { id: 'dashboard', name: 'Dashboard', description: 'User dashboard page' },
+    { id: 'my-progress', name: 'My Progress', description: 'User progress tracking' },
+    { id: 'quizzes', name: 'Quizzes', description: 'Quiz and test system' },
+    { id: 'user-overview', name: 'User Overview', description: 'Admin user management' },
+    { id: 'path-management', name: 'Path Management', description: 'Module and path management' },
+    { id: 'role-management', name: 'Role Management', description: 'Role and permission settings' },
+    { id: 'reports', name: 'Reports', description: 'System reports and analytics' },
+    { id: 'settings', name: 'Settings', description: 'System settings' }
+];
+
+// Initialize element access control
+function initializeElementAccessControl() {
+    renderElementsList();
+    loadElementAccessData();
+}
+
+// Render the elements list
+function renderElementsList() {
+    const elementsList = document.getElementById('elementsList');
+    if (!elementsList) return;
+    
+    elementsList.innerHTML = websiteElements.map(element => `
+        <div class="element-item" onclick="selectElement('${element.id}')">
+            <div class="element-icon">
+                <i class="fas fa-cube"></i>
+            </div>
+            <div class="element-info">
+                <h4>${element.name}</h4>
+                <p>${element.description}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Select an element to manage access
+function selectElement(elementId) {
+    selectedElementId = elementId;
+    const element = websiteElements.find(e => e.id === elementId);
+    
+    // Update selected element display
+    const selectedElementDiv = document.getElementById('selectedElement');
+    if (selectedElementDiv && element) {
+        selectedElementDiv.innerHTML = `
+            <h3>${element.name}</h3>
+            <p>${element.description}</p>
+        `;
+    }
+    
+    // Render role access checkboxes
+    renderRoleAccessList();
+    
+    // Enable save button
+    const saveBtn = document.getElementById('saveAccessBtn');
+    if (saveBtn) saveBtn.disabled = false;
+}
+
+// Render role access checkboxes
+function renderRoleAccessList() {
+    const roleAccessList = document.getElementById('roleAccessList');
+    if (!roleAccessList || !selectedElementId) return;
+    
+    roleAccessList.innerHTML = currentRoles.map(role => {
+        const hasAccess = elementAccessData[selectedElementId]?.includes(role.id) || false;
+        return `
+            <label class="checkbox-label">
+                <input type="checkbox" 
+                       data-role="${role.id}" 
+                       ${hasAccess ? 'checked' : ''}
+                       onchange="updateElementAccess()">
+                <span>${role.name}</span>
+                <span class="role-level">Level ${role.level}</span>
+            </label>
+        `;
+    }).join('');
+}
+
+// Update element access when checkbox changes
+function updateElementAccess() {
+    // This will be called when a checkbox is changed
+    // The save button will be enabled to persist changes
+}
+
+// Save element access settings
+function saveElementAccess() {
+    if (!selectedElementId) return;
+    
+    const checkboxes = document.querySelectorAll('#roleAccessList input[type="checkbox"]');
+    const allowedRoles = [];
+    
+    checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            allowedRoles.push(checkbox.dataset.role);
+        }
+    });
+    
+    elementAccessData[selectedElementId] = allowedRoles;
+    localStorage.setItem('elementAccessData', JSON.stringify(elementAccessData));
+    
+    showToast('success', 'Saved', `Access settings saved for ${websiteElements.find(e => e.id === selectedElementId).name}`);
+}
+
+// Clear selection
+function clearSelection() {
+    selectedElementId = null;
+    document.getElementById('selectedElement').innerHTML = '<p>Select an element to manage access</p>';
+    document.getElementById('roleAccessList').innerHTML = '';
+    document.getElementById('saveAccessBtn').disabled = true;
+}
+
+// Filter elements by search
+function filterElements() {
+    const searchTerm = document.getElementById('elementSearch')?.value.toLowerCase() || '';
+    const elementItems = document.querySelectorAll('.element-item');
+    
+    elementItems.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(searchTerm) ? 'block' : 'none';
+    });
+}
+
+// Load element access data
+function loadElementAccessData() {
+    // Access data is loaded from localStorage in the elementAccessData variable
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    initializeElementAccessControl();
+});
+
 // Export functions for global access
 window.openRoleModal = openRoleModal;
 window.editRole = editRole;
 window.viewRoleDetails = viewRoleDetails;
 window.deleteRole = deleteRole;
 window.updateRolePermission = updateRolePermission;
+window.selectElement = selectElement;
+window.updateElementAccess = updateElementAccess;
+window.saveElementAccess = saveElementAccess;
+window.clearSelection = clearSelection;
+window.filterElements = filterElements;
 

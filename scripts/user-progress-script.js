@@ -213,11 +213,31 @@ async function loadProgressData() {
         if (window.dbService && window.dbService.isConfigured && user && user.id) {
             // Get user's assigned modules
             userAssignments = await window.dbService.getModuleAssignments(user.id);
+            console.log('📋 Loaded module assignments for user:', userAssignments);
             
             if (userAssignments && userAssignments.length > 0) {
-                // Get the module titles from assignments
-                moduleTitles = userAssignments.map(assignment => assignment.module_title);
+                // Get all modules to resolve module titles
+                const allModules = await window.dbService.getModules();
+                
+                // Get the module titles from assignments, with fallback lookup
+                moduleTitles = userAssignments.map(assignment => {
+                    // First try assignment.module_title (from join)
+                    if (assignment.module_title && assignment.module_title !== 'Unknown Module') {
+                        return assignment.module_title;
+                    }
+                    // Fallback: lookup by module_id
+                    if (assignment.module_id) {
+                        const module = allModules.find(m => m.id === assignment.module_id);
+                        if (module && module.title) {
+                            return module.title;
+                        }
+                    }
+                    return null;
+                }).filter(title => title !== null && title !== 'Unknown Module');
+                
+                console.log('📚 Resolved module titles:', moduleTitles);
             } else {
+                console.log('📭 No module assignments found for user');
             }
         } else {
             console.warn('Database service not configured, using localStorage fallback for modules');
@@ -229,7 +249,7 @@ async function loadProgressData() {
     
     // If no modules are assigned, show empty state (don't fallback to all modules)
     if (moduleTitles.length === 0) {
-        // No modules assigned to user, showing empty state
+        console.log('📭 No modules assigned to user, showing empty state');
     }
     
     let achievements = 0;
@@ -467,13 +487,7 @@ function updateModules(modules, assignments = []) {
             </div>
             ` : ''}
             <div class="module-progress">
-                <div class="module-task-count">${module.completedTasks || 0} of ${module.totalTasks || 0} tasks completed</div>
-                <div class="module-progress-bar-container">
-                    <div class="module-progress-bar">
-                        <div class="module-progress-fill" style="width: ${module.progress}%;"></div>
-                    </div>
-                    <div class="module-progress-text">${module.progress}%</div>
-                </div>
+                <div class="module-task-count">${module.completedTasks || 0} of ${module.totalTasks || 0} tasks completed (${module.progress}%)</div>
             </div>
         </div>
     `;
@@ -504,7 +518,7 @@ async function openModuleModal(moduleTitle) {
         return;
     }
     
-    // Get user's saved progress
+    // Get user's saved progress (use same method as cards - from database)
     const currentUserData = localStorage.getItem('currentUser');
     
     // Parse the user data - it might be a JSON string or just a username
@@ -517,8 +531,8 @@ async function openModuleModal(moduleTitle) {
         username = currentUserData;
     }
     
-    const userProgressKey = `userProgress_${username}`;
-    const userProgress = JSON.parse(localStorage.getItem(userProgressKey) || '{}');
+    // Get fresh progress data from database (same as cards use)
+    const userProgress = await getUserProgress(username);
     const moduleProgress = userProgress[moduleTitle] || { checklist: [] };
     
     // Update modal title
@@ -683,8 +697,9 @@ async function openModuleModal(moduleTitle) {
             return `
                 <div class="checklist-item ${isCompleted ? 'completed' : ''}">
                     <input type="checkbox" class="checklist-checkbox" id="checklist-${index}" 
-                           ${isCompleted ? 'checked' : ''} 
-                           onchange="toggleChecklistItem('${moduleTitle}', ${index})">
+                           ${isCompleted ? 'checked' : ''}
+                           disabled
+                           readonly>
                     <label for="checklist-${index}" class="checklist-label">${item.task}</label>
                     ${fileInfo}
                 </div>
@@ -709,8 +724,127 @@ async function openModuleModal(moduleTitle) {
     // Store current module for updates
     modal.dataset.currentModule = moduleTitle;
     
+    // Load and display performance review data
+    await loadPerformanceReviewData(moduleTitle, username);
+    
     // Show modal
     modal.classList.add('show');
+}
+
+// Load and display performance review data
+async function loadPerformanceReviewData(moduleTitle, username) {
+    try {
+        if (!window.dbService || !window.dbService.isConfigured) {
+            return;
+        }
+        
+        // Get user and module data
+        const users = await window.dbService.getUsers();
+        const user = users.find(u => u.username === username);
+        const modules = await window.dbService.getModules();
+        const module = modules.find(m => m.title === moduleTitle);
+        
+        if (!user || !module) {
+            return;
+        }
+        
+        // Get performance review data if it exists
+        const reviews = await window.dbService.getPerformanceReviews(user.id, module.id);
+        if (!reviews || reviews.length === 0) {
+            return;
+        }
+        
+        const performanceReview = reviews[0];
+        const modal = document.getElementById('moduleModal');
+        
+        // Parse trainer comments and team member goals
+        let trainerComments = [];
+        let teamMemberGoals = [];
+        
+        try {
+            if (performanceReview.trainer_comments) {
+                trainerComments = JSON.parse(performanceReview.trainer_comments);
+            }
+            if (performanceReview.team_member_goals) {
+                teamMemberGoals = JSON.parse(performanceReview.team_member_goals);
+            }
+        } catch (e) {
+            console.error('Failed to parse review data:', e);
+        }
+        
+        // Populate first review entry with saved data
+        const firstReviewEntry = modal.querySelector('.review-entry');
+        if (firstReviewEntry) {
+            const dateInput = firstReviewEntry.querySelector('.review-input[type="date"]');
+            if (dateInput && performanceReview.review_date) {
+                dateInput.value = performanceReview.review_date;
+            }
+            
+            const textInputs = firstReviewEntry.querySelectorAll('.review-input[type="text"]');
+            if (textInputs[0] && performanceReview.trainee_initials) {
+                textInputs[0].value = performanceReview.trainee_initials;
+            }
+            if (textInputs[1] && performanceReview.trainer_signature) {
+                textInputs[1].value = performanceReview.trainer_signature;
+            }
+
+            // Restore selected rating circle from overall_rating (read-only visual display)
+            if (performanceReview.overall_rating) {
+                const ratingMapReverse = {
+                    'Excellent': 'excellent',
+                    'Average': 'average',
+                    'Unsatisfactory': 'unsatisfactory'
+                };
+                const normalized = ratingMapReverse[performanceReview.overall_rating] || null;
+                if (normalized) {
+                    const circle = firstReviewEntry.querySelector(`.rating-circles .circle[data-rating="${normalized}"]`);
+                    if (circle) {
+                        // Highlight the circle to show the selected rating (read-only display)
+                        firstReviewEntry.querySelectorAll('.rating-circles .circle').forEach(c => {
+                            c.classList.remove('selected');
+                            c.style.border = '';
+                            c.style.boxShadow = '';
+                        });
+                        circle.classList.add('selected');
+                        circle.style.border = '3px solid #333';
+                        circle.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+                    }
+                }
+            }
+        }
+        
+        // Populate trainer comments
+        trainerComments.forEach((comment, index) => {
+            const commentEntry = modal.querySelectorAll('.comment-entry')[index];
+            if (commentEntry) {
+                const initialsInput = commentEntry.querySelector('.trainer-initials-input');
+                const commentTextarea = commentEntry.querySelector('.comment-line');
+                if (initialsInput && comment.initials) {
+                    initialsInput.value = comment.initials;
+                }
+                if (commentTextarea && comment.comment) {
+                    commentTextarea.value = comment.comment;
+                }
+            }
+        });
+        
+        // Populate team member goals
+        teamMemberGoals.forEach((goal, index) => {
+            const goalEntry = modal.querySelectorAll('.goal-entry')[index];
+            if (goalEntry) {
+                const goalInput = goalEntry.querySelector('.goal-input');
+                const dueDateInput = goalEntry.querySelector('.due-date-input');
+                if (goalInput && goal.goal) {
+                    goalInput.value = goal.goal;
+                }
+                if (dueDateInput && goal.due_date) {
+                    dueDateInput.value = goal.due_date;
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Failed to load performance review data:', error);
+    }
 }
 
 async function toggleChecklistItem(moduleTitle, itemIndex) {
@@ -777,14 +911,15 @@ async function toggleChecklistItem(moduleTitle, itemIndex) {
             const totalCount = userProgress[moduleTitle].checklist.length;
             const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
             
-            // Saving progress for module
+            // Saving progress for module with checklist array
             
-            await window.dbService.updateUserProgress(
+            await window.dbService.updateUserProgressWithChecklist(
                 user.id,
                 module.id,
                 completedCount,
                 totalCount,
-                progressPercentage
+                progressPercentage,
+                userProgress[moduleTitle].checklist
             );
         }
     } catch (error) {
@@ -798,11 +933,70 @@ async function toggleChecklistItem(moduleTitle, itemIndex) {
     // Update modal display
     await updateModalProgress(moduleTitle);
     
+    // Also update the card immediately (in case modal is open, cards are visible)
+    await updateModuleCardProgress(moduleTitle);
+    
     // Refresh main page data with a small delay to ensure database is updated
     setTimeout(async () => {
         // Refreshing progress data after toggle
         await loadProgressData();
     }, 500);
+}
+
+// Update progress on the module card (outside the modal) to match modal
+async function updateModuleCardProgress(moduleTitle) {
+    try {
+        const currentUserData = localStorage.getItem('currentUser');
+        let username;
+        try {
+            const userObj = JSON.parse(currentUserData);
+            username = userObj.username;
+        } catch (e) {
+            username = currentUserData;
+        }
+        
+        // Get fresh progress data (same calculation as cards)
+        const userProgress = await getUserProgress(username);
+        const moduleData = await getModuleData(moduleTitle);
+        if (!moduleData) return;
+        
+        const moduleProgress = userProgress[moduleTitle] || { checklist: [] };
+        const completedCount = moduleProgress.checklist.filter(item => item).length;
+        const totalCount = moduleData.checklist.length;
+        const progressPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+        
+        // Find and update the module card
+        const moduleCards = document.querySelectorAll('.module-card');
+        moduleCards.forEach(card => {
+            const cardTitle = card.querySelector('.module-title')?.textContent?.trim();
+            if (cardTitle === moduleTitle) {
+                // Update progress text (progress bar removed)
+                const taskCount = card.querySelector('.module-task-count');
+                
+                if (taskCount) {
+                    taskCount.textContent = `${completedCount} of ${totalCount} tasks completed (${progressPercentage}%)`;
+                }
+                
+                // Update status badge
+                const statusBadge = card.querySelector('.module-status');
+                if (statusBadge) {
+                    let statusClass = 'not-started';
+                    let statusText = 'NOT STARTED';
+                    if (progressPercentage === 100) {
+                        statusClass = 'completed';
+                        statusText = 'COMPLETED';
+                    } else if (progressPercentage > 0) {
+                        statusClass = 'in-progress';
+                        statusText = 'IN PROGRESS';
+                    }
+                    statusBadge.className = `module-status ${statusClass}`;
+                    statusBadge.textContent = statusText;
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Failed to update module card progress:', error);
+    }
 }
 
 async function updateModalProgress(moduleTitle) {
@@ -825,8 +1019,8 @@ async function updateModalProgress(moduleTitle) {
         username = currentUserData;
     }
     
-    const userProgressKey = `userProgress_${username}`;
-    const userProgress = JSON.parse(localStorage.getItem(userProgressKey) || '{}');
+    // Get fresh progress data from database (same as cards use) to ensure consistency
+    const userProgress = await getUserProgress(username);
     const moduleProgress = userProgress[moduleTitle] || { checklist: [] };
     
     // Update checklist items
@@ -870,17 +1064,34 @@ function closeModuleModal() {
 
 
 async function getModuleData(moduleTitle) {
-    // Get modules from global storage
+    // Prefer local cache
     const globalModules = localStorage.getItem('globalModules');
-    if (!globalModules) {
-        return getFallbackModuleData(moduleTitle);
+    let module = null;
+    if (globalModules) {
+        try {
+            const modules = JSON.parse(globalModules);
+            module = modules.find(m => m.title === moduleTitle) || null;
+        } catch (e) {
+            // Ignore parse errors and fall back to DB
+        }
     }
     
-    const modules = JSON.parse(globalModules);
-    const module = modules.find(m => m.title === moduleTitle);
+    // Fallback to database if not found in cache
+    if (!module && window.dbService && window.dbService.isConfigured) {
+        try {
+            const dbModules = await window.dbService.getModules();
+            module = dbModules.find(m => m.title === moduleTitle) || null;
+        } catch (e) {
+            // If DB not available, use static fallback
+        }
+    }
     
+    // Final fallback to static seeded data
     if (!module) {
-        return null; // Return null for deleted modules
+        const fallback = getFallbackModuleData(moduleTitle);
+        if (!fallback) return null;
+        // Normalize fallback to expected shape below
+        module = fallback;
     }
     
     // Load checklist items from database if available
@@ -1278,8 +1489,14 @@ async function getUserProgress(username) {
                     // Find module title by ID
                     const module = modules.find(m => m.id === p.module_id);
                     if (module) {
+                        // Load checklist from database if available, otherwise initialize from completed_tasks
+                        let checklist = Array(p.total_tasks).fill(false).map((_, i) => i < p.completed_tasks);
+                        if (p.checklist && Array.isArray(p.checklist)) {
+                            checklist = p.checklist;
+                        }
+                        
                         userProgress[module.title] = {
-                            checklist: Array(p.total_tasks).fill(false).map((_, i) => i < p.completed_tasks)
+                            checklist: checklist
                         };
                     }
                 });

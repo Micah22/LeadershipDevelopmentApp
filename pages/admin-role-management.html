@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Role Management - CFA Leadership Development</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-    <link rel="stylesheet" href="../styles/admin-role-management-styles.css?v=1">
+    <link rel="stylesheet" href="../styles/admin-role-management-styles.css?v=2">
     <link rel="stylesheet" href="../styles/admin-overview-styles.css?v=29">
     <link rel="stylesheet" href="../styles/toast-component.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -120,6 +120,47 @@
                 
                 <div class="permission-matrix" id="permissionMatrix">
                     <!-- Permission matrix will be populated here -->
+                </div>
+            </div>
+
+            <!-- Element Access Control Section -->
+            <div class="element-access-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-lock"></i> Element Access Control</h2>
+                    <p>Control which roles can access specific UI elements and sections</p>
+                </div>
+                
+                <div class="access-control-container">
+                    <!-- Website Elements List -->
+                    <div class="elements-list">
+                        <h3>Website Elements</h3>
+                        <div class="elements-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="elementSearch" placeholder="Search elements..." onkeyup="filterElements()">
+                        </div>
+                        <div class="elements-items" id="elementsList">
+                            <!-- Elements will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Access Control Panel -->
+                    <div class="access-control-panel">
+                        <h3>Access Control</h3>
+                        <div class="selected-element" id="selectedElement">
+                            <p>Select an element to manage access</p>
+                        </div>
+                        <div class="role-access-list" id="roleAccessList">
+                            <!-- Role checkboxes will be populated here -->
+                        </div>
+                        <div class="access-control-actions">
+                            <button class="btn btn-primary" id="saveAccessBtn" onclick="saveElementAccess()" disabled>
+                                <i class="fas fa-save"></i> Save Access Settings
+                            </button>
+                            <button class="btn btn-secondary" onclick="clearSelection()">
+                                <i class="fas fa-times"></i> Clear Selection
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -243,8 +284,9 @@
                 <button type="button" class="btn btn-primary" id="roleModalSave">Save Role</button>
             </div>
         </div>
+        </div>
     </div>
 
-    <script src="../scripts/admin-role-management-script.js?v=1"></script>
+    <script src="../scripts/admin-role-management-script.js?v=3"></script>
 </body>
 </html>

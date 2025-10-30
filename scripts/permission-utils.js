@@ -55,6 +55,7 @@ class PermissionManager {
                     'view_users', 'create_users', 'edit_users', 'delete_users',
                     'view_modules', 'create_modules', 'edit_modules', 'delete_modules',
                     'view_assignments', 'create_assignments', 'edit_assignments', 'delete_assignments',
+                    'create_quizzes', 'edit_quizzes', 'delete_quizzes',
                     'view_reports', 'manage_roles', 'system_settings', 'backup_restore'
                 ]
             },
@@ -142,7 +143,12 @@ class PermissionManager {
         }
         
         const roleId = this.getRoleIdFromName(roleName);
-        const role = this.roles.find(role => role.id === roleId);
+        
+        // Debug: log the roles structure
+        console.log(`Searching for role: ${roleName} -> roleId: ${roleId}`);
+        console.log(`Available roles:`, this.roles.map(r => ({ id: r.id, role_id: r.role_id, name: r.name })));
+        
+        const role = this.roles.find(role => (role.id === roleId || role.role_id === roleId));
         
         if (!role) {
             console.warn(`Role not found for roleName: ${roleName}, roleId: ${roleId}`);
@@ -162,7 +168,7 @@ class PermissionManager {
             'Supervisor': 'supervisor',
             'Trainer': 'trainer',
             'Assistant Supervisor': 'assistant_supervisor',
-            'Team Member': 'team_member'
+            'Team Member': 'team-member'
         };
         return mapping[roleName] || 'team_member';
     }
@@ -173,13 +179,14 @@ class PermissionManager {
     hasPermission(permission) {
         const currentUser = this.getCurrentUser();
         
-        // Debug logging
-        console.log('Permission check - currentUser:', currentUser);
-        console.log('Permission check - requested permission:', permission);
+        // Debug logging (only for non-admin to reduce noise)
+        if (currentUser.role !== 'Admin' && currentUser.role !== 'admin') {
+            console.log('Permission check - currentUser:', currentUser);
+            console.log('Permission check - requested permission:', permission);
+        }
         
         // Admin bypass - if user is admin, grant all permissions
         if (currentUser.role === 'Admin' || currentUser.role === 'admin') {
-            console.log('Admin user detected, granting permission');
             return true;
         }
         
@@ -367,10 +374,104 @@ class PermissionManager {
     hasRoleLevel(requiredLevel) {
         return this.getUserRoleLevel() >= requiredLevel;
     }
+
+    /**
+     * Check permission for a specific role (used by admin bypass)
+     */
+    checkPermissionForRole(roleName, permission) {
+        this.ensureRolesLoaded();
+        
+        if (!this.roles || this.roles.length === 0) {
+            return false;
+        }
+        
+        const role = this.getRoleByName(roleName);
+        
+        if (!role) {
+            console.warn(`Role not found for checking permission: ${roleName}`);
+            return false;
+        }
+
+        if (!role.permissions || !Array.isArray(role.permissions)) {
+            return false;
+        }
+
+        return role.permissions.includes(permission);
+    }
+
+    /**
+     * Apply permission-based element visibility
+     * Hide/show elements based on data-permission attribute
+     */
+    applyElementVisibility() {
+        // Find all elements with data-permission attribute
+        const elements = document.querySelectorAll('[data-permission]');
+        
+        console.log(`Found ${elements.length} elements with data-permission attribute`);
+        
+        elements.forEach(element => {
+            const requiredPermission = element.getAttribute('data-permission');
+            
+            if (requiredPermission) {
+                const hasAccess = this.hasPermission(requiredPermission);
+                
+                if (hasAccess) {
+                    // Check if element is a tab (has data-tab attribute or admin-tab class)
+                    const isTab = element.hasAttribute('data-tab') || element.classList.contains('admin-tab');
+                    element.style.display = isTab ? 'flex' : '';
+                    element.classList.remove('permission-denied');
+                } else {
+                    element.style.display = 'none';
+                    element.classList.add('permission-denied');
+                }
+            }
+        });
+        
+        // Also handle data-require-any-permission (array of permissions)
+        const anyPermissionElements = document.querySelectorAll('[data-require-any-permission]');
+        anyPermissionElements.forEach(element => {
+            const permissionsAttr = element.getAttribute('data-require-any-permission');
+            if (permissionsAttr) {
+                const permissions = permissionsAttr.split(',').map(p => p.trim());
+                const hasAccess = this.hasAnyPermission(permissions);
+                
+                if (hasAccess) {
+                    element.style.display = '';
+                    element.classList.remove('permission-denied');
+                } else {
+                    element.style.display = 'none';
+                    element.classList.add('permission-denied');
+                }
+            }
+        });
+        
+        console.log('Applied element visibility based on permissions');
+    }
 }
 
 // Create global instance
 window.permissionManager = new PermissionManager();
+
+// Apply visibility on DOM load
+document.addEventListener('DOMContentLoaded', () => {
+    // Wait a bit for roles to load
+    setTimeout(() => {
+        window.permissionManager.applyElementVisibility();
+        // Also call quiz tab visibility updater if it exists
+        if (typeof window.updateQuizTabVisibility === 'function') {
+            window.updateQuizTabVisibility();
+        }
+    }, 500);
+    
+    // Also apply visibility after a longer delay to ensure everything is loaded
+    setTimeout(() => {
+        window.permissionManager.applyElementVisibility();
+        // Also call quiz tab visibility updater if it exists
+        if (typeof window.updateQuizTabVisibility === 'function') {
+            window.updateQuizTabVisibility();
+        }
+    }, 1500);
+});
 
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {

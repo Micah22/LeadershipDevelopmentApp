@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Set up assignment event listeners
     setupAssignmentEventListeners();
+    setupQuizAssignmentEventListeners();
     
     // Load user data
     await loadUserData();
@@ -43,6 +44,20 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
+// Session storage for checklist state (in-memory only, reset on page refresh)
+window.checklistSessionCache = {};
+
+// Clean up corrupted localStorage data (keys with undefined values)
+function cleanupLocalStorageData() {
+    try {
+        // Initialize session cache
+        window.checklistSessionCache = {};
+        console.log('Initialized checklist session cache');
+    } catch (error) {
+        console.error('Error in cleanupLocalStorageData:', error);
+    }
+}
+
 async function initializePage() {
     // Check if user is logged in
     const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -60,6 +75,9 @@ async function initializePage() {
         window.location.href = 'user-dashboard.html';
         return;
     }
+    
+    // Clean up corrupted localStorage data (undefined keys)
+    cleanupLocalStorageData();
     
     // Store current user info for role-based functionality
     window.currentUser = currentUser;
@@ -148,6 +166,52 @@ function setupRoleBasedUI() {
             pageSubtitle.textContent = 'Monitor your team\'s leadership development progress';
         } else {
             pageSubtitle.textContent = 'View user information and progress';
+        }
+    }
+    
+    // Update tab visibility based on page access
+    updateTabVisibility();
+}
+
+// Update tab visibility based on current user's page access
+function updateTabVisibility() {
+    if (!tabsComponent || typeof TabsComponent === 'undefined') {
+        return;
+    }
+    
+    const currentUser = window.currentUser;
+    const userRole = currentUser?.role || 'Team Member';
+    
+    // Get the role ID for permission checking
+    const roleId = reverseRoleMapping[userRole] || 'team-member';
+    
+    // Find the role definition to get page access
+    const roleDefinition = roles.find(r => r.id === roleId || r.role_id === roleId);
+    const userPageAccess = roleDefinition ? (roleDefinition.pageAccess || roleDefinition.page_access || []) : pageAccessLevels[1];
+    
+    // Map of tab IDs to page access IDs
+    const tabPageAccessMap = {
+        'userManagement': 'userManagement',
+        'pathManagement': 'pathManagement',
+        'roleManagement': 'roleManagement',
+        'reports': 'reports',
+        'settings': 'settings'
+    };
+    
+    // Update visibility for each tab
+    Object.keys(tabPageAccessMap).forEach(tabId => {
+        const pageAccessId = tabPageAccessMap[tabId];
+        const hasAccess = userPageAccess.includes(pageAccessId);
+        tabsComponent.setTabVisibility(tabId, hasAccess);
+    });
+    
+    // If the currently active tab was hidden, switch to the first visible tab
+    const activeTab = tabsComponent.container?.querySelector('.admin-tab.active');
+    if (activeTab && activeTab.style.display === 'none') {
+        const visibleTabs = Array.from(tabsComponent.container?.querySelectorAll('.admin-tab') || [])
+            .filter(tab => tab.style.display !== 'none');
+        if (visibleTabs.length > 0) {
+            tabsComponent.setActiveTab(visibleTabs[0].dataset.tab);
         }
     }
 }
@@ -395,6 +459,7 @@ async function loadUserData() {
     
     // Cache users data to avoid redundant queries
     window.cachedUsers = filteredUsers;
+    window.allUsersForFilter = filteredUsers; // Store for search filtering
     
     // Load user progress data in parallel for better performance
     const userProgressPromises = filteredUsers.map(async (user) => {
@@ -421,8 +486,14 @@ async function loadUserData() {
     // Update user progress table
     updateUserProgressTable(filteredUsers);
     
+    // Setup search functionality
+    setupUserSearch();
+    
     // Load module assignments
     loadModuleAssignments();
+    
+    // Load quiz assignments
+    loadQuizAssignments();
     
     // Hide loading indicator
     hideLoadingIndicator();
@@ -513,7 +584,7 @@ function updateUserProgressTable(users) {
                 </td>
                 <td>
                     <div class="action-buttons">
-                        <button class="action-btn" onclick="editUser('${user.username}')">
+                        <button class="action-btn" onclick="editUser('${user.username}')" data-permission="edit_users">
                             <i class="fas fa-edit"></i>
                             Edit User
                         </button>
@@ -521,9 +592,13 @@ function updateUserProgressTable(users) {
                             <i class="fas fa-info-circle"></i>
                             Details
                         </button>
-                        <button class="action-btn action-btn-danger" onclick="resetUserProgress('${user.username}')" title="Reset User Progress">
+                        <button class="action-btn action-btn-danger" onclick="resetUserProgress('${user.username}')" title="Reset User Progress" data-permission="reset_progress">
                             <i class="fas fa-undo"></i>
                             Reset Progress
+                        </button>
+                        <button class="action-btn action-btn-danger" onclick="deleteUser('${user.id || user.username}', '${user.full_name || user.fullName || user.username}')" title="Delete User" data-permission="delete_users">
+                            <i class="fas fa-trash"></i>
+                            Delete User
                         </button>
                     </div>
                 </td>
@@ -557,11 +632,14 @@ function updateUserProgressTable(users) {
                     </div>
                 </div>
                 <div class="user-actions">
-                    <button class="action-btn-mobile" onclick="editUser('${user.username}')">
+                    <button class="action-btn-mobile" onclick="editUser('${user.username}')" data-permission="edit_users">
                         Edit
                     </button>
                     <button class="action-btn-mobile primary" onclick="viewUserDetails('${user.username}')">
                         Details
+                    </button>
+                    <button class="action-btn-mobile danger delete-btn-user-card" onclick="deleteUser('${user.id || user.username}', '${user.full_name || user.fullName || user.username}')" data-permission="delete_users">
+                        Delete
                     </button>
                 </div>
             </div>
@@ -570,6 +648,11 @@ function updateUserProgressTable(users) {
     
     tableBody.innerHTML = tableRows.join('');
     mobileTable.innerHTML = mobileCards.join('');
+    
+    // Apply permission-based visibility after rendering
+    if (window.permissionManager) {
+        window.permissionManager.applyElementVisibility();
+    }
 }
 
 function getStatusClass(role) {
@@ -641,6 +724,124 @@ function viewUserDetails(username) {
     openUserDetailsModal(username);
 }
 
+// Setup user search and filter functionality
+function setupUserSearch() {
+    const searchInput = document.getElementById('userSearchInput');
+    const roleFilter = document.getElementById('userRoleFilter');
+    
+    if (!searchInput) {
+        return;
+    }
+    
+    // Combined filter function
+    const applyFilters = () => {
+        if (!window.allUsersForFilter || window.allUsersForFilter.length === 0) {
+            return;
+        }
+        
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const selectedRole = roleFilter ? roleFilter.value : '';
+        
+        // Filter users based on search term and role
+        let filteredUsers = window.allUsersForFilter.filter(user => {
+            // Apply role filter if selected
+            if (selectedRole && user.role !== selectedRole) {
+                return false;
+            }
+            
+            // Apply search term filter if provided
+            if (searchTerm) {
+                const fullName = (user.full_name || user.fullName || '').toLowerCase();
+                const username = (user.username || '').toLowerCase();
+                const email = (user.email || '').toLowerCase();
+                const role = (user.role || '').toLowerCase();
+                
+                return fullName.includes(searchTerm) ||
+                       username.includes(searchTerm) ||
+                       email.includes(searchTerm) ||
+                       role.includes(searchTerm);
+            }
+            
+            return true;
+        });
+        
+        updateUserProgressTable(filteredUsers);
+    };
+    
+    // Add event listeners
+    if (searchInput) {
+        searchInput.addEventListener('input', applyFilters);
+    }
+    
+    if (roleFilter) {
+        roleFilter.addEventListener('change', applyFilters);
+    }
+}
+
+// Delete user function
+async function deleteUser(userIdOrUsername, displayName) {
+    // Prevent deleting yourself
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const users = await getAllUsers();
+    const userToDelete = users.find(u => (u.id === userIdOrUsername || u.username === userIdOrUsername));
+    
+    if (userToDelete && currentUser.username === userToDelete.username) {
+        showToast('error', 'Cannot Delete User', 'You cannot delete your own account.');
+        return;
+    }
+    
+    // Show confirmation dialog
+    const confirmed = confirm(
+        `Are you sure you want to permanently delete user "${displayName}"?\n\n` +
+        `This will:\n` +
+        `• Remove the user from the system\n` +
+        `• Delete all their progress data\n` +
+        `• Delete all their module assignments\n` +
+        `• Delete all their quiz assignments\n\n` +
+        `This action cannot be undone.`
+    );
+    
+    if (!confirmed) {
+        return;
+    }
+    
+    try {
+        // Get the full user object to ensure we have the ID
+        if (!userToDelete) {
+            showToast('error', 'User Not Found', `User "${displayName}" not found`);
+            return;
+        }
+        
+        const userId = userToDelete.id;
+        
+        if (!userId) {
+            showToast('error', 'Invalid User', 'Cannot delete user: missing user ID');
+            return;
+        }
+        
+        // Delete from database
+        if (window.dbService && window.dbService.isConfigured) {
+            await window.dbService.deleteUser(userId);
+            console.log(`✅ User deleted from database: ${userId}`);
+        }
+        
+        // Remove from localStorage
+        const localUsers = JSON.parse(localStorage.getItem('users') || '[]');
+        const updatedUsers = localUsers.filter(u => u.id !== userId && u.username !== userIdOrUsername);
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
+        
+        // Show success message
+        showToast('success', 'User Deleted', `User "${displayName}" has been permanently deleted.`);
+        
+        // Reload the user data to refresh the display
+        await loadUserData();
+        
+    } catch (error) {
+        console.error('Failed to delete user:', error);
+        showToast('error', 'Delete Failed', `Failed to delete user "${displayName}": ${error.message || 'Unknown error'}`);
+    }
+}
+
 async function openUserDetailsModal(username) {
     const users = await getUsers();
     const user = users.find(u => u.username === username);
@@ -654,11 +855,53 @@ async function openUserDetailsModal(username) {
     const userFullName = user.full_name || user.fullName || user.username || 'Unknown User';
     const userDisplayName = userFullName.charAt(0).toUpperCase();
     
-    // Get quiz results for this user
-    let quizResults = JSON.parse(localStorage.getItem('quizResults') || '[]');
+    // Get quiz results for this user (DB-first, cache fallback)
+    let quizResults = [];
+    try {
+        if (window.dbService && window.dbService.isConfigured && user.id && typeof window.dbService.getQuizResults === 'function') {
+            quizResults = await window.dbService.getQuizResults(user.id);
+            try { localStorage.setItem('quizResults', JSON.stringify(quizResults)); } catch(_) {}
+        } else {
+            quizResults = JSON.parse(localStorage.getItem('quizResults') || '[]');
+        }
+    } catch (e) {
+        console.warn('Falling back to cached quizResults:', e);
+        quizResults = JSON.parse(localStorage.getItem('quizResults') || '[]');
+    }
+    
+    // Also load quiz results from database (quiz_assignments with scores)
+    let dbQuizResults = [];
+    try {
+        if (window.dbService && window.dbService.isConfigured && user.id) {
+            // Get quiz assignments for this user that have scores (completed quizzes)
+            const assignments = await window.dbService.getQuizAssignments(user.id);
+            console.log('📋 All quiz assignments for user:', assignments.length, assignments);
+            console.log('📋 Assignments with scores:', assignments.filter(a => a.score !== null && a.score !== undefined).length);
+            
+            dbQuizResults = assignments
+                .filter(assignment => assignment.score !== null && assignment.score !== undefined)
+                .map(assignment => ({
+                    id: `db_${assignment.id}`,
+                    quizId: assignment.quiz_id,
+                    quizTitle: assignment.quiz_title || 'Unknown Quiz',
+                    username: username,
+                    score: assignment.score,
+                    passed: assignment.passed || false,
+                    dateTaken: assignment.updated_at || assignment.assigned_at,
+                    completedAt: assignment.updated_at || assignment.assigned_at,
+                    correctAnswers: null,
+                    totalQuestions: null,
+                    answers: [],
+                    timeSpent: 0
+                }));
+            console.log('📋 Loaded quiz results from database:', dbQuizResults.length);
+        }
+    } catch (error) {
+        console.error('Failed to load quiz results from database:', error);
+    }
     
     // Add some test quiz data for admin user if none exists
-    if (username === 'admin' && quizResults.length === 0) {
+    if (username === 'admin' && quizResults.length === 0 && dbQuizResults.length === 0) {
         const testQuizResults = [
             {
                 id: 'test_result_1',
@@ -707,20 +950,37 @@ async function openUserDetailsModal(username) {
         localStorage.setItem('quizResults', JSON.stringify(quizResults));
     }
     
-    const userQuizResults = quizResults.filter(result => {
-        // Handle both old format (no username) and new format (with username)
-        // For old results without username, assume they belong to the current user if they're the only results
-        if (result.username) {
-            return result.username === username;
-        } else {
-            // For backward compatibility, if there are no results with usernames,
-            // and this is the admin user, show all results
-            return username === 'admin' && quizResults.every(r => !r.username);
+    // Merge localStorage results with database results
+    // Prioritize database results over localStorage for the same quiz
+    const mergedResults = [...dbQuizResults];
+    quizResults.forEach(localResult => {
+        if (localResult.username === username) {
+            // Only add if we don't already have a database result for this quiz
+            const existsInDb = dbQuizResults.some(dbResult => dbResult.quizId === localResult.quizId);
+            if (!existsInDb) {
+                mergedResults.push(localResult);
+            }
         }
     });
     
-    // Get all quizzes to match with results
-    const allQuizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
+    const userQuizResults = mergedResults;
+    
+    // Get all quizzes from database first, fallback to localStorage
+    let allQuizzes = [];
+    try {
+        if (window.dbService && window.dbService.isConfigured) {
+            allQuizzes = await window.dbService.getQuizzes();
+            console.log('📚 Loaded quizzes from database:', allQuizzes.length);
+        }
+    } catch (error) {
+        console.error('Failed to load quizzes from database:', error);
+    }
+    
+    // Fallback to localStorage if database failed or returned no quizzes
+    if (allQuizzes.length === 0) {
+        allQuizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
+        console.log('📚 Loaded quizzes from localStorage:', allQuizzes.length);
+    }
     
     // Get user's module progress (use async version from user-progress-script.js)
     let userProgress = await getUserProgress(username);
@@ -849,8 +1109,11 @@ async function openUserDetailsModal(username) {
                 </div>
                 <div class="quiz-scores-list">
                     ${userQuizResults.map(result => {
+                        // Use quizTitle from result if available, otherwise look it up
+                        const quizTitle = result.quizTitle || (() => {
                         const quiz = allQuizzes.find(q => q.id === result.quizId);
-                        const quizTitle = quiz ? quiz.title : 'Unknown Quiz';
+                            return quiz ? quiz.title : 'Unknown Quiz';
+                        })();
                         const passedClass = result.passed ? 'passed' : 'failed';
                         const passedText = result.passed ? 'Passed' : 'Failed';
                         
@@ -900,7 +1163,7 @@ async function openUserDetailsModal(username) {
                         const statusText = module.progress === 100 ? 'Completed' : module.progress > 0 ? 'In Progress' : 'Not Started';
                         
                         return `
-                            <div class="module-progress-item ${statusClass}">
+                            <div class="module-progress-item ${statusClass}" onclick="showModuleDetails('${username}', '${module.title}', ${JSON.stringify(module).replace(/"/g, '&quot;')})">
                                 <div class="module-info">
                                     <span class="module-title">${module.title}</span>
                                     <span class="module-status">${statusText}</span>
@@ -910,6 +1173,10 @@ async function openUserDetailsModal(username) {
                                         <div class="progress-fill" style="width: ${module.progress}%"></div>
                                     </div>
                                     <span class="progress-text">${module.completedTasks}/${module.totalTasks} tasks</span>
+                                </div>
+                                <div class="module-click-hint">
+                                    <i class="fas fa-eye"></i>
+                                    <span>Click to view details</span>
                                 </div>
                             </div>
                         `;
@@ -932,17 +1199,6 @@ async function openUserDetailsModal(username) {
     // Create user details modal content
     const modalContent = `
         <div class="user-details-modal">
-            <div class="user-details-header">
-                <div class="user-avatar">
-                    <span>${userDisplayName}</span>
-                </div>
-                <div class="user-info">
-                    <h3>${userFullName}</h3>
-                    <p class="username">@${user.username}</p>
-                    <span class="role-badge role-${user.role.toLowerCase().replace(' ', '-')}">${user.role}</span>
-                </div>
-            </div>
-            
             <div class="user-details-content">
                 <div class="user-stats">
                     <div class="stat-item">
@@ -998,9 +1254,6 @@ function showDetailsModal(content, title) {
                 <div class="modal-body">
                     ${content}
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="closeDetailsModal()">Close</button>
-                </div>
             </div>
         </div>
     `;
@@ -1016,10 +1269,731 @@ function closeDetailsModal() {
     }
 }
 
+// Show detailed module progress for a specific user and module
+async function showModuleDetails(username, moduleTitle, moduleData) {
+    try {
+        // Get user data
+        const users = await getUsers();
+        const user = users.find(u => u.username === username);
+        
+        if (!user) {
+            showToast('error', 'Error', 'User not found');
+            return;
+        }
+        
+        // Get user's progress for this specific module
+        const userProgress = await getUserProgress(username);
+        const moduleProgress = userProgress[moduleTitle] || { completedTasks: 0, totalTasks: 0, checklist: [] };
+        
+        // Get all modules to find the full module details
+        const allModules = await getAllModules();
+        const module = allModules.find(m => m.title === moduleTitle);
+        
+        if (!module) {
+            showToast('error', 'Error', 'Module not found');
+            return;
+        }
+        
+        // Get performance review data if it exists
+        let performanceReview = null;
+        try {
+            const reviews = await window.dbService.getPerformanceReviews(user.id, module.id);
+            if (reviews && reviews.length > 0) {
+                performanceReview = reviews[0];
+            }
+        } catch (error) {
+            console.error('Failed to load performance review:', error);
+        }
+        
+        
+        // Calculate progress percentage
+        const progressPercentage = moduleProgress.totalTasks > 0 ? 
+            Math.round((moduleProgress.completedTasks / moduleProgress.totalTasks) * 100) : 0;
+        
+        // Create the exact user progress modal content
+        const modalContent = `
+            <div class="user-progress-modal">
+                <div class="modal-body">
+                    <!-- Module Description -->
+                    <div class="module-description-section">
+                        <h3>Module Description</h3>
+                        <div class="module-description" id="modalModuleDescription">
+                            <p>${module.description || 'No description available.'}</p>
+                            ${module.prerequisites ? `
+                                <div class="prerequisites-info">
+                                    <strong>Prerequisites:</strong> ${module.prerequisites}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Performance Rubric Section -->
+                    <div class="rubric-section" id="modalRubricSection">
+                        <h3>Performance Rubric</h3>
+                        <div class="rubric-grid">
+                            ${module.qualityUnsatisfactory || module.quality_unsatisfactory || module.quality_average || module.quality_excellent ? `
+                            <div class="rubric-column">
+                                <h4>Quality Criteria</h4>
+                                ${module.qualityUnsatisfactory || module.quality_unsatisfactory ? `<div class="rubric-level unsatisfactory"><h5>Unsatisfactory</h5><p>${module.qualityUnsatisfactory || module.quality_unsatisfactory}</p></div>` : ''}
+                                ${module.quality_average ? `<div class="rubric-level average"><h5>Average</h5><p>${module.quality_average}</p></div>` : ''}
+                                ${module.quality_excellent ? `<div class="rubric-level excellent"><h5>Excellent</h5><p>${module.quality_excellent}</p></div>` : ''}
+                            </div>
+                            ` : ''}
+                            ${module.speedUnsatisfactory || module.speed_unsatisfactory || module.speed_average || module.speed_excellent ? `
+                            <div class="rubric-column">
+                                <h4>Speed/Timing Criteria</h4>
+                                ${module.speedUnsatisfactory || module.speed_unsatisfactory ? `<div class="rubric-level unsatisfactory"><h5>Unsatisfactory</h5><p>${module.speedUnsatisfactory || module.speed_unsatisfactory}</p></div>` : ''}
+                                ${module.speed_average ? `<div class="rubric-level average"><h5>Average</h5><p>${module.speed_average}</p></div>` : ''}
+                                ${module.speed_excellent ? `<div class="rubric-level excellent"><h5>Excellent</h5><p>${module.speed_excellent}</p></div>` : ''}
+                            </div>
+                            ` : ''}
+                            ${module.communicationUnsatisfactory || module.communication_unsatisfactory || module.communication_average || module.communication_excellent ? `
+                            <div class="rubric-column">
+                                <h4>Communication Criteria</h4>
+                                ${module.communicationUnsatisfactory || module.communication_unsatisfactory ? `<div class="rubric-level unsatisfactory"><h5>Unsatisfactory</h5><p>${module.communicationUnsatisfactory || module.communication_unsatisfactory}</p></div>` : ''}
+                                ${module.communication_average ? `<div class="rubric-level average"><h5>Average</h5><p>${module.communication_average}</p></div>` : ''}
+                                ${module.communication_excellent ? `<div class="rubric-level excellent"><h5>Excellent</h5><p>${module.communication_excellent}</p></div>` : ''}
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Learning Checklist -->
+                    <div class="learning-checklist-section">
+                        <h3>Learning Checklist</h3>
+                        <div class="checklist" id="modalChecklist">
+                            ${module.checklist ? module.checklist.map((task, index) => {
+                                const isCompleted = moduleProgress.checklist && moduleProgress.checklist[index];
+                                // Handle different task data structures
+                                let taskText = '';
+                                if (typeof task === 'string') {
+                                    taskText = task;
+                                } else if (typeof task === 'object' && task !== null) {
+                                    // If task is an object, try to get the text property or convert to string
+                                    taskText = task.text || task.title || task.name || task.description || JSON.stringify(task);
+                                } else {
+                                    taskText = String(task);
+                                }
+                                
+                                return `
+                                    <div class="checklist-item ${isCompleted ? 'completed' : 'uncompleted'}">
+                                        <input type="checkbox" class="checklist-checkbox" id="admin-checklist-${username}-${moduleTitle}-${index}" 
+                                               ${isCompleted ? 'checked' : ''} 
+                                               onchange="toggleChecklistItem('${username}', '${moduleTitle}', ${index})">
+                                        <label for="admin-checklist-${username}-${moduleTitle}-${index}" class="checklist-label">${taskText}</label>
+                                    </div>
+                                `;
+                            }).join('') : '<p>No checklist items available.</p>'}
+                        </div>
+                    </div>
+                    
+                    <!-- Performance Review Checklist -->
+                    <div class="performance-review-section">
+                        <h3>Performance Review Checklist</h3>
+                        <div class="overall-performance-rating">
+                            <h4>Overall Performance Rating</h4>
+                            <div class="review-entries">
+                                ${[0, 1, 2].map(reviewIdx => `
+                                <div class="review-entry" data-review-index="${reviewIdx}">
+                                    <div class="rating-circles">
+                                        <div class="circle green" data-rating="excellent" onclick="selectRating(this, '${username}', '${moduleTitle}', ${reviewIdx}, 'excellent')" style="cursor: pointer;"></div>
+                                        <div class="circle orange" data-rating="average" onclick="selectRating(this, '${username}', '${moduleTitle}', ${reviewIdx}, 'average')" style="cursor: pointer;"></div>
+                                        <div class="circle red" data-rating="unsatisfactory" onclick="selectRating(this, '${username}', '${moduleTitle}', ${reviewIdx}, 'unsatisfactory')" style="cursor: pointer;"></div>
+                                    </div>
+                                    <div class="review-fields">
+                                        <div class="field-row">
+                                            <div class="field-group">
+                                                <label>Date:</label>
+                                                <input type="date" class="review-input" placeholder="mm/dd/yyyy">
+                                            </div>
+                                            <div class="field-group">
+                                                <label>Trainee Initials:</label>
+                                                <input type="text" class="review-input" maxlength="3" placeholder="Trainee Initials">
+                                            </div>
+                                            <div class="field-group">
+                                                <label>Trainer Signature:</label>
+                                                <input type="text" class="review-input signature" placeholder="Trainer Signature">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Trainer Comments and Feedback -->
+                    <div class="trainer-comments-section">
+                        <h4>Trainer Comments and Feedback</h4>
+                        <div class="comments-container">
+                            <div class="comment-entry">
+                                <input type="text" class="trainer-initials-input" maxlength="3" placeholder="initls">
+                                <textarea class="comment-line" placeholder="Comment 1"></textarea>
+                            </div>
+                            <div class="comment-entry">
+                                <input type="text" class="trainer-initials-input" maxlength="3" placeholder="initls">
+                                <textarea class="comment-line" placeholder="Comment 2"></textarea>
+                            </div>
+                            <div class="comment-entry">
+                                <input type="text" class="trainer-initials-input" maxlength="3" placeholder="initls">
+                                <textarea class="comment-line" placeholder="Comment 3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeModuleDetailsModal()">Close</button>
+                    <button class="btn btn-info refresh-progress-btn" onclick="refreshModuleDetails('${username}', '${moduleTitle}')">
+                        <i class="fas fa-sync"></i> Refresh Progress
+                    </button>
+                    ${canEditModule(window.currentUser?.role || 'Team Member') ? `
+                        <button class="btn btn-success save-module-btn" onclick="saveModuleDetails('${username}', '${moduleTitle}')">
+                            <i class="fas fa-save"></i> <span class="btn-text">Save All Changes</span>
+                        </button>
+                        <button class="btn btn-primary edit-module-btn" onclick="enableModuleEditing('${username}', '${moduleTitle}')">
+                            <i class="fas fa-edit"></i> <span class="btn-text">Edit Module</span>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        
+        // Show the modal
+        showModuleDetailsModal(modalContent, `${user.full_name || user.fullName || user.username} - ${moduleTitle}`);
+        
+        // Populate performance review data if it exists
+        if (performanceReview) {
+            const modal = document.getElementById('moduleDetailsModal');
+            
+            // Parse trainer comments and team member goals
+            let trainerComments = [];
+            let teamMemberGoals = [];
+            
+            try {
+                if (performanceReview.trainer_comments) {
+                    trainerComments = JSON.parse(performanceReview.trainer_comments);
+                }
+                if (performanceReview.team_member_goals) {
+                    teamMemberGoals = JSON.parse(performanceReview.team_member_goals);
+                }
+            } catch (e) {
+                console.error('Failed to parse review data:', e);
+            }
+            
+        // Populate first review entry with saved data
+        const firstReviewEntry = modal.querySelector('.review-entry');
+        if (firstReviewEntry) {
+            // Date and text fields
+            if (performanceReview.review_date) {
+                const dateInput = firstReviewEntry.querySelector('input[type="date"]');
+                if (dateInput) dateInput.value = performanceReview.review_date;
+            }
+            const textInputs = firstReviewEntry.querySelectorAll('input[type="text"]');
+            if (textInputs[0] && performanceReview.trainee_initials) textInputs[0].value = performanceReview.trainee_initials;
+            if (textInputs[1] && performanceReview.trainer_signature) textInputs[1].value = performanceReview.trainer_signature;
+
+            // Restore selected rating circle from overall_rating
+            if (performanceReview.overall_rating) {
+                const ratingMapReverse = {
+                    'Excellent': 'excellent',
+                    'Average': 'average',
+                    'Unsatisfactory': 'unsatisfactory'
+                };
+                const normalized = ratingMapReverse[performanceReview.overall_rating] || null;
+                if (normalized) {
+                    const circle = firstReviewEntry.querySelector(`.rating-circles .circle[data-rating="${normalized}"]`);
+                    if (circle) {
+                        // mimic selectRating visuals and class
+                        firstReviewEntry.querySelectorAll('.rating-circles .circle').forEach(c => {
+                            c.classList.remove('selected');
+                            c.style.border = '';
+                            c.style.boxShadow = '';
+                        });
+                        circle.classList.add('selected');
+                        circle.style.border = '3px solid #333';
+                        circle.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+                        circle.dataset.selectedRating = normalized;
+                    }
+                }
+            }
+        }
+            
+            // Populate trainer comments
+            trainerComments.forEach((comment, index) => {
+                const commentEntry = modal.querySelectorAll('.comment-entry')[index];
+                if (commentEntry) {
+                    const initialsInput = commentEntry.querySelector('.trainer-initials-input');
+                    const commentTextarea = commentEntry.querySelector('.comment-line');
+                    if (initialsInput) initialsInput.value = comment.initials || '';
+                    if (commentTextarea) commentTextarea.value = comment.comment || '';
+                }
+            });
+            
+            // Populate team member goals
+            teamMemberGoals.forEach((goal, index) => {
+                const goalEntry = modal.querySelectorAll('.goal-entry')[index];
+                if (goalEntry) {
+                    const goalInput = goalEntry.querySelector('.goal-input');
+                    const dueDateInput = goalEntry.querySelector('.due-date-input');
+                    if (goalInput) goalInput.value = goal.goal || '';
+                    if (dueDateInput) dueDateInput.value = goal.due_date || '';
+                }
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error showing module details:', error);
+        showToast('error', 'Error', 'Failed to load module details');
+    }
+}
+
+// Check if user role can edit modules
+function canEditModule(userRole) {
+    const editableRoles = ['Admin', 'Director', 'Supervisor'];
+    return editableRoles.includes(userRole);
+}
+
+// Enable module editing mode
+function enableModuleEditing(username, moduleTitle) {
+    // This will be implemented later for role-based editing
+    showToast('info', 'Edit Mode', 'Module editing functionality will be available soon');
+}
+
+// Refresh module details manually (expose to window for onclick handlers)
+window.refreshModuleDetails = async function refreshModuleDetails(username, moduleTitle) {
+    try {
+        const userProgress = await getUserProgress(username);
+        await refreshModuleDetailsModal(username, moduleTitle, userProgress);
+        showToast('success', 'Refreshed', 'Module details have been refreshed');
+    } catch (error) {
+        console.error('Error refreshing module details:', error);
+        showToast('error', 'Error', 'Failed to refresh module details');
+    }
+}
+
+// Save all module details (performance reviews, trainer comments, team member goals) (expose to window for onclick handlers)
+window.saveModuleDetails = async function saveModuleDetails(username, moduleTitle) {
+    try {
+        showToast('info', 'Saving', 'Saving all module details...');
+        
+        // Get user and module data
+        const users = await getUsers();
+        const user = users.find(u => u.username === username);
+        const allModules = await getAllModules();
+        const module = allModules.find(m => m.title === moduleTitle);
+        
+        if (!user || !module) {
+            showToast('error', 'Error', 'User or module not found');
+            return;
+        }
+        
+        // Collect all performance review data from the modal
+        const modal = document.getElementById('moduleDetailsModal');
+        const reviewEntries = modal.querySelectorAll('.review-entry');
+        const trainerComments = [];
+        const teamMemberGoals = [];
+        
+        // Collect trainer comments
+        const commentEntries = modal.querySelectorAll('.comment-entry');
+        commentEntries.forEach((entry, index) => {
+            const initials = entry.querySelector('.trainer-initials-input')?.value || '';
+            const comment = entry.querySelector('.comment-line')?.value || '';
+            if (initials || comment) {
+                trainerComments.push({
+                    initials: initials,
+                    comment: comment,
+                    order: index
+                });
+            }
+        });
+        
+        // Collect team member goals
+        const goalEntries = modal.querySelectorAll('.goal-entry');
+        goalEntries.forEach((entry, index) => {
+            const goal = entry.querySelector('.goal-input')?.value || '';
+            const dueDate = entry.querySelector('.due-date-input')?.value || '';
+            if (goal || dueDate) {
+                teamMemberGoals.push({
+                    goal: goal,
+                    due_date: dueDate,
+                    order: index
+                });
+            }
+        });
+        
+        // Collect performance review data (we'll save the first one with data)
+        let savedReview = false;
+        for (let i = 0; i < reviewEntries.length && !savedReview; i++) {
+            const entry = reviewEntries[i];
+            const date = entry.querySelector('input[type="date"]')?.value || '';
+            const textInputs = entry.querySelectorAll('input[type="text"]');
+            const traineeInitials = textInputs.length > 0 ? textInputs[0].value || '' : '';
+            const trainerSignature = textInputs.length > 1 ? textInputs[1].value || '' : '';
+            
+            // Check for selected rating
+            const selectedRatingCircle = entry.querySelector('.circle.selected');
+            const ratingRaw = selectedRatingCircle?.dataset?.selectedRating || selectedRatingCircle?.dataset?.rating || null;
+            
+            // Map rating from lowercase to proper case for database (Excellent, Average, Unsatisfactory)
+            let overallRating = null;
+            if (ratingRaw) {
+                const ratingMap = {
+                    'excellent': 'Excellent',
+                    'average': 'Average',
+                    'unsatisfactory': 'Unsatisfactory'
+                };
+                overallRating = ratingMap[ratingRaw.toLowerCase()] || null;
+            }
+            
+            // Save if any data exists
+            if (date || traineeInitials || trainerSignature || overallRating) {
+                // Save this review
+                const reviewData = {
+                    user_id: user.id,
+                    module_id: module.id,
+                    review_date: date || null,
+                    trainee_initials: traineeInitials || null,
+                    trainer_signature: trainerSignature || null,
+                    overall_rating: overallRating || null,
+                    trainer_comments: JSON.stringify(trainerComments),
+                    team_member_goals: JSON.stringify(teamMemberGoals)
+                };
+                
+                // Check if review already exists
+                const existingReviews = await window.dbService.getPerformanceReviews(user.id, module.id);
+                if (existingReviews && existingReviews.length > 0) {
+                    // Update existing review
+                    await window.dbService.updatePerformanceReview(existingReviews[0].id, reviewData);
+                } else {
+                    // Create new review
+                    await window.dbService.createPerformanceReview(reviewData);
+                }
+                
+                savedReview = true;
+            }
+        }
+        
+        showToast('success', 'Saved', 'All module details have been saved successfully');
+    } catch (error) {
+        console.error('Error saving module details:', error);
+        showToast('error', 'Error', 'Failed to save module details');
+    }
+}
+
+// Toggle checklist item completion for a user
+async function toggleChecklistItem(username, moduleTitle, itemIndex) {
+    try {
+        // Get current user progress
+        const userProgress = await getUserProgress(username);
+        const moduleProgress = userProgress[moduleTitle] || { completedTasks: 0, totalTasks: 0, checklist: [] };
+        
+        // Initialize checklist array if it doesn't exist
+        if (!moduleProgress.checklist) {
+            moduleProgress.checklist = [];
+        }
+        
+        // Get module data to ensure we have the right checklist length
+        const allModules = await getAllModules();
+        const module = allModules.find(m => m.title === moduleTitle);
+        if (!module || !module.checklist) {
+            console.error('Module data not found for:', moduleTitle);
+            return;
+        }
+        
+        // Ensure checklist array is the right length
+        while (moduleProgress.checklist.length < module.checklist.length) {
+            moduleProgress.checklist.push(false);
+        }
+        
+        // Toggle classes on the clicked item immediately - find the checkbox first
+        const checkboxId = `admin-checklist-${username}-${moduleTitle}-${itemIndex}`;
+        const checkbox = document.getElementById(checkboxId);
+        const clickedItem = checkbox ? checkbox.closest('.checklist-item') : null;
+        
+        // Get the checkbox's current state (before we update the data)
+        const currentlyChecked = checkbox ? checkbox.checked : false;
+        
+        // Toggle the specific item based on checkbox state
+        const isCompleted = currentlyChecked;
+        moduleProgress.checklist[itemIndex] = isCompleted;
+        
+        if (clickedItem) {
+            if (isCompleted) {
+                clickedItem.classList.remove('uncompleted');
+                clickedItem.classList.add('completed');
+            } else {
+                clickedItem.classList.remove('completed');
+                clickedItem.classList.add('uncompleted');
+            }
+        }
+        
+        // Update completed tasks count
+        const completedCount = moduleProgress.checklist.filter(item => item === true).length;
+        const totalCount = moduleProgress.checklist.length;
+        const progressPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+        
+        moduleProgress.completedTasks = completedCount;
+        moduleProgress.totalTasks = totalCount;
+        moduleProgress.progress = progressPercentage;
+        
+        // Save to database using the same method as user progress page
+        try {
+            const users = await getUsers();
+            const user = users.find(u => u.username === username);
+            
+            if (user && module) {
+                // Use the new method that saves the full checklist array
+                await window.dbService.updateUserProgressWithChecklist(
+                    user.id,
+                    module.id,
+                    completedCount,
+                    totalCount,
+                    progressPercentage,
+                    moduleProgress.checklist
+                );
+                
+            }
+        } catch (error) {
+            console.error('Failed to save progress to database:', error);
+        }
+        
+        // Save checklist state to session cache
+        const cacheKey = `${username}_${moduleTitle}`;
+        window.checklistSessionCache[cacheKey] = {
+            checklist: moduleProgress.checklist,
+            completedTasks: completedCount,
+            totalTasks: totalCount,
+            progressPercentage: progressPercentage
+        };
+        
+        // Show success message
+        const status = isCompleted ? 'completed' : 'marked as incomplete';
+        showToast('success', 'Progress Updated', `Task ${status} for ${username}`);
+        
+        // Also update the module progress display in the user details modal if it's open
+        const userDetailsModal = document.getElementById('userDetailsModal');
+        if (userDetailsModal && userDetailsModal.style.display !== 'none') {
+            // Update the specific module's progress in the module progress list
+            const moduleProgressItems = document.querySelectorAll('.module-progress-item');
+            moduleProgressItems.forEach(item => {
+                const moduleTitleElement = item.querySelector('.module-title');
+                if (moduleTitleElement && moduleTitleElement.textContent.trim() === moduleTitle) {
+                    // Update progress bar
+                    const progressFill = item.querySelector('.progress-fill');
+                    const progressText = item.querySelector('.progress-text');
+                    const moduleStatus = item.querySelector('.module-status');
+                    
+                    if (progressFill && progressText) {
+                        const progressPercentage = moduleProgress.totalTasks > 0 ? 
+                            Math.round((moduleProgress.completedTasks / moduleProgress.totalTasks) * 100) : 0;
+                        
+                        progressFill.style.width = `${progressPercentage}%`;
+                        progressText.textContent = `${moduleProgress.completedTasks}/${moduleProgress.totalTasks} tasks`;
+                        
+                        // Update status
+                        const statusClass = progressPercentage === 100 ? 'completed' : progressPercentage > 0 ? 'in-progress' : 'not-started';
+                        const statusText = progressPercentage === 100 ? 'Completed' : progressPercentage > 0 ? 'In Progress' : 'Not Started';
+                        
+                        item.className = `module-progress-item ${statusClass}`;
+                        if (moduleStatus) {
+                            moduleStatus.textContent = statusText;
+                        }
+                    }
+                }
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error toggling checklist item:', error);
+        showToast('error', 'Error', 'Failed to update checklist item');
+    }
+}
+
+// Select rating for performance review (expose to window for onclick handlers)
+window.selectRating = function selectRating(circleElement, username, moduleTitle, reviewIndex, rating) {
+    // Remove selected class from all circles in this entry
+    const entry = circleElement.closest('.review-entry');
+    if (entry) {
+        entry.querySelectorAll('.circle').forEach(circle => {
+            circle.classList.remove('selected');
+            circle.style.border = '';
+            circle.style.boxShadow = '';
+        });
+        
+        // Add selected class to clicked circle
+        circleElement.classList.add('selected');
+        circleElement.style.border = '3px solid #333';
+        circleElement.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+        circleElement.dataset.selectedRating = rating;
+    }
+}
+
+// Refresh the module details modal with updated data
+async function refreshModuleDetailsModal(username, moduleTitle, freshUserProgress = null) {
+    try {
+        console.log('Refreshing modal for:', username, moduleTitle);
+        
+        // Get updated module data
+        const allModules = await getAllModules();
+        const module = allModules.find(m => m.title === moduleTitle);
+        
+        if (!module) {
+            console.error('Module not found:', moduleTitle);
+            showToast('error', 'Error', 'Module not found');
+            return;
+        }
+        
+        // Use fresh data if provided, otherwise get from storage
+        let userProgress;
+        if (freshUserProgress) {
+            userProgress = freshUserProgress;
+            console.log('Using fresh user progress data');
+        } else {
+            userProgress = await getUserProgress(username);
+            console.log('Retrieved user progress from storage');
+        }
+        
+        const moduleProgress = userProgress[moduleTitle] || { completedTasks: 0, totalTasks: 0, checklist: [] };
+        
+        console.log('Module progress for refresh:', moduleProgress);
+        console.log('Module progress checklist content for refresh:', moduleProgress.checklist);
+        console.log('Checklist array length:', moduleProgress.checklist ? moduleProgress.checklist.length : 'null/undefined');
+        if (moduleProgress.checklist) {
+            console.log('Checklist array values:', moduleProgress.checklist.map((val, i) => `[${i}]=${val}`).join(', '));
+        }
+        
+        // Calculate updated progress percentage
+        const progressPercentage = moduleProgress.totalTasks > 0 ? 
+            Math.round((moduleProgress.completedTasks / moduleProgress.totalTasks) * 100) : 0;
+        
+        // Update the checklist items in the modal
+        const checklistContainer = document.getElementById('modalChecklist');
+        console.log('Checklist container found:', !!checklistContainer);
+        
+        if (checklistContainer && module.checklist) {
+            console.log('Updating checklist HTML...');
+            const updatedChecklistHTML = module.checklist.map((task, index) => {
+                const isCompleted = moduleProgress.checklist && moduleProgress.checklist[index];
+                console.log(`Item ${index}: ${isCompleted ? 'completed' : 'incomplete'}`);
+                
+                // Handle different task data structures
+                let taskText = '';
+                if (typeof task === 'string') {
+                    taskText = task;
+                } else if (typeof task === 'object' && task !== null) {
+                    taskText = task.text || task.title || task.name || task.description || JSON.stringify(task);
+                } else {
+                    taskText = String(task);
+                }
+                
+                const html = `
+                    <div class="checklist-item ${isCompleted ? 'completed' : 'uncompleted'}">
+                        <input type="checkbox" class="checklist-checkbox" id="admin-checklist-${username}-${moduleTitle}-${index}" 
+                               ${isCompleted ? 'checked' : ''} 
+                               onchange="toggleChecklistItem('${username}', '${moduleTitle}', ${index})">
+                        <label for="admin-checklist-${username}-${moduleTitle}-${index}" class="checklist-label">${taskText}</label>
+                    </div>
+                `;
+                
+                console.log(`Generated HTML for item ${index}:`, html);
+                return html;
+            }).join('');
+            
+            console.log('Full checklist HTML:', updatedChecklistHTML);
+            checklistContainer.innerHTML = updatedChecklistHTML;
+            console.log('Checklist HTML updated');
+            
+            // Force a reflow to ensure the DOM updates
+            checklistContainer.offsetHeight;
+            
+            // Log the actual DOM state after update
+            const checklistItems = checklistContainer.querySelectorAll('.checklist-item');
+            console.log('DOM items after update:', checklistItems.length);
+            checklistItems.forEach((item, index) => {
+                const isCompleted = item.classList.contains('completed');
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                const isChecked = checkbox ? checkbox.checked : false;
+                console.log(`DOM Item ${index}: completed=${isCompleted}, checked=${isChecked}`);
+            });
+        }
+        
+        // Update progress percentage in modal header if it exists
+        const progressPercentageElement = document.querySelector('.modal-progress-percentage');
+        if (progressPercentageElement) {
+            progressPercentageElement.textContent = `${progressPercentage}%`;
+        }
+        
+        // Update progress bar if it exists
+        const progressFillElement = document.querySelector('.modal-progress-fill');
+        if (progressFillElement) {
+            progressFillElement.style.width = `${progressPercentage}%`;
+        }
+        
+        console.log('Modal refresh completed');
+        
+    } catch (error) {
+        console.error('Error refreshing modal:', error);
+        showToast('error', 'Error', 'Failed to refresh modal');
+    }
+}
+
+// Show module details modal
+function showModuleDetailsModal(content, title) {
+    // Remove existing module details modal if any
+    const existingModal = document.getElementById('moduleDetailsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal-open class to body to prevent background scrolling
+    // Save scroll position before fixing body
+    const scrollY = window.scrollY;
+    document.body.style.top = `-${scrollY}px`;
+    document.body.classList.add('modal-open');
+    
+    // Create modal HTML with user progress styling
+    const modalHtml = `
+        <div class="modal-overlay show" id="moduleDetailsModal">
+            <div class="modal-content user-progress-modal-content">
+                <div class="modal-header">
+                    <h2>${title}</h2>
+                    <button class="modal-close" onclick="closeModuleDetailsModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    ${content}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Close module details modal (expose to window for onclick handlers)
+window.closeModuleDetailsModal = function closeModuleDetailsModal() {
+    const modal = document.getElementById('moduleDetailsModal');
+    if (modal) {
+        modal.remove();
+    }
+    
+    // Remove modal-open class from body to restore background scrolling
+    const scrollY = document.body.style.top;
+    document.body.classList.remove('modal-open');
+    document.body.style.top = '';
+    if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+    }
+}
+
 async function openUserModal(username) {
     const modal = document.getElementById('userModal');
     const modalTitle = document.getElementById('modalTitle');
     const modalSave = document.getElementById('modalSave');
+    const modalDeleteBtn = document.getElementById('modalDeleteUser');
     const users = await getUsers();
     const user = users.find(u => u.username === username);
     
@@ -1030,7 +2004,7 @@ async function openUserModal(username) {
     
     // Update modal title and button for editing
     modalTitle.textContent = 'Edit User';
-    modalSave.textContent = 'Save Changes';
+    // Save button is now icon-only, no text change needed
     
     // Populate form with user data
     document.getElementById('editFullName').value = user.full_name || user.fullName || '';
@@ -1041,8 +2015,19 @@ async function openUserModal(username) {
     document.getElementById('editEmail').value = user.email || '';
     document.getElementById('editStartDate').value = user.start_date || user.startDate || '';
     
-    // Store current username for updates
+    // Store current user info for updates and delete
     modal.dataset.currentUsername = username;
+    modal.dataset.currentUserId = user.id || username;
+    modal.dataset.currentDisplayName = user.full_name || user.fullName || username;
+    
+    // Show delete button on mobile (it's hidden by default in CSS)
+    if (modalDeleteBtn) {
+        // The button will be shown on mobile via CSS media query
+        modalDeleteBtn.onclick = function() {
+            deleteUser(modal.dataset.currentUserId, modal.dataset.currentDisplayName);
+            closeUserModal();
+        };
+    }
     
     // Show modal
     modal.classList.add('show');
@@ -1070,7 +2055,7 @@ function openNewUserModal() {
     
     // Update modal title
     modalTitle.textContent = 'Add New User';
-    modalSave.textContent = 'Create User';
+    // Save button is now icon-only, no text change needed
     
     // Clear the form
     document.getElementById('userEditForm').reset();
@@ -1516,31 +2501,37 @@ async function getUserProgress(username) {
             const user = users.find(u => u.username === username);
             
             if (user) {
-                // Get progress from database
+                // Get progress from database - this is now our source of truth
                 const dbProgress = await window.dbService.getUserProgress(user.id);
-                // Database progress for user
                 
                 // Get modules from database
                 const modules = await window.dbService.getModules();
                 
+                // Build userProgress object from database data
                 dbProgress.forEach(p => {
-                    // Find module title by ID
                     const module = modules.find(m => m.id === p.module_id);
-                    if (module) {
+                    if (module && module.title) {
+                        const cacheKey = `${username}_${module.title}`;
+                        
+                        // Check if we have cached checklist state for this module
+                        if (window.checklistSessionCache[cacheKey]) {
+                            userProgress[module.title] = window.checklistSessionCache[cacheKey];
+                        } else {
+                            // Load checklist from database if available, otherwise initialize as all unchecked
+                            let checklist = Array(p.total_tasks || module.checklist?.length || 0).fill(false);
+                            if (p.checklist && Array.isArray(p.checklist)) {
+                                checklist = p.checklist;
+                            }
+                            
                         userProgress[module.title] = {
                             completedTasks: p.completed_tasks || 0,
                             totalTasks: p.total_tasks || 0,
                             progressPercentage: p.progress_percentage || 0,
-                            checklist: Array(p.total_tasks || 0).fill(false).map((_, i) => i < (p.completed_tasks || 0))
-                        };
+                                checklist: checklist
+                            };
+                        }
                     }
                 });
-                
-                // Store in localStorage for compatibility
-                const userProgressKey = `userProgress_${username}`;
-                localStorage.setItem(userProgressKey, JSON.stringify(userProgress));
-                
-                // Final userProgress object
             }
         } else {
             // Fallback to localStorage
@@ -1562,6 +2553,7 @@ async function getUserProgress(username) {
     
     return userProgress;
 }
+
 
 // Utility function to get module data (simplified version for admin overview)
 function getModuleData(moduleTitle) {
@@ -1629,6 +2621,9 @@ function setupTabNavigation() {
     tabsComponent.options.refreshCallback = refreshDataFromDatabase;
     tabsComponent.options.tabChangeCallback = handleTabChange;
     tabsComponent.createTabs(tabsConfig);
+    
+    // Apply page access filtering to tabs
+    updateTabVisibility();
 }
 
 // Handle tab change events
@@ -1664,6 +2659,8 @@ async function showPathManagementContent() {
         // Path management content is now handled by tab switching
         // Path Management content shown
         
+        // Check if user has view_modules permission before loading modules
+        if (window.permissionManager && window.permissionManager.hasPermission('view_modules')) {
         // Load modules data when showing path management
         try {
             await loadModulesData();
@@ -1673,6 +2670,18 @@ async function showPathManagementContent() {
         
         // Setup search and filter functionality
         setupSearchAndFilter();
+        } else {
+            // Hide modules grid if user doesn't have view_modules permission
+            const modulesGrid = document.getElementById('modulesManagementGrid');
+            if (modulesGrid) {
+                modulesGrid.innerHTML = '<div class="no-modules-message"><p>You do not have permission to view modules.</p></div>';
+            }
+        }
+        
+        // Apply permission-based visibility
+        if (window.permissionManager) {
+            window.permissionManager.applyElementVisibility();
+        }
     } catch (error) {
         console.error('Error in showPathManagementContent:', error);
     }
@@ -1852,11 +2861,11 @@ function renderModulesGrid(modules) {
                         ${tasksWithFiles > 0 ? `<div class="module-management-files"><i class="fas fa-file"></i> ${tasksWithFiles} tasks with files</div>` : ''}
                     </div>
                     <div class="module-management-actions">
-                        <button class="btn btn-secondary" onclick="editModule('${module.title}')">
+                        <button class="btn btn-secondary" onclick="editModule('${module.title}')" data-permission="edit_modules">
                             <i class="fas fa-edit"></i>
                             Edit
                         </button>
-                        <button class="btn btn-danger" onclick="deleteModule('${module.title}')">
+                        <button class="btn btn-danger" onclick="deleteModule('${module.title}')" data-permission="delete_modules">
                             <i class="fas fa-trash"></i>
                             Delete
                         </button>
@@ -1866,6 +2875,11 @@ function renderModulesGrid(modules) {
         }).join('');
         
         modulesGrid.innerHTML = modulesHTML;
+        
+        // Apply permission-based visibility after rendering
+        if (window.permissionManager) {
+            window.permissionManager.applyElementVisibility();
+        }
 }
 
 // Path Management Functions (copied from admin-path-management-script.js)
@@ -2987,13 +4001,13 @@ async function updateAssignmentsTable() {
             <td>${assignment.notes || '-'}</td>
             <td>
                 <div class="assignment-actions">
-                    <button class="btn-edit" onclick="editAssignment('${assignment.id}')" title="Edit Assignment">
+                    <button class="btn-edit" onclick="editAssignment('${assignment.id}')" title="Edit Assignment" data-permission="edit_assignments">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn-unassign" onclick="unassignModule('${assignment.id}')" title="Unassign Module">
+                    <button class="btn-unassign" onclick="unassignModule('${assignment.id}')" title="Unassign Module" data-permission="unassign_assignments">
                         <i class="fas fa-user-minus"></i>
                     </button>
-                    <button class="btn-delete" onclick="deleteAssignment('${assignment.id}')" title="Delete Assignment">
+                    <button class="btn-delete" onclick="deleteAssignment('${assignment.id}')" title="Delete Assignment" data-permission="delete_assignments">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -3038,15 +4052,15 @@ async function updateAssignmentsTable() {
                     </div>
                 </div>
                 <div class="assignment-actions">
-                    <button class="assignment-btn-mobile" onclick="editAssignment('${assignment.id}')" title="Edit Assignment">
+                    <button class="assignment-btn-mobile" onclick="editAssignment('${assignment.id}')" title="Edit Assignment" data-permission="edit_assignments">
                         <i class="fas fa-edit"></i>
                         Edit
                     </button>
-                    <button class="assignment-btn-mobile danger" onclick="unassignModule('${assignment.id}')" title="Unassign Module">
+                    <button class="assignment-btn-mobile danger" onclick="unassignModule('${assignment.id}')" title="Unassign Module" data-permission="unassign_assignments">
                         <i class="fas fa-user-minus"></i>
                         Unassign
                     </button>
-                    <button class="assignment-btn-mobile danger" onclick="deleteAssignment('${assignment.id}')" title="Delete Assignment">
+                    <button class="assignment-btn-mobile danger" onclick="deleteAssignment('${assignment.id}')" title="Delete Assignment" data-permission="delete_assignments">
                         <i class="fas fa-trash"></i>
                         Delete
                     </button>
@@ -3062,6 +4076,11 @@ async function updateAssignmentsTable() {
     assignmentCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', updateBulkUnassignButton);
     });
+    
+    // Apply permission-based visibility after rendering
+    if (window.permissionManager) {
+        window.permissionManager.applyElementVisibility();
+    }
 }
 
 // Update assignment filters
@@ -3554,6 +4573,572 @@ async function bulkUnassignModules() {
     await loadModuleAssignments();
 }
 
+// ===== QUIZ ASSIGNMENT FUNCTIONALITY =====
+let quizAssignments = [];
+let currentQuizAssignment = null;
+
+// Load quiz assignments
+async function loadQuizAssignments() {
+    try {
+        let dbAssignments = [];
+        if (window.dbService && window.dbService.isConfigured) {
+            const result = await window.dbService.getQuizAssignments();
+            dbAssignments = Array.isArray(result) ? result : [];
+        }
+        
+        quizAssignments = Array.isArray(dbAssignments) ? dbAssignments : [];
+        await updateQuizAssignmentsTable();
+        await updateQuizAssignmentFilters();
+    } catch (error) {
+        console.error('Failed to load quiz assignments:', error);
+        showToast('error', 'Database Error', 'Failed to load quiz assignments from database');
+        quizAssignments = [];
+        await updateQuizAssignmentsTable();
+        await updateQuizAssignmentFilters();
+    }
+}
+
+// Update quiz assignments table
+async function updateQuizAssignmentsTable() {
+    const tbody = document.getElementById('quizAssignmentsTableBody');
+    const mobileTable = document.getElementById('quizAssignmentsTableMobile');
+    
+    if (!tbody || !mobileTable) return;
+
+    // Ensure quizAssignments is an array
+    if (!Array.isArray(quizAssignments)) {
+        quizAssignments = [];
+    }
+
+    tbody.innerHTML = '';
+    mobileTable.innerHTML = '';
+
+    if (quizAssignments.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem; color: #666;">No quiz assignments found</td></tr>';
+        mobileTable.innerHTML = `
+            <div class="assignment-card-mobile">
+                <div style="text-align: center; padding: 2rem; color: #666;">
+                    No quiz assignments found
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    // Get all users for display
+    const allUsers = await getAllUsers();
+    
+    for (const assignment of quizAssignments) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><input type="checkbox" class="quiz-assignment-checkbox" data-assignment-id="${assignment.id}"></td>
+            <td>${assignment.user_name || 'Unknown User'}</td>
+            <td>${assignment.quiz_title || 'Unknown Quiz'}</td>
+            <td>${formatDate(assignment.assigned_at)}</td>
+            <td>${assignment.due_date ? formatDate(assignment.due_date) : 'No due date'}</td>
+            <td><span class="status-badge status-${assignment.status}">${assignment.status}</span></td>
+            <td>${assignment.score !== null && assignment.score !== undefined ? `${assignment.score}%` : '-'}</td>
+            <td>${assignment.passed !== null && assignment.passed !== undefined ? (assignment.passed ? 'Yes' : 'No') : '-'}</td>
+            <td>${assignment.notes || '-'}</td>
+            <td>
+                <div class="assignment-actions">
+                    <button class="btn-edit" onclick="editQuizAssignment('${assignment.id}')" title="Edit Assignment" data-permission="edit_assignments">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-unassign" onclick="unassignQuiz('${assignment.id}')" title="Unassign Quiz" data-permission="unassign_assignments">
+                        <i class="fas fa-user-minus"></i>
+                    </button>
+                    <button class="btn-delete" onclick="deleteQuizAssignment('${assignment.id}')" title="Delete Assignment" data-permission="delete_assignments">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    }
+
+    // Generate mobile cards for each quiz assignment
+    const mobileCards = quizAssignments.map(assignment => {
+        const assignedDate = formatDate(assignment.assigned_at);
+        const dueDate = assignment.due_date ? formatDate(assignment.due_date) : 'No due date';
+        const score = assignment.score !== null && assignment.score !== undefined ? `${assignment.score}%` : '-';
+        const passed = assignment.passed !== null && assignment.passed !== undefined ? (assignment.passed ? 'Yes' : 'No') : '-';
+        
+        return `
+            <div class="assignment-card-mobile">
+                <div class="assignment-card-header">
+                    <input type="checkbox" class="quiz-assignment-checkbox" data-assignment-id="${assignment.id}">
+                    <div class="assignment-user-info">
+                        <div class="assignment-user-name">${assignment.user_name || 'Unknown User'}</div>
+                        <div class="assignment-module-name">${assignment.quiz_title || 'Unknown Quiz'}</div>
+                    </div>
+                </div>
+                <div class="assignment-details">
+                    <div class="assignment-detail-item">
+                        <div class="assignment-detail-label">Assigned Date</div>
+                        <div class="assignment-detail-value">${assignedDate}</div>
+                    </div>
+                    <div class="assignment-detail-item">
+                        <div class="assignment-detail-label">Due Date</div>
+                        <div class="assignment-detail-value">${dueDate}</div>
+                    </div>
+                    <div class="assignment-detail-item">
+                        <div class="assignment-detail-label">Status</div>
+                        <div class="assignment-detail-value">
+                            <span class="status-badge status-${assignment.status}">${assignment.status}</span>
+                        </div>
+                    </div>
+                    <div class="assignment-detail-item">
+                        <div class="assignment-detail-label">Score</div>
+                        <div class="assignment-detail-value">${score}</div>
+                    </div>
+                    <div class="assignment-detail-item">
+                        <div class="assignment-detail-label">Passed</div>
+                        <div class="assignment-detail-value">${passed}</div>
+                    </div>
+                </div>
+                <div class="assignment-actions">
+                    <button class="assignment-btn-mobile" onclick="editQuizAssignment('${assignment.id}')" title="Edit Assignment" data-permission="edit_assignments">
+                        <i class="fas fa-edit"></i>
+                        Edit
+                    </button>
+                    <button class="assignment-btn-mobile danger" onclick="unassignQuiz('${assignment.id}')" title="Unassign Quiz" data-permission="unassign_assignments">
+                        <i class="fas fa-user-minus"></i>
+                        Unassign
+                    </button>
+                    <button class="assignment-btn-mobile danger" onclick="deleteQuizAssignment('${assignment.id}')" title="Delete Assignment" data-permission="delete_assignments">
+                        <i class="fas fa-trash"></i>
+                        Delete
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    mobileTable.innerHTML = mobileCards;
+
+    // Add event listeners to individual checkboxes
+    const quizAssignmentCheckboxes = document.querySelectorAll('.quiz-assignment-checkbox');
+    quizAssignmentCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkUnassignQuizButton);
+    });
+    
+    // Apply permission-based visibility after rendering
+    if (window.permissionManager) {
+        window.permissionManager.applyElementVisibility();
+    }
+}
+
+// Update quiz assignment filters
+async function updateQuizAssignmentFilters() {
+    const userFilter = document.getElementById('quizAssignmentUserFilter');
+    const quizFilter = document.getElementById('quizAssignmentQuizFilter');
+
+    if (userFilter) {
+        // Populate user filter
+        const users = await getAllUsers();
+        userFilter.innerHTML = '<option value="">All Users</option>';
+        users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.id || user.username;
+            option.textContent = user.full_name || user.fullName || user.username;
+            userFilter.appendChild(option);
+        });
+    }
+
+    if (quizFilter) {
+        // Populate quiz filter from localStorage
+        quizFilter.innerHTML = '<option value="">All Quizzes</option>';
+        try {
+            const savedQuizzes = localStorage.getItem('quizzes');
+            if (savedQuizzes) {
+                const quizzes = JSON.parse(savedQuizzes);
+                quizzes.forEach(quiz => {
+                    const option = document.createElement('option');
+                    option.value = quiz.id;
+                    option.textContent = quiz.title || quiz.id;
+                    quizFilter.appendChild(option);
+                });
+            }
+        } catch (e) {
+            console.warn('Failed to load quizzes for filter:', e);
+        }
+    }
+}
+
+// Open quiz assignment modal
+async function openQuizAssignmentModal(assignmentId = null) {
+    const modal = document.getElementById('quizAssignmentModal');
+    const title = document.getElementById('quizAssignmentModalTitle');
+    
+    if (assignmentId) {
+        currentQuizAssignment = quizAssignments.find(a => a.id === assignmentId);
+        title.textContent = 'Edit Quiz Assignment';
+    } else {
+        currentQuizAssignment = null;
+        title.textContent = 'Assign Quiz';
+    }
+
+    await populateQuizAssignmentForm();
+    modal.classList.add('show');
+}
+
+// Populate quiz assignment form
+async function populateQuizAssignmentForm() {
+    const userCheckboxes = document.getElementById('quizUserCheckboxes');
+    const quizCheckboxes = document.getElementById('quizCheckboxes');
+    const dueDateInput = document.getElementById('quizAssignmentDueDate');
+    const statusSelect = document.getElementById('quizAssignmentStatus');
+    const notesTextarea = document.getElementById('quizAssignmentNotes');
+
+    // Populate user checkboxes
+    const users = await getAllUsers();
+    userCheckboxes.innerHTML = '';
+    users.forEach(user => {
+        const checkboxItem = document.createElement('div');
+        checkboxItem.className = 'user-checkbox-item';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `quiz-user-${user.id || user.username}`;
+        checkbox.name = 'userIds';
+        checkbox.value = user.id || user.username;
+        
+        const label = document.createElement('label');
+        label.htmlFor = `quiz-user-${user.id || user.username}`;
+        label.textContent = user.full_name || user.fullName || user.username;
+        
+        // Check if this user is already assigned (for editing)
+        if (currentQuizAssignment && (user.id === currentQuizAssignment.user_id || user.username === currentQuizAssignment.user_id)) {
+            checkbox.checked = true;
+        }
+        
+        checkboxItem.appendChild(checkbox);
+        checkboxItem.appendChild(label);
+        userCheckboxes.appendChild(checkboxItem);
+    });
+
+    // Populate quiz checkboxes
+    quizCheckboxes.innerHTML = '';
+    try {
+        const savedQuizzes = localStorage.getItem('quizzes');
+        if (savedQuizzes) {
+            const quizzes = JSON.parse(savedQuizzes);
+            quizzes.forEach(quiz => {
+                const checkboxItem = document.createElement('div');
+                checkboxItem.className = 'module-checkbox-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `quiz-${quiz.id}`;
+                checkbox.name = 'quizIds';
+                checkbox.value = quiz.id;
+                
+                const label = document.createElement('label');
+                label.htmlFor = `quiz-${quiz.id}`;
+                label.textContent = quiz.title || quiz.id;
+                
+                // Check if this quiz is already assigned (for editing)
+                if (currentQuizAssignment && quiz.id === currentQuizAssignment.quiz_id) {
+                    checkbox.checked = true;
+                }
+                
+                checkboxItem.appendChild(checkbox);
+                checkboxItem.appendChild(label);
+                quizCheckboxes.appendChild(checkboxItem);
+            });
+        }
+    } catch (e) {
+        console.warn('Failed to load quizzes for assignment form:', e);
+    }
+
+    // Populate other fields
+    if (currentQuizAssignment) {
+        dueDateInput.value = currentQuizAssignment.due_date || '';
+        statusSelect.value = currentQuizAssignment.status || 'assigned';
+        notesTextarea.value = currentQuizAssignment.notes || '';
+    } else {
+        dueDateInput.value = '';
+        statusSelect.value = 'assigned';
+        notesTextarea.value = '';
+    }
+}
+
+// Save quiz assignment
+async function saveQuizAssignment() {
+    const form = document.getElementById('quizAssignmentForm');
+    const formData = new FormData(form);
+    
+    const userIds = formData.getAll('userIds');
+    const quizIds = formData.getAll('quizIds');
+    const dueDate = formData.get('dueDate') || null;
+    const status = formData.get('status');
+    const notes = formData.get('notes') || null;
+
+    if (userIds.length === 0 || quizIds.length === 0) {
+        showToast('error', 'Validation Error', 'Please select at least one user and one quiz');
+        return;
+    }
+
+    // Filter out empty values
+    const validUserIds = userIds.filter(id => id && id !== '');
+    const validQuizIds = quizIds.filter(id => id && id !== '');
+    
+    if (validUserIds.length === 0 || validQuizIds.length === 0) {
+        showToast('error', 'Validation Error', 'Please select at least one user and one quiz');
+        return;
+    }
+
+    try {
+        if (currentQuizAssignment) {
+            // Update existing assignment
+            const assignmentData = {
+                user_id: validUserIds[0],
+                quiz_id: validQuizIds[0],
+                due_date: dueDate,
+                status: status,
+                notes: notes
+            };
+            await window.dbService.updateQuizAssignment(currentQuizAssignment.id, assignmentData);
+            showToast('success', 'Assignment Updated', 'Quiz assignment updated successfully');
+        } else {
+            // Create multiple new assignments for all user-quiz combinations
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const userId of validUserIds) {
+                for (const quizId of validQuizIds) {
+                    try {
+                        await window.dbService.assignQuizToUser(
+                            userId,
+                            quizId,
+                            null, // assigned_by
+                            dueDate,
+                            notes
+                        );
+                        successCount++;
+                    } catch (error) {
+                        // Check if this is a duplicate assignment error (409 Conflict)
+                        if (error.message && error.message.includes('409') || 
+                            (error.code && error.code === '23505') ||
+                            (error.message && error.message.includes('duplicate key'))) {
+                            // Assignment already exists - skip it silently or count as success
+                            console.log(`Quiz ${quizId} already assigned to user ${userId}, skipping...`);
+                            successCount++; // Count as success since assignment already exists
+                        } else {
+                            console.error(`Failed to assign quiz ${quizId} to user ${userId}:`, error);
+                            errorCount++;
+                        }
+                    }
+                }
+            }
+            
+            if (successCount > 0) {
+                const message = errorCount > 0 
+                    ? `${successCount} assignments created successfully, ${errorCount} failed`
+                    : `${successCount} assignments created successfully`;
+                showToast('success', 'Assignments Created', message);
+            } else {
+                showToast('error', 'Assignment Failed', 'No assignments could be created');
+            }
+        }
+
+        closeQuizAssignmentModal();
+        await loadQuizAssignments();
+    } catch (error) {
+        console.error('Failed to save quiz assignments:', error);
+        showToast('error', 'Database Error', 'Failed to save quiz assignments to database');
+    }
+}
+
+// Edit quiz assignment
+function editQuizAssignment(assignmentId) {
+    openQuizAssignmentModal(assignmentId);
+}
+
+// Unassign quiz
+async function unassignQuiz(assignmentId) {
+    const assignment = quizAssignments.find(a => a.id === assignmentId);
+    if (!assignment) {
+        showToast('error', 'Error', 'Assignment not found');
+        return;
+    }
+
+    const confirmMessage = `Are you sure you want to unassign "${assignment.quiz_title}" from "${assignment.user_name}"?`;
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+
+    try {
+        await window.dbService.removeQuizAssignment(assignmentId);
+        showToast('success', 'Quiz Unassigned', `"${assignment.quiz_title}" has been unassigned from "${assignment.user_name}"`);
+        await loadQuizAssignments();
+    } catch (error) {
+        console.error('Failed to remove quiz assignment from database:', error);
+        showToast('error', 'Database Error', 'Failed to remove quiz assignment from database');
+    }
+}
+
+// Delete quiz assignment
+async function deleteQuizAssignment(assignmentId) {
+    const assignment = quizAssignments.find(a => a.id === assignmentId);
+    if (!assignment) {
+        showToast('error', 'Error', 'Assignment not found');
+        return;
+    }
+
+    const confirmMessage = `Are you sure you want to permanently delete this quiz assignment for "${assignment.user_name}" and "${assignment.quiz_title}"? This action cannot be undone.`;
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+
+    try {
+        await window.dbService.removeQuizAssignment(assignmentId);
+        showToast('success', 'Assignment Deleted', 'Quiz assignment deleted successfully');
+        await loadQuizAssignments();
+    } catch (error) {
+        console.error('Failed to delete quiz assignment:', error);
+        showToast('error', 'Delete Failed', 'Could not delete quiz assignment');
+    }
+}
+
+// Close quiz assignment modal
+function closeQuizAssignmentModal() {
+    const modal = document.getElementById('quizAssignmentModal');
+    modal.classList.remove('show');
+    currentQuizAssignment = null;
+}
+
+// Setup quiz assignment event listeners
+function setupQuizAssignmentEventListeners() {
+    // Assign quiz button
+    const assignBtn = document.getElementById('assignQuizBtn');
+    if (assignBtn) {
+        assignBtn.addEventListener('click', () => openQuizAssignmentModal());
+    }
+
+    // Quiz assignment modal close buttons
+    const modalClose = document.getElementById('quizAssignmentModalClose');
+    const modalCancel = document.getElementById('quizAssignmentModalCancel');
+    const modalSave = document.getElementById('quizAssignmentModalSave');
+
+    if (modalClose) {
+        modalClose.addEventListener('click', closeQuizAssignmentModal);
+    }
+    if (modalCancel) {
+        modalCancel.addEventListener('click', closeQuizAssignmentModal);
+    }
+    if (modalSave) {
+        modalSave.addEventListener('click', saveQuizAssignment);
+    }
+
+    // Quiz assignment modal backdrop click
+    const modal = document.getElementById('quizAssignmentModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeQuizAssignmentModal();
+            }
+        });
+    }
+
+    // Filter change events
+    const userFilter = document.getElementById('quizAssignmentUserFilter');
+    const quizFilter = document.getElementById('quizAssignmentQuizFilter');
+    const statusFilter = document.getElementById('quizAssignmentStatusFilter');
+
+    if (userFilter) {
+        userFilter.addEventListener('change', filterQuizAssignments);
+    }
+    if (quizFilter) {
+        quizFilter.addEventListener('change', filterQuizAssignments);
+    }
+    if (statusFilter) {
+        statusFilter.addEventListener('change', filterQuizAssignments);
+    }
+
+    // Bulk unassign button
+    const bulkUnassignBtn = document.getElementById('bulkUnassignQuizBtn');
+    if (bulkUnassignBtn) {
+        bulkUnassignBtn.addEventListener('click', bulkUnassignQuizzes);
+    }
+
+    // Select all checkbox
+    const selectAllCheckbox = document.getElementById('selectAllQuizAssignments');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', toggleSelectAllQuizAssignments);
+    }
+}
+
+// Filter quiz assignments
+async function filterQuizAssignments() {
+    // This would filter the quiz assignments based on the selected filters
+    // For now, we'll just reload all assignments
+    await updateQuizAssignmentsTable();
+}
+
+// Toggle select all quiz assignments
+function toggleSelectAllQuizAssignments() {
+    const selectAllCheckbox = document.getElementById('selectAllQuizAssignments');
+    const quizAssignmentCheckboxes = document.querySelectorAll('.quiz-assignment-checkbox');
+    const bulkUnassignBtn = document.getElementById('bulkUnassignQuizBtn');
+    
+    quizAssignmentCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    
+    // Show/hide bulk unassign button based on selections
+    updateBulkUnassignQuizButton();
+}
+
+// Update bulk unassign quiz button visibility
+function updateBulkUnassignQuizButton() {
+    const selectedCheckboxes = document.querySelectorAll('.quiz-assignment-checkbox:checked');
+    const bulkUnassignBtn = document.getElementById('bulkUnassignQuizBtn');
+    
+    if (selectedCheckboxes.length > 0) {
+        bulkUnassignBtn.style.display = 'inline-flex';
+    } else {
+        bulkUnassignBtn.style.display = 'none';
+    }
+}
+
+// Bulk unassign quizzes
+async function bulkUnassignQuizzes() {
+    const selectedCheckboxes = document.querySelectorAll('.quiz-assignment-checkbox:checked');
+    
+    if (selectedCheckboxes.length === 0) {
+        showToast('warning', 'No Selection', 'Please select at least one quiz assignment to unassign');
+        return;
+    }
+
+    const confirmMessage = `Are you sure you want to unassign ${selectedCheckboxes.length} quiz assignment(s)?`;
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const checkbox of selectedCheckboxes) {
+        const assignmentId = checkbox.getAttribute('data-assignment-id');
+        try {
+            await window.dbService.removeQuizAssignment(assignmentId);
+            successCount++;
+        } catch (error) {
+            console.error(`Failed to unassign quiz assignment ${assignmentId}:`, error);
+            errorCount++;
+        }
+    }
+
+    const message = errorCount > 0 
+        ? `${successCount} assignments unassigned successfully, ${errorCount} failed`
+        : `${successCount} assignments unassigned successfully`;
+    
+    showToast('success', 'Bulk Unassign Complete', message);
+    await loadQuizAssignments();
+}
+
 // ===== ROLE MANAGEMENT FUNCTIONALITY =====
 
 // Global variables for role management
@@ -3621,11 +5206,58 @@ async function loadRoleManagementData() {
     try {
         // Loading role management data
         
-        // Load roles from localStorage (in a real app, this would come from the database)
+        // Try to load roles from database first
+        if (window.dbService && window.dbService.isConfigured) {
+            try {
+                const dbRoles = await window.dbService.getRoles();
+                if (dbRoles && dbRoles.length > 0) {
+                    console.log('Loaded roles from database:', dbRoles);
+                    // Normalize roles to support both camelCase and snake_case
+                    roles = dbRoles.map(role => {
+                        // Handle permissions - ensure it's always an array
+                        let permissions = role.permissions || [];
+                        // If permissions is a string, try to parse it
+                        if (typeof permissions === 'string') {
+                            try {
+                                permissions = JSON.parse(permissions);
+                            } catch (e) {
+                                console.warn('Failed to parse permissions for role:', role.name, e);
+                                permissions = [];
+                            }
+                        }
+                        // Ensure permissions is an array
+                        if (!Array.isArray(permissions)) {
+                            permissions = [];
+                        }
+                        
+                        return {
+                            ...role,
+                            // Ensure both pageAccess (camelCase) and page_access (snake_case) are available
+                            pageAccess: role.page_access || role.pageAccess || [],
+                            // Ensure permissions is always an array
+                            permissions: permissions
+                        };
+                    });
+                    // Log the permissions for Admin role specifically
+                    const adminRole = roles.find(r => r.role_id === 'admin' || r.id === 'admin');
+                    if (adminRole) {
+                        console.log('Admin role permissions after DB load:', adminRole.permissions);
+                        console.log('Admin role pageAccess after normalization:', adminRole.pageAccess);
+                    }
+                    // Update localStorage with database roles
+                    localStorage.setItem('roles', JSON.stringify(roles));
+                }
+            } catch (dbError) {
+                console.error('Failed to load roles from database:', dbError);
+            }
+        }
+        
+        // Fallback to localStorage if database failed
+        if (!roles || roles.length === 0) {
         const storedRoles = localStorage.getItem('roles');
         if (storedRoles) {
             roles = JSON.parse(storedRoles);
-            // Loaded roles from localStorage
+                console.log('Loaded roles from localStorage:', roles);
         } else {
             // Default roles if none exist
             roles = [
@@ -3635,7 +5267,8 @@ async function loadRoleManagementData() {
                 { id: 'team-member', name: 'Team Member', description: 'Basic access', level: 1, pageAccess: pageAccessLevels[1] }
             ];
             localStorage.setItem('roles', JSON.stringify(roles));
-            // Created default roles
+                console.log('Created default roles');
+            }
         }
         
         // Render role management content
@@ -3680,16 +5313,15 @@ function renderRolesGrid() {
         <div class="role-card">
             <h3>${role.name}</h3>
             <p>${role.description}</p>
-            <div class="role-level">Level ${role.level}</div>
             <div class="page-access">
                 <strong>Can Access:</strong><br>
                 <span class="accessible-pages">${accessiblePages || 'No pages assigned'}</span>
             </div>
             <div class="role-actions">
-                <button class="btn btn-edit" onclick="editRole('${role.id}')">
+                <button class="btn btn-edit" onclick="editRole('${role.id}')" data-permission="manage_roles">
                     <i class="fas fa-edit"></i> Edit
                 </button>
-                <button class="btn btn-delete" onclick="deleteRole('${role.id}')">
+                <button class="btn btn-delete" onclick="deleteRole('${role.id}')" data-permission="manage_roles">
                     <i class="fas fa-trash"></i> Delete
                 </button>
             </div>
@@ -3698,6 +5330,11 @@ function renderRolesGrid() {
     }).join('');
     
     rolesGrid.innerHTML = rolesHTML;
+    
+    // Apply element visibility after rendering
+    if (window.permissionManager) {
+        window.permissionManager.applyElementVisibility();
+    }
 }
 
 
@@ -3706,7 +5343,10 @@ function setupRoleManagementEventListeners() {
     // Add role button
     const addRoleBtn = document.getElementById('addRoleBtn');
     if (addRoleBtn) {
-        addRoleBtn.addEventListener('click', openRoleModal);
+        addRoleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openRoleModal(); // Call with no arguments for add mode
+        });
     }
     
     // Role modal event listeners
@@ -3714,8 +5354,6 @@ function setupRoleManagementEventListeners() {
     const roleModalClose = document.getElementById('roleModalClose');
     const roleModalCancel = document.getElementById('roleModalCancel');
     const roleForm = document.getElementById('roleForm');
-    const roleLevelSelect = document.getElementById('roleLevel');
-    
     if (roleModalClose) {
         roleModalClose.addEventListener('click', closeRoleModal);
     }
@@ -3728,10 +5366,6 @@ function setupRoleManagementEventListeners() {
         roleForm.addEventListener('submit', saveRole);
     }
     
-    if (roleLevelSelect) {
-        roleLevelSelect.addEventListener('change', applyPermissionLevel);
-    }
-    
     // Close modal when clicking outside
     if (roleModal) {
         roleModal.addEventListener('click', function(e) {
@@ -3740,18 +5374,488 @@ function setupRoleManagementEventListeners() {
             }
         });
     }
+    
 }
+
+// Element Access Control removed - using Role Definitions instead
+/*
+let selectedElementId = null;
+let elementAccessData = JSON.parse(localStorage.getItem('elementAccessData') || '{}');
+
+// Define website elements that can be controlled
+const websiteElements = [
+    { id: 'navbar', name: 'Navigation Bar', description: 'Top navigation menu' },
+    { id: 'dashboard', name: 'Dashboard', description: 'User dashboard page' },
+    { id: 'my-progress', name: 'My Progress', description: 'User progress tracking' },
+    { id: 'quizzes', name: 'Quizzes', description: 'Quiz and test system' },
+    { id: 'user-overview', name: 'User Overview', description: 'Admin user management' },
+    { id: 'path-management', name: 'Path Management', description: 'Module and path management' },
+    { id: 'role-management', name: 'Role Management', description: 'Role and permission settings' },
+    { id: 'reports', name: 'Reports', description: 'System reports and analytics' },
+    { id: 'settings', name: 'Settings', description: 'System settings' }
+];
+
+// Initialize element access control
+function initializeElementAccessControl() {
+    renderElementsList();
+}
+
+// Render the elements list
+function renderElementsList() {
+    const elementsList = document.getElementById('elementsList');
+    if (!elementsList) return;
+    
+    elementsList.innerHTML = websiteElements.map(element => `
+        <div class="element-item" onclick="selectElement('${element.id}')">
+            <div class="element-icon">
+                <i class="fas fa-cube"></i>
+            </div>
+            <div class="element-info">
+                <h4>${element.name}</h4>
+                <p>${element.description}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Select an element to manage access entities
+function selectElement(elementId) {
+    selectedElementId = elementId;
+    const element = websiteElements.find(e => e.id === elementId);
+    
+    // Update selected element display
+    const selectedElementDiv = document.getElementById('selectedElement');
+    if (selectedElementDiv && element) {
+        selectedElementDiv.innerHTML = `
+            <h3>${element.name}</h3>
+            <p>${element.description}</p>
+        `;
+    }
+    
+    // Render role access checkboxes
+    renderRoleAccessList();
+    
+    // Enable save button
+    const saveBtn = document.getElementById('saveAccessBtn');
+    if (saveBtn) saveBtn.disabled = false;
+}
+
+// Render role access checkboxes
+function renderRoleAccessList() {
+    const roleAccessList = document.getElementById('roleAccessList');
+    if (!roleAccessList || !selectedElementId) return;
+    
+    roleAccessList.innerHTML = roles.map(role => {
+        const hasAccess = elementAccessData[selectedElementId]?.includes(role.id) || false;
+        return `
+            <label class="checkbox-label">
+                <input type="checkbox" 
+                       data-role="${role.id}" 
+                       ${hasAccess ? 'checked' : ''}
+                       onchange="updateElementAccess()">
+                <span>${role.name}</span>
+                <span class="role-level">Level ${role.level}</span>
+            </label>
+        `;
+    }).join('');
+}
+
+// Update element access when checkbox changes
+function updateElementAccess() {
+    // This will be called when a checkbox is changed
+}
+
+// Save element access settings
+function saveElementAccess() {
+    if (!selectedElementId) return;
+    
+    const checkboxes = document.querySelectorAll('#roleAccessList input[type="checkbox"]');
+    const allowedRoles = [];
+    
+    checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            allowedRoles.push(checkbox.dataset.role);
+        }
+    });
+    
+    elementAccessData[selectedElementId] = allowedRoles;
+    localStorage.setItem('elementAccessData', JSON.stringify(elementAccessData));
+    
+    showToast('success', 'Saved', `Access settings saved for ${websiteElements.find(e => e.id === selectedElementId).name}`);
+}
+
+// Clear selection
+function clearSelection() {
+    selectedElementId = null;
+    const selectedDiv = document.getElementById('selectedElement');
+    if (selectedDiv) selectedDiv.innerHTML = '<p>Select an element to manage access</p>';
+    const roleList = document.getElementById('roleAccessList');
+    if (roleList) roleList.innerHTML = '';
+    const saveBtn = document.getElementById('saveAccessBtn');
+    if (saveBtn) saveBtn.disabled = true;
+}
+
+// Filter elements by search
+function filterElements() {
+    const searchTerm = document.getElementById('elementSearch')?.value.toLowerCase() || '';
+    const elementItems = document.querySelectorAll('.element-item');
+    
+    elementItems.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(searchTerm) ? 'block' : 'none';
+    });
+}
+
+// Export element access functions - REMOVED
+// window.selectElement = selectElement;
+// window.updateElementAccess = updateElementAccess;
+// window.saveElementAccess = saveElementAccess;
+// window.clearSelection = clearSelection;
+// window.filterElements = filterElements;
+*/
+
+// Permission Matrix removed - using Role Definitions instead
+/*
+function initializeMatrixFromRoles() {
+    // Map permission categories to permission keys used in the system
+    const permissionMap = {
+        'User Management': {
+            'View Users': 'view_users',
+            'Create Users': 'create_users',
+            'Edit Users': 'edit_users',
+            'Delete Users': 'delete_users'
+        },
+        'Module Management': {
+            'View Modules': 'view_modules',
+            'Create Modules': 'create_modules',
+            'Edit Modules': 'edit_modules',
+            'Delete Modules': 'delete_modules'
+        },
+        'Assignment Management': {
+            'View Assignments': 'view_assignments',
+            'Create Assignments': 'create_assignments',
+            'Edit Assignments': 'edit_assignments',
+            'Delete Assignments': 'delete_assignments'
+        },
+        'System Administration': {
+            'View Reports': 'view_reports',
+            'Manage Roles': 'manage_roles',
+            'System Settings': 'system_settings',
+            'Backup & Restore': 'backup_restore'
+        }
+    };
+    
+    // Always sync matrix from current roles to ensure it's up to date
+    // Remove the check to always sync
+    // const hasStoredData = Object.keys(permissionMatrixData).length > 0;
+    
+    // Always sync (removed the if condition)
+    {
+        console.log('Syncing permission matrix from current roles...');
+        
+        // Load roles from localStorage to ensure we have the latest data with permissions
+        const storedRoles = JSON.parse(localStorage.getItem('roles') || '[]');
+        const rolesToSync = storedRoles.length > 0 ? storedRoles : roles;
+        
+        console.log('Roles to sync:', rolesToSync);
+        
+        // For each role
+        rolesToSync.forEach(role => {
+            const rolePermissions = role.permissions || [];
+            console.log(`Syncing ${role.name} (role_id: ${role.role_id || role.id}) with ${rolePermissions.length} permissions:`, rolePermissions);
+            
+            // For each category
+            Object.entries(permissionMap).forEach(([category, permissions]) => {
+                // For each permission in category
+                Object.entries(permissions).forEach(([displayName, permissionKey]) => {
+                    // Check if this role has this permission
+                    const hasPermission = rolePermissions.includes(permissionKey);
+                    
+                    // Set matrix data
+                    const matrixKey = `${category}_${displayName}_${role.id}`;
+                    permissionMatrixData[matrixKey] = hasPermission;
+                });
+            });
+        });
+        
+        // Save initialized data
+        localStorage.setItem('permissionMatrixData', JSON.stringify(permissionMatrixData));
+        console.log('Synced permission matrix with current roles');
+    }
+}
+
+// Render the permission matrix table
+function renderPermissionMatrix() {
+    const matrixBody = document.getElementById('permissionMatrixBody');
+    if (!matrixBody) return;
+    
+    let html = '';
+    
+    permissionCategories.forEach(category => {
+        // Category header row
+        html += `
+            <tr class="category-row">
+                <td colspan="5">${category.category}</td>
+            </tr>
+        `;
+        
+        // Permission rows
+        category.permissions.forEach(permission => {
+            html += '<tr class="permission-row">';
+            html += `<td>${permission}</td>`;
+            
+            roleIds.forEach(roleId => {
+                const checked = permissionMatrixData[`${category.category}_${permission}_${roleId}`] || false;
+                html += `
+                    <td>
+                        <input type="checkbox" 
+                               data-category="${category.category}" 
+                               data-permission="${permission}" 
+                               data-role="${roleId}"
+                               ${checked ? 'checked' : ''}
+                               onchange="updatePermissionCheckbox(this)">
+                    </td>
+                `;
+            });
+            
+            html += '</tr>';
+        });
+    });
+    
+    matrixBody.innerHTML = html;
+}
+
+// Update permission checkbox
+function updatePermissionCheckbox(checkbox) {
+    const category = checkbox.dataset.category;
+    const permission = checkbox.dataset.permission;
+    const role = checkbox.dataset.role;
+    const key = `${category}_${permission}_${role}`;
+    
+    permissionMatrixData[key] = checkbox.checked;
+    
+    // Visual feedback on checkbox
+    checkbox.style.transform = 'scale(0.9)';
+    setTimeout(() => {
+        checkbox.style.transition = 'transform 0.2s ease';
+        checkbox.style.transform = 'scale(1)';
+    }, 100);
+    
+    // Update save button to show unsaved changes
+    const saveBtn = document.querySelector('[onclick="savePermissionMatrix()"]');
+    if (saveBtn) {
+        saveBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Save Permissions <span style="color: orange;">(Unsaved)</span>';
+        saveBtn.classList.add('has-unsaved-changes');
+    }
+}
+
+// Save permission matrix
+async function savePermissionMatrix() {
+    localStorage.setItem('permissionMatrixData', JSON.stringify(permissionMatrixData));
+    
+    // Restore save button
+    const saveBtn = document.querySelector('[onclick="savePermissionMatrix()"]');
+    if (saveBtn) {
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Permissions';
+        saveBtn.classList.remove('has-unsaved-changes');
+        
+        // Visual confirmation
+        saveBtn.style.backgroundColor = '#28a745';
+        setTimeout(() => {
+            saveBtn.style.transition = 'background-color 0.3s ease';
+            saveBtn.style.backgroundColor = '';
+        }, 500);
+    }
+    
+    // Apply permission changes to roles
+    await applyPermissionMatrixToRoles();
+    
+    showToast('success', 'Saved', 'Permission matrix has been saved and applied successfully');
+    
+    // Log saved data for debugging
+    const checkedCount = Object.values(permissionMatrixData).filter(v => v === true).length;
+    console.log('Permission matrix saved:', {
+        totalChecked: checkedCount,
+        totalKeys: Object.keys(permissionMatrixData).length,
+        data: permissionMatrixData
+    });
+}
+
+// Apply permission matrix changes to roles
+async function applyPermissionMatrixToRoles() {
+    console.log('=== Applying permission matrix to roles ===');
+    console.log('permissionMatrixData:', permissionMatrixData);
+    
+    // Map permission categories to permission keys used in the system
+    const permissionMap = {
+        'User Management': {
+            'View Users': 'view_users',
+            'Create Users': 'create_users',
+            'Edit Users': 'edit_users',
+            'Delete Users': 'delete_users'
+        },
+        'Module Management': {
+            'View Modules': 'view_modules',
+            'Create Modules': 'create_modules',
+            'Edit Modules': 'edit_modules',
+            'Delete Modules': 'delete_modules'
+        },
+        'Assignment Management': {
+            'View Assignments': 'view_assignments',
+            'Create Assignments': 'create_assignments',
+            'Edit Assignments': 'edit_assignments',
+            'Delete Assignments': 'delete_assignments'
+        },
+        'System Administration': {
+            'View Reports': 'view_reports',
+            'Manage Roles': 'manage_roles',
+            'System Settings': 'system_settings',
+            'Backup & Restore': 'backup_restore'
+        }
+    };
+    
+    // Update roles array with permissions from matrix
+    roles.forEach(role => {
+        const rolePermissions = [];
+        
+        // For each category
+        Object.entries(permissionMap).forEach(([category, permissions]) => {
+            // For each permission in category
+            Object.entries(permissions).forEach(([displayName, permissionKey]) => {
+                const matrixKey = `${category}_${displayName}_${role.id}`;
+                
+                // If checked in matrix, add to role permissions
+                const isChecked = permissionMatrixData[matrixKey] === true;
+                if (isChecked) {
+                    if (!rolePermissions.includes(permissionKey)) {
+                        rolePermissions.push(permissionKey);
+                    }
+                    console.log(`✓ Added "${permissionKey}" to ${role.name} (checked: ${isChecked})`);
+                }
+            });
+        });
+        
+        // Update role with new permissions
+        const oldPermissions = role.permissions || [];
+        role.permissions = rolePermissions;
+        
+        console.log(`${role.name}:`);
+        console.log(`  Old: [${oldPermissions.join(', ')}]`);
+        console.log(`  New: [${rolePermissions.join(', ')}]`);
+    });
+    
+    // Save updated roles to localStorage
+    localStorage.setItem('roles', JSON.stringify(roles));
+    console.log('✓ Saved updated roles to localStorage');
+    
+    // Save roles to database
+    try {
+        if (window.dbService && window.dbService.isConfigured) {
+            console.log('Saving roles to database...');
+            for (const role of roles) {
+                await window.dbService.updateRole(role.id, {
+                    permissions: role.permissions,
+                    updated_at: new Date().toISOString()
+                });
+            }
+            console.log('✓ Saved updated roles to database');
+        }
+    } catch (error) {
+        console.error('Failed to save roles to database:', error);
+    }
+    
+    // Reload roles in permission manager if it exists
+    if (window.permissionManager) {
+        window.permissionManager.loadRoles();
+    }
+    
+    // Refresh permissions display
+    displayCurrentPermissions();
+    
+    console.log('=== Done applying permission matrix ===');
+}
+
+// Reset permission matrix to defaults
+function resetPermissionMatrix() {
+    permissionMatrixData = {};
+    localStorage.setItem('permissionMatrixData', JSON.stringify(permissionMatrixData));
+    renderPermissionMatrix();
+    showToast('info', 'Reset', 'Permission matrix has been reset to defaults');
+}
+
+*/
+
+// Display current role permissions for testing
+function displayCurrentPermissions() {
+    const displayDiv = document.getElementById('permissionsDisplay');
+    if (!displayDiv) return;
+    
+    // Load roles from localStorage to ensure we have the latest data
+    const storedRoles = JSON.parse(localStorage.getItem('roles') || '[]');
+    const rolesToDisplay = storedRoles.length > 0 ? storedRoles : roles;
+    
+    let html = '<div class="roles-permissions-grid">';
+    
+    rolesToDisplay.forEach(role => {
+        const permissions = role.permissions || [];
+        html += `
+            <div class="role-permissions-card">
+                <h3>${role.name}</h3>
+                <div class="permissions-list">
+                    ${permissions.length > 0 ? 
+                        permissions.map(p => `<span class="permission-badge">${p}</span>`).join('') : 
+                        '<span class="no-permissions">No permissions assigned</span>'
+                    }
+                </div>
+                <div class="permission-count">${permissions.length} permission${permissions.length !== 1 ? 's' : ''}</div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    displayDiv.innerHTML = html;
+}
+
+// Refresh permissions display
+function refreshPermissionsDisplay() {
+    displayCurrentPermissions();
+    showToast('success', 'Refreshed', 'Permissions display updated');
+}
+
+// Initialize permissions display
+function initializePermissionsDisplay() {
+    displayCurrentPermissions();
+}
+
+// Call on page load and after role updates
+setTimeout(() => {
+    if (document.getElementById('permissionsDisplay')) {
+        initializePermissionsDisplay();
+    }
+}, 1000);
+
+// Export functions
+window.refreshPermissionsDisplay = refreshPermissionsDisplay;
 
 // Open role modal
 function openRoleModal(roleId = null) {
+    console.log('🔵 openRoleModal called with roleId:', roleId);
+    console.log('🔵 typeof roleId:', typeof roleId);
+    console.log('🔵 roleId value:', roleId);
+    
     const roleModal = document.getElementById('roleModal');
     const roleModalTitle = document.getElementById('roleModalTitle');
     const roleIdInput = document.getElementById('roleId');
     const roleNameInput = document.getElementById('roleName');
     const roleDescriptionInput = document.getElementById('roleDescription');
-    const roleLevelSelect = document.getElementById('roleLevel');
+    
+    if (!roleModal || !roleModalTitle || !roleIdInput || !roleNameInput || !roleDescriptionInput) {
+        console.error('❌ Missing required modal elements!', { roleModal: !!roleModal, roleModalTitle: !!roleModalTitle, roleIdInput: !!roleIdInput, roleNameInput: !!roleNameInput, roleDescriptionInput: !!roleDescriptionInput });
+        return;
+    }
     
     if (roleId) {
+        console.log('✏️ Edit mode - roleId provided:', roleId);
         // Edit mode
         const role = roles.find(r => r.id === roleId);
         if (role) {
@@ -3759,20 +5863,78 @@ function openRoleModal(roleId = null) {
             roleIdInput.value = role.id;
             roleNameInput.value = role.name;
             roleDescriptionInput.value = role.description;
-            roleLevelSelect.value = role.level;
-            populateRolePageAccess(role.pageAccess || []);
+            // Handle both camelCase (pageAccess) and snake_case (page_access) from database
+            const pageAccess = role.pageAccess || role.page_access || [];
+            populateRolePageAccess(Array.isArray(pageAccess) ? pageAccess : []);
+            
+            // Ensure permissions is an array before passing to populateGranularPermissions
+            let permissions = role.permissions || [];
+            if (typeof permissions === 'string') {
+                try {
+                    permissions = JSON.parse(permissions);
+                } catch (e) {
+                    console.warn('Failed to parse permissions for role:', role.name, e);
+                    permissions = [];
+                }
+            }
+            if (!Array.isArray(permissions)) {
+                permissions = [];
+            }
+            
+            console.log('Opening role modal for:', role.name);
+            console.log('Role permissions:', permissions);
+            populateGranularPermissions(permissions);
         }
     } else {
         // Add mode
+        console.log('➕ Add mode - roleId is null/undefined');
+        console.log('➕ Opening modal in ADD mode');
         roleModalTitle.textContent = 'Add New Role';
         roleIdInput.value = '';
         roleNameInput.value = '';
         roleDescriptionInput.value = '';
-        roleLevelSelect.value = '1';
+        
+        // Show modal first
+        roleModal.classList.add('show');
+        
+        // Force a reflow to ensure modal is visible
+        void roleModal.offsetHeight;
+        
+        // Clear any existing content first
+        const rolePermissionsGrid = document.getElementById('rolePermissionsGrid');
+        const granularPermissionsDiv = document.getElementById('granularPermissions');
+        if (rolePermissionsGrid) {
+            console.log('🔍 Clearing rolePermissionsGrid');
+            rolePermissionsGrid.innerHTML = '';
+        }
+        if (granularPermissionsDiv) {
+            console.log('🔍 Clearing granularPermissionsDiv');
+            granularPermissionsDiv.innerHTML = '';
+        }
+        
+        // Populate immediately - elements should be accessible now that modal is shown
+        console.log('📋 Populating page access and granular permissions for new role...');
+        try {
         populateRolePageAccess([]);
+            populateGranularPermissions([]);
+            console.log('✅ Both populate functions completed');
+        } catch (error) {
+            console.error('❌ Error populating permissions:', error);
+            // If it fails, try again with a small delay
+            setTimeout(() => {
+                console.log('🔄 Retrying population after delay...');
+                populateRolePageAccess([]);
+                populateGranularPermissions([]);
+            }, 50);
+        }
     }
     
+    if (roleId) {
+        // For edit mode, show modal after populating (already populated above)
     roleModal.classList.add('show');
+    }
+    
+    console.log('✅ Modal should now be visible');
 }
 
 // Close role modal
@@ -3785,13 +5947,22 @@ function closeRoleModal() {
 
 // Populate role page access
 function populateRolePageAccess(selectedPageAccess) {
-    // Populate role page access
+    console.log('📋 populateRolePageAccess called with:', selectedPageAccess);
+    
+    // Check if pagePermissions is defined
+    if (typeof pagePermissions === 'undefined') {
+        console.error('❌ pagePermissions is not defined!');
+        return;
+    }
+    
     const rolePermissionsGrid = document.getElementById('rolePermissionsGrid');
-    // Role permissions grid element
     if (!rolePermissionsGrid) {
         console.error('❌ rolePermissionsGrid element not found!');
         return;
     }
+    
+    console.log('✅ rolePermissionsGrid found, pagePermissions keys:', Object.keys(pagePermissions));
+    console.log('✅ pagePermissions object:', pagePermissions);
     
     // Available page permissions
     const permissionsHTML = Object.entries(pagePermissions).map(([pageName, pageInfo]) => {
@@ -3814,41 +5985,155 @@ function populateRolePageAccess(selectedPageAccess) {
     `;
     }).join('');
     
+    console.log('📝 Generated page access HTML length:', permissionsHTML.length);
+    console.log('📝 HTML preview:', permissionsHTML.substring(0, 200));
     rolePermissionsGrid.innerHTML = permissionsHTML;
-    // Role permissions grid populated
+    console.log('✅ Page access checkboxes populated. Current innerHTML length:', rolePermissionsGrid.innerHTML.length);
 }
 
-// Apply permission level
-function applyPermissionLevel() {
-    const roleLevelSelect = document.getElementById('roleLevel');
-    const level = parseInt(roleLevelSelect.value);
-    
-    if (pageAccessLevels[level]) {
-        populateRolePageAccess(pageAccessLevels[level]);
+// Populate granular permissions for a role
+function populateGranularPermissions(rolePermissions) {
+    console.log('📋 populateGranularPermissions called with:', rolePermissions);
+    const granularPermissionsDiv = document.getElementById('granularPermissions');
+    if (!granularPermissionsDiv) {
+        console.error('❌ granularPermissions div not found!');
+        return;
     }
+    
+    console.log('✅ granularPermissions div found');
+    
+    const permissionCategories = [
+        {
+            category: 'User Management',
+            permissions: [
+                { name: 'View Users', key: 'view_users' },
+                { name: 'Create Users', key: 'create_users' },
+                { name: 'Edit Users', key: 'edit_users' },
+                { name: 'Delete Users', key: 'delete_users' },
+                { name: 'Reset Progress', key: 'reset_progress' }
+            ]
+        },
+        {
+            category: 'Module Management',
+            permissions: [
+                { name: 'View Modules', key: 'view_modules' },
+                { name: 'Create Modules', key: 'create_modules' },
+                { name: 'Edit Modules', key: 'edit_modules' },
+                { name: 'Delete Modules', key: 'delete_modules' }
+            ]
+        },
+        {
+            category: 'Assignment Management',
+            permissions: [
+                { name: 'View Assignments', key: 'view_assignments' },
+                { name: 'Create Assignments', key: 'create_assignments' },
+                { name: 'Edit Assignments', key: 'edit_assignments' },
+                { name: 'Unassign Assignments', key: 'unassign_assignments' },
+                { name: 'Delete Assignments', key: 'delete_assignments' }
+            ]
+        },
+        {
+            category: 'Quiz Management',
+            permissions: [
+                { name: 'Create Quizzes', key: 'create_quizzes' },
+                { name: 'Edit Quizzes', key: 'edit_quizzes' },
+                { name: 'Delete Quizzes', key: 'delete_quizzes' }
+            ]
+        },
+        {
+            category: 'System Administration',
+            permissions: [
+                { name: 'View Reports', key: 'view_reports' },
+                { name: 'Manage Roles', key: 'manage_roles' },
+                { name: 'System Settings', key: 'system_settings' },
+                { name: 'Backup & Restore', key: 'backup_restore' }
+            ]
+        }
+    ];
+    
+    let html = '';
+    permissionCategories.forEach(category => {
+        html += `<div class="permission-category">`;
+        html += `<h4>${category.category}</h4>`;
+        html += `<div class="permission-category-items">`;
+        
+        category.permissions.forEach(permission => {
+            const isChecked = rolePermissions && Array.isArray(rolePermissions) && rolePermissions.includes(permission.key);
+            if (category.category === 'Module Management') {
+                console.log(`Permission ${permission.key}: isChecked=${isChecked}, rolePermissions:`, rolePermissions);
+            }
+            html += `
+                <div class="permission-checkbox-item">
+                    <input type="checkbox" 
+                           id="perm_${permission.key}" 
+                           value="${permission.key}"
+                           ${isChecked ? 'checked' : ''}>
+                    <label for="perm_${permission.key}">${permission.name}</label>
+                </div>
+            `;
+        });
+        
+        html += `</div></div>`;
+    });
+    
+    console.log('📝 Generated granular permissions HTML length:', html.length);
+    console.log('📝 HTML preview:', html.substring(0, 300));
+    granularPermissionsDiv.innerHTML = html;
+    console.log('✅ Granular permissions populated. Current innerHTML length:', granularPermissionsDiv.innerHTML.length);
+    
+    // Verify checkboxes were created correctly
+    const moduleCheckboxes = granularPermissionsDiv.querySelectorAll('#perm_view_modules, #perm_create_modules, #perm_edit_modules, #perm_delete_modules');
+    console.log(`Created ${moduleCheckboxes.length} Module Management checkboxes`);
+    moduleCheckboxes.forEach(cb => {
+        console.log(`Checkbox ${cb.id}: value=${cb.value}, checked=${cb.checked}`);
+    });
 }
 
 // Save role
-function saveRole(e) {
+async function saveRole(e) {
     e.preventDefault();
     
     const roleIdInput = document.getElementById('roleId');
     const roleNameInput = document.getElementById('roleName');
     const roleDescriptionInput = document.getElementById('roleDescription');
-    const roleLevelSelect = document.getElementById('roleLevel');
+    // Get selected granular permissions
+    const granularPermissions = Array.from(document.querySelectorAll('#granularPermissions input[type="checkbox"]:checked'))
+        .map(checkbox => checkbox.value);
+    
+    // Calculate level based on page access (for backward compatibility with database schema)
+    const pageAccess = getSelectedPageAccess();
+    let calculatedLevel = 1;
+    if (pageAccess.length >= 5) {
+        calculatedLevel = 4; // Full access
+    } else if (pageAccess.length >= 3) {
+        calculatedLevel = 3; // Advanced
+    } else if (pageAccess.length >= 2) {
+        calculatedLevel = 2; // Standard
+    }
     
     const roleData = {
         id: roleIdInput.value || generateRoleId(),
         name: roleNameInput.value,
         description: roleDescriptionInput.value,
-        level: parseInt(roleLevelSelect.value),
-        pageAccess: getSelectedPageAccess()
+        level: calculatedLevel, // Auto-calculated from page access
+        pageAccess: pageAccess,
+        permissions: granularPermissions
     };
+    
+    console.log('💾 Saving role with data:', {
+        id: roleData.id,
+        name: roleData.name,
+        permissions: roleData.permissions,
+        pageAccess: roleData.pageAccess
+    });
     
     if (roleIdInput.value) {
         // Update existing role
         const index = roles.findIndex(r => r.id === roleIdInput.value);
         if (index !== -1) {
+            // Preserve the original role_id from the database
+            const originalRole = roles[index];
+            roleData.role_id = originalRole.role_id || originalRole.id;
             roles[index] = roleData;
         }
     } else {
@@ -3856,14 +6141,90 @@ function saveRole(e) {
         roles.push(roleData);
     }
     
-    // Save to localStorage
+    // Save to localStorage first
     localStorage.setItem('roles', JSON.stringify(roles));
+    
+    // Save to database if configured
+    if (window.dbService && window.dbService.isConfigured && roleIdInput.value) {
+        try {
+            // Find the actual role_id to use for the update
+            const existingRole = roles.find(r => r.id === roleIdInput.value);
+            console.log('Existing role object:', existingRole);
+            const actualRoleId = existingRole.role_id || existingRole.id;
+            console.log('Using role_id for update:', actualRoleId);
+            
+            // Update role in database
+            // Don't include role_id in update data since it's the filter
+            const dbRoleData = {
+                name: roleData.name,
+                description: roleData.description,
+                level: roleData.level,
+                permissions: roleData.permissions, // JSONB fields - send as arrays
+                page_access: roleData.pageAccess // JSONB fields - send as arrays
+            };
+            
+            console.log('Updating role with role_id:', actualRoleId);
+            console.log('Update data:', dbRoleData);
+            
+            const result = await window.dbService.updateRole(actualRoleId, dbRoleData);
+            console.log('✓ Saved role to database:', roleData.name);
+            console.log('Database response:', result);
+            
+            // Reload roles from database to ensure we have the latest data
+            try {
+                const dbRoles = await window.dbService.getRoles();
+                if (dbRoles && dbRoles.length > 0) {
+                    // Normalize roles to support both camelCase and snake_case
+                    roles = dbRoles.map(role => {
+                        // Handle permissions - ensure it's always an array
+                        let permissions = role.permissions || [];
+                        if (typeof permissions === 'string') {
+                            try {
+                                permissions = JSON.parse(permissions);
+                            } catch (e) {
+                                console.warn('Failed to parse permissions for role:', role.name, e);
+                                permissions = [];
+                            }
+                        }
+                        if (!Array.isArray(permissions)) {
+                            permissions = [];
+                        }
+                        
+                        return {
+                            ...role,
+                            pageAccess: role.page_access || role.pageAccess || [],
+                            permissions: permissions
+                        };
+                    });
+                    localStorage.setItem('roles', JSON.stringify(roles));
+                }
+            } catch (reloadError) {
+                console.warn('Failed to reload roles from database:', reloadError);
+                // Continue with in-memory roles
+            }
+        } catch (error) {
+            console.error('Failed to save role to database:', error);
+            showToast('warning', 'Warning', 'Role saved locally but database update failed');
+        }
+    }
     
     // Refresh displays
     renderRoleOverviewCards();
     renderRolesGrid();
     
-    // Refresh role-based UI for current user
+    // Reload roles in PermissionManager if it exists
+    if (window.permissionManager) {
+        await window.permissionManager.loadRoles();
+        // Re-apply element visibility based on updated permissions
+        window.permissionManager.applyElementVisibility();
+        
+        // Also update quiz tab visibility if the function exists (for quizzes page)
+        if (typeof window.updateQuizTabVisibility === 'function') {
+            window.updateQuizTabVisibility();
+        }
+    }
+    
+    // Refresh role-based UI for current user (this will update tab visibility)
     refreshRoleBasedUI();
     
     closeRoleModal();
@@ -3892,19 +6253,48 @@ function editRole(roleId) {
 }
 
 // Delete role
-function deleteRole(roleId) {
-    // Delete role called
+async function deleteRole(roleId) {
     const role = roles.find(r => r.id === roleId);
-    if (!role) return;
+    if (!role) {
+        showToast('error', 'Error', 'Role not found');
+        return;
+    }
     
-    if (confirm(`Are you sure you want to delete the "${role.name}" role?`)) {
+    // Confirm deletion
+    if (!confirm(`Are you sure you want to delete the "${role.name}" role?\n\nThis action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        // Get the database role_id if available
+        const dbRoleId = role.role_id || role.id;
+        
+        // Delete from database first
+        if (window.dbService && window.dbService.isConfigured) {
+            await window.dbService.deleteRole(dbRoleId);
+            console.log(`✅ Role deleted from database: ${dbRoleId}`);
+        }
+        
+        // Remove from in-memory array
         roles = roles.filter(r => r.id !== roleId);
+        
+        // Remove from localStorage
         localStorage.setItem('roles', JSON.stringify(roles));
         
+        // Refresh displays
         renderRoleOverviewCards();
         renderRolesGrid();
         
-        showToast('success', 'Success', 'Role deleted successfully');
+        // Reload roles in PermissionManager if it exists
+        if (window.permissionManager) {
+            await window.permissionManager.loadRoles();
+        }
+        
+        showToast('success', 'Role Deleted', `Role "${role.name}" has been permanently deleted.`);
+        
+    } catch (error) {
+        console.error('Failed to delete role:', error);
+        showToast('error', 'Delete Failed', `Failed to delete role "${role.name}": ${error.message || 'Unknown error'}`);
     }
 }
 
@@ -3930,6 +6320,7 @@ function hideLoadingIndicator() {
 window.editRole = editRole;
 window.deleteRole = deleteRole;
 window.closeRoleModal = closeRoleModal;
+window.openRoleModal = openRoleModal;
 
 
 // ===== REPORTS & ANALYTICS FUNCTIONALITY =====

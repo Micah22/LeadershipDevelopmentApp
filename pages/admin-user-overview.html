@@ -7,10 +7,12 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
     <!-- Load navbar component styles -->
     <link rel="stylesheet" href="../styles/navbar-component.css?v=2">
-    <link rel="stylesheet" href="../styles/admin-overview-content.css">
+    <link rel="stylesheet" href="../styles/admin-overview-content.css?v=2">
     <link rel="stylesheet" href="../styles/admin-path-management-styles.css?v=8">
+    <link rel="stylesheet" href="../styles/user-progress-content.css">
+    <link rel="stylesheet" href="../styles/user-progress-styles.css">
     <link rel="stylesheet" href="../styles/toast-component.css">
-    <link rel="stylesheet" href="../styles/admin-overview-styles.css">
+    <link rel="stylesheet" href="../styles/admin-overview-styles.css?v=145">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../styles/tabs-component.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -21,7 +23,7 @@
     <script src="../components/tabs-component.js"></script>
     <script src="../database/config.js"></script>
     <script src="../scripts/notification-service.js"></script>
-    <script src="../scripts/permission-utils.js"></script>
+    <script src="../scripts/permission-utils.js?v=4"></script>
 
 </head>
 <body>
@@ -106,12 +108,30 @@
                         </div>
                         <h2 class="section-title">Individual User Progress</h2>
                     </div>
-                    <button class="action-btn" id="newUserBtn">
+                    <button class="action-btn" id="newUserBtn" data-permission="create_users">
                         <i class="fas fa-plus"></i>
                         New User
                     </button>
                 </div>
                 <div class="section-content">
+                    <!-- Search Bar and Filters -->
+                    <div class="search-filter-container" style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                        <div class="search-box" style="position: relative; max-width: 400px; flex: 1; min-width: 250px;">
+                            <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--medium-gray);"></i>
+                            <input type="text" id="userSearchInput" placeholder="Search users by name, username, email, or role..." 
+                                   style="width: 100%; padding: 0.75rem 1rem 0.75rem 3rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.95rem;">
+                        </div>
+                        <div class="role-filter-box" style="min-width: 200px;">
+                            <select id="userRoleFilter" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: white; cursor: pointer;">
+                                <option value="">All Roles</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Director">Director</option>
+                                <option value="Manager">Manager</option>
+                                <option value="Team Member">Team Member</option>
+                            </select>
+                        </div>
+                    </div>
+                    
                     <div class="table-container">
                         <table class="progress-table">
                             <thead>
@@ -136,7 +156,7 @@
             </div>
 
             <!-- Module Assignments Section -->
-            <div class="section">
+            <div class="section" data-permission="view_assignments">
                 <div class="section-header">
                     <div class="section-title-group">
                         <div class="section-icon">
@@ -144,7 +164,7 @@
                         </div>
                         <h2 class="section-title">Module Assignments</h2>
                     </div>
-                    <button class="action-btn" id="assignModuleBtn">
+                    <button class="action-btn" id="assignModuleBtn" data-permission="create_assignments">
                         <i class="fas fa-plus"></i>
                         Assign Module
                     </button>
@@ -165,7 +185,7 @@
                                 <option value="completed">Completed</option>
                                 <option value="overdue">Overdue</option>
                             </select>
-                            <button class="btn btn-secondary" id="bulkUnassignBtn" style="display: none;">
+                            <button class="btn btn-secondary" id="bulkUnassignBtn" style="display: none;" data-permission="unassign_assignments">
                                 <i class="fas fa-user-minus"></i>
                                 Unassign Selected
                             </button>
@@ -194,6 +214,71 @@
                         <!-- Mobile Assignments Cards -->
                         <div class="assignments-table-mobile" id="assignmentsTableMobile">
                             <!-- Mobile assignment cards will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Assignments Section -->
+            <div class="section" data-permission="view_assignments">
+                <div class="section-header">
+                    <div class="section-title-group">
+                        <div class="section-icon">
+                            <i class="fas fa-clipboard-question"></i>
+                        </div>
+                        <h2 class="section-title">Quiz Assignments</h2>
+                    </div>
+                    <button class="action-btn" id="assignQuizBtn" data-permission="create_assignments">
+                        <i class="fas fa-plus"></i>
+                        Assign Quiz
+                    </button>
+                </div>
+                <div class="section-content">
+                    <div class="assignments-container">
+                        <div class="assignments-filters">
+                            <select id="quizAssignmentUserFilter" class="filter-select">
+                                <option value="">All Users</option>
+                            </select>
+                            <select id="quizAssignmentQuizFilter" class="filter-select">
+                                <option value="">All Quizzes</option>
+                            </select>
+                            <select id="quizAssignmentStatusFilter" class="filter-select">
+                                <option value="">All Statuses</option>
+                                <option value="assigned">Assigned</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="overdue">Overdue</option>
+                            </select>
+                            <button class="btn btn-secondary" id="bulkUnassignQuizBtn" style="display: none;" data-permission="unassign_assignments">
+                                <i class="fas fa-user-minus"></i>
+                                Unassign Selected
+                            </button>
+                        </div>
+                        <div class="table-container">
+                            <table class="assignments-table">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="selectAllQuizAssignments" title="Select All"></th>
+                                        <th>USER</th>
+                                        <th>QUIZ</th>
+                                        <th>ASSIGNED DATE</th>
+                                        <th>DUE DATE</th>
+                                        <th>STATUS</th>
+                                        <th>SCORE</th>
+                                        <th>PASSED</th>
+                                        <th>NOTES</th>
+                                        <th>ACTIONS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="quizAssignmentsTableBody">
+                                    <!-- Quiz assignments will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Mobile Quiz Assignments Cards -->
+                        <div class="assignments-table-mobile" id="quizAssignmentsTableMobile">
+                            <!-- Mobile quiz assignment cards will be populated here -->
                         </div>
                     </div>
                 </div>
@@ -239,7 +324,7 @@
                             </button>
                         </div>
                         <div class="add-module-inline">
-                            <button class="btn btn-primary" id="addModuleBtn">
+                            <button class="btn btn-primary" id="addModuleBtn" data-permission="create_modules">
                                 <i class="fas fa-plus"></i>
                                 Add New Module
                             </button>
@@ -251,7 +336,7 @@
                 </div>
 
                 <!-- Modules Management Grid -->
-                <div class="modules-management-grid" id="modulesManagementGrid">
+                <div class="modules-management-grid" id="modulesManagementGrid" data-permission="view_modules">
                     <!-- Modules will be populated here -->
                 </div>
             </div>
@@ -294,7 +379,7 @@
                 <div class="section">
                     <div class="section-header">
                         <h2>Role Definitions</h2>
-                        <button class="btn btn-primary" id="addRoleBtn">
+                        <button class="btn btn-primary" id="addRoleBtn" data-permission="manage_roles">
                             <i class="fas fa-plus"></i> Add New Role
                         </button>
                     </div>
@@ -302,6 +387,22 @@
                         <div class="roles-grid" id="rolesGrid">
                             <!-- Role cards will be populated here -->
                         </div>
+                    </div>
+                </div>
+
+                <!-- Permission Test Section -->
+                <div class="section permission-test-section">
+                    <div class="section-header">
+                        <h2>Current Role Permissions (Test View)</h2>
+                        <p>Shows the actual permissions currently assigned to each role</p>
+                    </div>
+                    <div class="section-content">
+                        <div class="permissions-display" id="permissionsDisplay">
+                            <!-- Role permissions will be displayed here -->
+                        </div>
+                        <button class="btn btn-secondary" onclick="refreshPermissionsDisplay()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
                     </div>
                 </div>
 
@@ -937,12 +1038,16 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="modalCancel">Cancel</button>
-                <button type="button" class="btn btn-danger" id="modalResetProgress" style="display: none;">
-                    <i class="fas fa-undo"></i>
-                    Reset Progress
+                <button type="button" class="btn btn-danger modal-delete-btn-mobile" id="modalDeleteUser" style="display: none;" data-permission="delete_users" title="Delete User">
+                    <i class="fas fa-trash"></i>
                 </button>
-                <button type="button" class="btn btn-primary" id="modalSave">Save Changes</button>
+                <button type="button" class="btn btn-secondary" id="modalCancel">Cancel</button>
+                <button type="button" class="btn btn-danger modal-icon-btn" id="modalResetProgress" style="display: none;" data-permission="reset_progress" title="Reset Progress">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button type="button" class="btn btn-primary modal-icon-btn" id="modalSave" title="Save">
+                    <i class="fas fa-save"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -1116,6 +1221,61 @@
         </div>
     </div>
 
+    <!-- Quiz Assignment Modal -->
+    <div class="modal-overlay" id="quizAssignmentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="quizAssignmentModalTitle">Assign Quiz</h2>
+                <button class="modal-close" id="quizAssignmentModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="quizAssignmentForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Users</label>
+                            <div id="quizUserCheckboxes" class="user-checkboxes">
+                                <!-- User checkboxes will be populated here -->
+                            </div>
+                            <small class="form-help">Select one or more users to assign quizzes to</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Quizzes</label>
+                            <div id="quizCheckboxes" class="module-checkboxes">
+                                <!-- Quiz checkboxes will be populated here -->
+                            </div>
+                            <small class="form-help">Select one or more quizzes to assign</small>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quizAssignmentDueDate">Due Date (optional)</label>
+                            <input type="date" id="quizAssignmentDueDate" name="dueDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="quizAssignmentStatus">Status</label>
+                            <select id="quizAssignmentStatus" name="status" required>
+                                <option value="assigned">Assigned</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="overdue">Overdue</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="quizAssignmentNotes">Notes (optional)</label>
+                        <textarea id="quizAssignmentNotes" name="notes" rows="3" placeholder="Add any notes about this assignment..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="quizAssignmentModalCancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="quizAssignmentModalSave">Assign Quiz</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Role Management Modal -->
     <div class="modal-overlay" id="roleModal">
         <div class="modal-content">
@@ -1137,18 +1297,16 @@
                         <textarea id="roleDescription" rows="3"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="roleLevel">Permission Level</label>
-                        <select id="roleLevel">
-                            <option value="1">Level 1 (Basic)</option>
-                            <option value="2">Level 2 (Standard)</option>
-                            <option value="3">Level 3 (Advanced)</option>
-                            <option value="4">Level 4 (Full Access)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
                         <label>Page Access</label>
                         <div class="permissions-grid" id="rolePermissionsGrid">
                             <!-- Page access checkboxes will be populated here -->
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Granular Permissions</label>
+                        <p class="form-help">Select specific permissions for this role</p>
+                        <div class="granular-permissions" id="granularPermissions">
+                            <!-- Granular permissions will be populated here -->
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -1169,7 +1327,7 @@
     
     <!-- Navbar Component is auto-initialized by navbar-component.js -->
     
-    <script src="../scripts/admin-overview-script.js?v=105"></script>
+     <script src="../scripts/admin-overview-script.js?v=176"></script>
     <script>
         // admin-overview-script.js loaded
     </script>

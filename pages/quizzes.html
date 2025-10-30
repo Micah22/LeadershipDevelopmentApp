@@ -10,6 +10,7 @@
     <!-- Load navbar component styles -->
     <link rel="stylesheet" href="../styles/navbar-component.css">
     <link rel="stylesheet" href="../styles/quiz-content.css">
+    <link rel="stylesheet" href="../styles/quiz-styles.css">
     <link rel="stylesheet" href="../styles/toast-component.css">
     <link rel="stylesheet" href="../styles/tabs-component.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -19,6 +20,7 @@
     <script src="../components/toast-component.js"></script>
     <script src="../database/config.js"></script>
     <script src="../scripts/notification-service.js"></script>
+    <script src="../scripts/permission-utils.js?v=4"></script>
     <script src="../components/tabs-component.js"></script>
 
 
@@ -73,6 +75,9 @@
             <div class="content-header">
                 <h1>My Quiz Results</h1>
                 <p>Track your progress and performance across all quizzes</p>
+                <div id="resultsActions" style="margin-top:.5rem; display:flex; gap:.5rem; flex-wrap:wrap;">
+                    <button class="btn btn-secondary" id="exportResultsBtn"><i class="fas fa-file-csv"></i> Export CSV</button>
+                </div>
             </div>
 
             <div class="results-summary">
@@ -105,6 +110,11 @@
                 </div>
             </div>
 
+            <!-- Analytics Container -->
+            <div id="resultsAnalytics" class="results-summary" style="margin-top: 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+                <!-- Analytics cards/table will be rendered here -->
+            </div>
+
             <div class="results-table-container">
                 <table class="results-table" id="resultsTable">
                     <thead>
@@ -113,7 +123,7 @@
                             <th>Category</th>
                             <th>Score</th>
                             <th>Date Taken</th>
-                            <th>Time</th>
+                            <th>Time Taken</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -152,6 +162,16 @@
                                     <input type="number" id="quizPassingScore" name="quizPassingScore" min="1" max="100"
                                         value="70" required>
                                     <small class="form-help">Percentage needed to pass the quiz (1-100)</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="quizTimeLimit">Time Limit (minutes) <span class="optional-label">Optional</span></label>
+                                    <input type="number" id="quizTimeLimit" name="quizTimeLimit" min="1" max="300"
+                                        value="" placeholder="No time limit">
+                                    <small class="form-help">Maximum time allowed to complete the quiz (1-300 minutes). Leave empty for no time limit.</small>
+                                </div>
+                                <div class="form-group" style="display:flex; align-items:center; gap:.5rem;">
+                                    <input type="checkbox" id="quizAllowRetake" name="quizAllowRetake" checked>
+                                    <label for="quizAllowRetake" style="margin:0;">Allow Retake</label>
                                 </div>
                                 <div class="form-group">
                                     <label for="quizDescription">Description</label>
@@ -203,6 +223,24 @@
                         </div>
                     </div>
 
+                    <div class="form-section" id="questionBankSection">
+                        <h3>Question Bank</h3>
+                        <div class="quiz-info-layout">
+                            <div class="quiz-left-section">
+                                <div class="form-group" style="display:flex; gap:.5rem; align-items:center;">
+                                    <input type="text" id="questionBankSearch" placeholder="Search questions (title, text, category)..." style="flex:1;">
+                                    <button type="button" class="btn btn-secondary" id="refreshQuestionBank"><i class="fas fa-sync"></i></button>
+                                </div>
+                                <small class="form-help">Browse reusable questions and insert into your quiz.</small>
+                            </div>
+                        </div>
+                        <div id="questionBankContainer" style="margin-top:.5rem;">
+                            <div id="questionBankList">
+                                <!-- Bank questions will render here -->
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-section">
                         <h3>Questions</h3>
                         <div id="questionsContainer">
@@ -231,6 +269,10 @@
                     <h2 id="quizModalTitle">Quiz Title</h2>
                     <div class="quiz-progress">
                         <span id="currentQuestion">1</span> of <span id="totalQuestions">10</span>
+                    </div>
+                    <div class="quiz-timer" id="quizTimer" style="display: none;">
+                        <i class="fas fa-clock"></i>
+                        <span id="timerDisplay">00:00</span>
                     </div>
                     <button class="modal-close" id="quizModalClose">
                         <i class="fas fa-times"></i>
@@ -273,7 +315,7 @@
         <div class="toast-container" id="toastContainer"></div>
 
         <!-- Image Modal -->
-        <div id="imageModal" class="image-modal">
+        <div id="imageModal" class="image-modal" style="display: none !important; visibility: hidden !important; opacity: 0 !important;">
             <div class="image-modal-content">
                 <span class="image-modal-close">&times;</span>
                 <img id="modalImage" src="" alt="Enlarged Image">
@@ -323,11 +365,7 @@
             initializeQuizTabs();
             
             // Refresh quizzes display after a short delay to ensure all scripts are loaded
-            setTimeout(() => {
-                if (typeof renderAvailableQuizzes === 'function') {
-                    renderAvailableQuizzes();
-                }
-            }, 500);
+            // renderAvailableQuizzes will be called after loadQuizData completes in quiz-script.js
         });
 
         // Initialize quiz tabs
@@ -362,6 +400,41 @@
 
             // Create the tabs
             tabsComponent.createTabs(tabsConfig);
+            
+            // Apply permission-based visibility to Create Quiz tab
+            function applyQuizTabPermissions() {
+                // Always ensure the data-permission attribute is set on the Create Quiz tab
+                const createQuizTab = document.querySelector('[data-tab="createQuiz"]');
+                if (createQuizTab) {
+                    createQuizTab.setAttribute('data-permission', 'create_quizzes');
+                    
+                    // Apply visibility using permission manager (which handles tabs correctly)
+                    if (window.permissionManager) {
+                        const hasPermission = window.permissionManager.hasPermission('create_quizzes');
+                        console.log('Create Quiz tab - hasPermission:', hasPermission);
+                        window.permissionManager.applyElementVisibility();
+                    }
+                }
+            }
+            
+            // Apply immediately if permission manager is ready
+            if (window.permissionManager) {
+                setTimeout(() => applyQuizTabPermissions(), 300);
+            } else {
+                // Wait for permission manager to load
+                const checkPermissionManager = setInterval(() => {
+                    if (window.permissionManager) {
+                        setTimeout(() => applyQuizTabPermissions(), 300);
+                        clearInterval(checkPermissionManager);
+                    }
+                }, 100);
+                
+                // Stop checking after 5 seconds
+                setTimeout(() => clearInterval(checkPermissionManager), 5000);
+            }
+            
+            // Also apply when roles might be reloaded
+            window.updateQuizTabVisibility = applyQuizTabPermissions;
         }
 
         // Handle quiz tab changes
@@ -388,6 +461,7 @@
             }
         }
     </script>
+    <script src="force-close-modal.js"></script>
 </body>
 
 </html>

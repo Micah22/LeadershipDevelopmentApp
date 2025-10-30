@@ -29,7 +29,7 @@ class DatabaseService {
 
         try {
             // Use service key for problematic endpoints that need to bypass RLS
-            const useServiceKey = endpoint.includes('module_assignments') || endpoint.includes('unassigned_role_assignments');
+            const useServiceKey = endpoint.includes('module_assignments') || endpoint.includes('unassigned_role_assignments') || endpoint.includes('quiz_assignments') || endpoint.includes('quizzes');
             const keyToUse = useServiceKey ? this.serviceKey : this.supabaseKey;
             
             const options = {
@@ -49,7 +49,7 @@ class DatabaseService {
             }
 
             // Add bypass RLS header for problematic operations
-            if (endpoint.includes('module_assignments') || endpoint.includes('unassigned_role_assignments')) {
+            if (endpoint.includes('module_assignments') || endpoint.includes('unassigned_role_assignments') || endpoint.includes('quiz_assignments') || endpoint.includes('quizzes')) {
                 options.headers['Prefer'] = 'return=representation,resolution=ignore-duplicates';
             }
             
@@ -168,6 +168,100 @@ class DatabaseService {
             const users = await this.getUsers();
             localStorage.setItem('users', JSON.stringify(users));
         } catch (error) {
+        }
+    }
+
+    // Roles operations
+    async getRoles() {
+        try {
+            const roles = await this.apiCall('roles?select=*');
+            return roles;
+        } catch (error) {
+            console.error('Failed to get roles from database:', error);
+            // Fallback to localStorage
+            const localRoles = JSON.parse(localStorage.getItem('roles') || '[]');
+            return localRoles;
+        }
+    }
+
+    async updateRole(roleId, roleData) {
+        try {
+            // Use service key for roles updates to bypass RLS if needed
+            const endpoint = `roles?role_id=eq.${roleId}`;
+            console.log('Updating role via endpoint:', endpoint);
+            console.log('Role data being sent:', roleData);
+            
+            // Make a direct API call with service key to ensure update works
+            const url = `${this.supabaseUrl}/rest/v1/${endpoint}`;
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.serviceKey}`,
+                    'apikey': this.serviceKey,
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify(roleData)
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Role update failed:', response.status, errorText);
+                throw new Error(`Failed to update role: ${response.status} ${errorText}`);
+            }
+            
+            const result = await response.json();
+            console.log('Role update response:', result);
+            
+            // Also sync to localStorage for compatibility
+            await this.syncRolesToLocalStorage();
+            return result;
+        } catch (error) {
+            console.error('Failed to update role in database:', error);
+            throw error;
+        }
+    }
+
+    async deleteRole(roleId) {
+        try {
+            // Use service key for roles deletion to bypass RLS if needed
+            const endpoint = `roles?role_id=eq.${roleId}`;
+            console.log('Deleting role via endpoint:', endpoint);
+            
+            // Make a direct API call with service key
+            const url = `${this.supabaseUrl}/rest/v1/${endpoint}`;
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.serviceKey}`,
+                    'apikey': this.serviceKey,
+                    'Prefer': 'return=representation'
+                }
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Role deletion failed:', response.status, errorText);
+                throw new Error(`Failed to delete role: ${response.status} ${errorText}`);
+            }
+            
+            // Also sync to localStorage for compatibility
+            await this.syncRolesToLocalStorage();
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to delete role in database:', error);
+            throw error;
+        }
+    }
+
+    // Helper method to sync roles to localStorage
+    async syncRolesToLocalStorage() {
+        try {
+            const roles = await this.getRoles();
+            localStorage.setItem('roles', JSON.stringify(roles));
+        } catch (error) {
+            console.error('Failed to sync roles to localStorage:', error);
         }
     }
 
@@ -290,6 +384,37 @@ class DatabaseService {
         }
     }
 
+    async updateUserProgressWithChecklist(userId, moduleId, completedTasks, totalTasks, progressPercentage, checklist) {
+        try {
+            const updateData = {
+                completed_tasks: completedTasks,
+                total_tasks: totalTasks,
+                progress_percentage: progressPercentage,
+                checklist: checklist
+            };
+            
+            const updateResult = await this.apiCall(`user_progress?user_id=eq.${userId}&module_id=eq.${moduleId}`, 'PATCH', updateData);
+            
+            if (!updateResult || updateResult.length === 0) {
+                const insertData = {
+                    user_id: userId,
+                    module_id: moduleId,
+                    completed_tasks: completedTasks,
+                    total_tasks: totalTasks,
+                    progress_percentage: progressPercentage,
+                    checklist: checklist
+                };
+                const insertResult = await this.apiCall('user_progress', 'POST', insertData);
+                return insertResult;
+            }
+            
+            return updateResult;
+        } catch (error) {
+            console.error('Failed to update user progress with checklist in database:', error);
+            throw error;
+        }
+    }
+
     // Helper method to sync user progress to localStorage
     async syncUserProgressToLocalStorage(userId) {
         try {
@@ -399,6 +524,240 @@ class DatabaseService {
         const moduleIds = assignments.map(a => a.module_id);
         const modules = await this.getModules();
         return modules.filter(module => moduleIds.includes(module.id));
+    }
+
+    // Quiz Assignment Methods
+    async getQuizAssignments(userId = null) {
+        // Join with users table to get user names
+        // Note: quizzes are stored in localStorage, so we can't join with a quizzes table
+        const endpoint = userId 
+            ? `quiz_assignments?user_id=eq.${userId}&select=*,users!quiz_assignments_user_id_fkey(full_name,username)`
+            : 'quiz_assignments?select=*,users!quiz_assignments_user_id_fkey(full_name,username)';
+        const assignments = await this.apiCall(endpoint);
+        
+        // Transform the data to include user_name and quiz_title
+        // Load quiz titles from database instead of localStorage
+        let quizTitles = {};
+        try {
+            const quizzes = await this.getQuizzes(); // Get all quizzes from database
+            quizzes.forEach(quiz => {
+                quizTitles[quiz.id] = quiz.title;
+            });
+        } catch (e) {
+            console.warn('Failed to load quizzes from database for titles:', e);
+            // Fallback to localStorage
+            try {
+                const savedQuizzes = localStorage.getItem('quizzes');
+                if (savedQuizzes) {
+                    const quizzes = JSON.parse(savedQuizzes);
+                    quizzes.forEach(quiz => {
+                        quizTitles[quiz.id] = quiz.title;
+                    });
+                }
+            } catch (e2) {
+                console.warn('Failed to load quizzes from localStorage:', e2);
+            }
+        }
+        
+        // Transform the data to include user_name and quiz_title
+        return assignments.map(assignment => {
+            return {
+                ...assignment,
+                user_name: assignment.users?.full_name || 'Unknown User',
+                quiz_title: quizTitles[assignment.quiz_id] || assignment.quiz_id || 'Unknown Quiz'
+            };
+        });
+    }
+
+    async assignQuizToUser(userId, quizId, assignedBy = null, dueDate = null, notes = null) {
+        const assignment = {
+            user_id: userId,
+            quiz_id: quizId,
+            assigned_by: assignedBy,
+            due_date: dueDate,
+            notes: notes,
+            status: 'assigned'
+        };
+        return await this.apiCall('quiz_assignments', 'POST', assignment);
+    }
+
+    async updateQuizAssignment(assignmentId, updates) {
+        return await this.apiCall(`quiz_assignments?id=eq.${assignmentId}`, 'PATCH', updates);
+    }
+
+    async removeQuizAssignment(assignmentId) {
+        return await this.apiCall(`quiz_assignments?id=eq.${assignmentId}`, 'DELETE');
+    }
+
+    async getUserAssignedQuizzes(userId) {
+        const assignments = await this.getQuizAssignments(userId);
+        if (!assignments || assignments.length === 0) return [];
+        
+        // Get quiz details from database for each assignment
+        const quizIds = assignments.map(a => a.quiz_id);
+        const quizzes = await this.getQuizzes();
+        return quizzes.filter(quiz => quizIds.includes(quiz.id));
+    }
+
+    // Quiz Management Methods
+    async getQuizzes(status = 'active') {
+        try {
+            // If status is null, get all quizzes; otherwise filter by status
+            const endpoint = status ? `quizzes?status=eq.${status}&select=*` : 'quizzes?select=*';
+            const quizzes = await this.apiCall(endpoint);
+            
+            // Transform database format to quiz script format
+            return quizzes.map(quiz => ({
+                id: quiz.id,
+                title: quiz.title,
+                description: quiz.description || '',
+                category: quiz.category || '',
+                difficulty: quiz.difficulty || 'beginner',
+                tags: quiz.tags || (Array.isArray(quiz.tags) ? quiz.tags : []),
+                questions: quiz.questions || (Array.isArray(quiz.questions) ? quiz.questions : []),
+                timeLimit: quiz.time_limit || quiz.timeLimit || 15,
+                passingScore: quiz.passing_score || quiz.passingScore || 70,
+                status: quiz.status || 'active'
+            }));
+        } catch (error) {
+            console.error('Failed to get quizzes from database:', error);
+            // Fallback to localStorage
+            try {
+                const savedQuizzes = localStorage.getItem('quizzes');
+                if (savedQuizzes) {
+                    return JSON.parse(savedQuizzes);
+                }
+            } catch (e) {
+                console.warn('Failed to load quizzes from localStorage fallback:', e);
+            }
+            return [];
+        }
+    }
+
+    // Question Bank Methods
+    async getBankQuestions() {
+        return await this.apiCall('questions_bank?select=*');
+    }
+    async searchBankQuestions(query = '') {
+        if (!query) return this.getBankQuestions();
+        const q = encodeURIComponent(`%${query}%`);
+        return await this.apiCall(`questions_bank?or=(title.ilike.${q},question.ilike.${q},category.ilike.${q})`);
+    }
+    async createBankQuestion(q) {
+        const data = {
+            title: q.title || null,
+            question: q.question,
+            type: q.type,
+            options: q.options || [],
+            correct: q.correct || null,
+            points: q.points || 1,
+            category: q.category || null,
+            tags: q.tags || []
+        };
+        return await this.apiCall('questions_bank', 'POST', data);
+    }
+    async updateBankQuestion(id, updates) {
+        const data = { ...updates, updated_at: new Date().toISOString() };
+        return await this.apiCall(`questions_bank?id=eq.${id}`, 'PATCH', data);
+    }
+    async deleteBankQuestion(id) {
+        return await this.apiCall(`questions_bank?id=eq.${id}`, 'DELETE');
+    }
+
+    async getQuiz(quizId) {
+        try {
+            const quizzes = await this.apiCall(`quizzes?id=eq.${quizId}&select=*`);
+            if (quizzes && quizzes.length > 0) {
+                const quiz = quizzes[0];
+                // Transform to quiz script format
+                return {
+                    id: quiz.id,
+                    title: quiz.title,
+                    description: quiz.description || '',
+                    category: quiz.category || '',
+                    difficulty: quiz.difficulty || 'beginner',
+                    tags: quiz.tags || (Array.isArray(quiz.tags) ? quiz.tags : []),
+                    questions: quiz.questions || (Array.isArray(quiz.questions) ? quiz.questions : []),
+                    timeLimit: quiz.time_limit || quiz.timeLimit || 15,
+                    passingScore: quiz.passing_score || quiz.passingScore || 70,
+                    status: quiz.status || 'active'
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error('Failed to get quiz from database:', error);
+            return null;
+        }
+    }
+
+    async createQuiz(quizData) {
+        try {
+            // Get current user ID for created_by
+            let createdBy = null;
+            try {
+                const userStr = localStorage.getItem('currentUser');
+                if (userStr) {
+                    const currentUser = JSON.parse(userStr);
+                    const users = await this.getUsers();
+                    const user = users.find(u => u.username === currentUser.username || u.email === currentUser.email);
+                    if (user && user.id) {
+                        createdBy = user.id;
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to get current user for quiz creation:', e);
+            }
+            
+            const dbQuizData = {
+                id: quizData.id,
+                title: quizData.title,
+                description: quizData.description || null,
+                category: quizData.category || null,
+                difficulty: quizData.difficulty || 'beginner',
+                tags: quizData.tags || [],
+                questions: quizData.questions || [],
+                time_limit: quizData.timeLimit || quizData.time_limit || 15,
+                passing_score: quizData.passingScore || quizData.passing_score || 70,
+                status: quizData.status || 'active',
+                created_by: createdBy
+            };
+            
+            return await this.apiCall('quizzes', 'POST', dbQuizData);
+        } catch (error) {
+            console.error('Failed to create quiz in database:', error);
+            throw error;
+        }
+    }
+
+    async updateQuiz(quizId, quizData) {
+        try {
+            const dbQuizData = {
+                title: quizData.title,
+                description: quizData.description || null,
+                category: quizData.category || null,
+                difficulty: quizData.difficulty || 'beginner',
+                tags: quizData.tags || [],
+                questions: quizData.questions || [],
+                time_limit: quizData.timeLimit || quizData.time_limit || 15,
+                passing_score: quizData.passingScore || quizData.passing_score || 70,
+                status: quizData.status || 'active',
+                updated_at: new Date().toISOString()
+            };
+            
+            return await this.apiCall(`quizzes?id=eq.${quizId}`, 'PATCH', dbQuizData);
+        } catch (error) {
+            console.error('Failed to update quiz in database:', error);
+            throw error;
+        }
+    }
+
+    async deleteQuiz(quizId) {
+        try {
+            return await this.apiCall(`quizzes?id=eq.${quizId}`, 'DELETE');
+        } catch (error) {
+            console.error('Failed to delete quiz from database:', error);
+            throw error;
+        }
     }
 
     // Unassigned Role Assignments Methods

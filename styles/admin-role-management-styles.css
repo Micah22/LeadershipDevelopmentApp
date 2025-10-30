@@ -578,3 +578,168 @@ body {
     background: var(--white);
 }
 
+/* Element Access Control Section */
+.element-access-section {
+    margin-top: 3rem;
+    background: var(--white);
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.element-access-section .section-header {
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 1rem;
+}
+
+.element-access-section .section-header h2 {
+    color: var(--cfa-red);
+    margin-bottom: 0.5rem;
+}
+
+.element-access-section .section-header p {
+    color: var(--medium-gray);
+}
+
+.access-control-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.elements-list {
+    background: var(--light-gray);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.elements-list h3 {
+    margin-bottom: 1rem;
+    color: var(--navy);
+}
+
+.elements-search {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.elements-search i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--medium-gray);
+}
+
+.elements-search input {
+    width: 100%;
+    padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.elements-items {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.element-item {
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.element-item:hover {
+    border-color: var(--cfa-red);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+}
+
+.element-icon {
+    font-size: 1.5rem;
+    color: var(--cfa-red);
+}
+
+.element-info h4 {
+    margin-bottom: 0.25rem;
+    color: var(--navy);
+}
+
+.element-info p {
+    color: var(--medium-gray);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.access-control-panel {
+    background: var(--light-gray);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.access-control-panel h3 {
+    margin-bottom: 1rem;
+    color: var(--navy);
+}
+
+.selected-element {
+    background: var(--white);
+    border: 2px solid var(--cfa-red);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.selected-element h3 {
+    color: var(--cfa-red);
+    margin-bottom: 0.5rem;
+}
+
+.selected-element p {
+    color: var(--medium-gray);
+    margin: 0;
+}
+
+.role-access-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1.5rem;
+}
+
+.role-access-list .checkbox-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.role-level {
+    color: var(--medium-gray);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.access-control-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+@media (max-width: 1024px) {
+    .access-control-container {
+        grid-template-columns: 1fr;
+    }
+}

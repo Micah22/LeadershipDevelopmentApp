@@ -674,21 +674,28 @@ body {
 
 /* Due Date Styles */
 .due-date {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     font-size: 0.85rem;
-    color: var(--medium-gray);
+    padding: 0.35rem 0.65rem;
     margin-top: 0.25rem;
+    border-radius: 4px;
+    background: var(--cfa-light-blue);
+    color: var(--cfa-navy);
+    font-weight: 500;
+    border-left: 3px solid var(--info);
 }
 
 .due-date i {
     font-size: 0.8rem;
-    color: var(--cfa-red);
+    color: var(--info);
 }
 
 .due-date.due-soon {
-    color: var(--warning-orange);
+    background: #fff3cd;
+    color: #856404;
+    border-left-color: var(--warning-orange);
 }
 
 .due-date.due-soon i {
@@ -696,8 +703,10 @@ body {
 }
 
 .due-date.overdue {
-    color: var(--cfa-red);
+    background: #f8d7da;
+    color: #721c24;
     font-weight: 600;
+    border-left-color: var(--cfa-red);
 }
 
 .due-date.overdue i {

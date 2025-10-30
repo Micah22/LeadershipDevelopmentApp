@@ -425,21 +425,19 @@ body {
         display: block !important;
     }
     
-    /* Ensure mobile cards use grid layout */
+    /* Ensure mobile cards use vertical stacked layout */
     .user-card-mobile .user-details {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        grid-template-rows: 1fr 1fr !important;
-        gap: 1rem !important;
+        display: block !important;
+        grid-template-columns: none !important;
+        grid-template-rows: none !important;
         width: 100% !important;
     }
     
-    /* Force grid layout for mobile user details */
+    /* Force block layout for mobile user details */
     .progress-table-mobile .user-details {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        grid-template-rows: 1fr 1fr !important;
-        gap: 1rem !important;
+        display: block !important;
+        grid-template-columns: none !important;
+        grid-template-rows: none !important;
     }
     
     .user-card-mobile {
