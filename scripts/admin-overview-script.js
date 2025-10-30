@@ -632,14 +632,14 @@ function updateUserProgressTable(users) {
                     </div>
                 </div>
                 <div class="user-actions">
-                    <button class="action-btn-mobile" onclick="editUser('${user.username}')" data-permission="edit_users">
-                        Edit
+                    <button class="action-btn-mobile" onclick="editUser('${user.username}')" data-permission="edit_users" title="Edit">
+                        <i class="fas fa-edit" aria-hidden="true"></i><span class="btn-text"> Edit</span>
                     </button>
-                    <button class="action-btn-mobile primary" onclick="viewUserDetails('${user.username}')">
-                        Details
+                    <button class="action-btn-mobile primary" onclick="viewUserDetails('${user.username}')" title="Details">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i><span class="btn-text"> Details</span>
                     </button>
-                    <button class="action-btn-mobile danger delete-btn-user-card" onclick="deleteUser('${user.id || user.username}', '${user.full_name || user.fullName || user.username}')" data-permission="delete_users">
-                        Delete
+                    <button class="action-btn-mobile danger delete-btn-user-card" onclick="deleteUser('${user.id || user.username}', '${user.full_name || user.fullName || user.username}')" data-permission="delete_users" title="Delete">
+                        <i class="fas fa-trash" aria-hidden="true"></i><span class="btn-text"> Delete</span>
                     </button>
                 </div>
             </div>
@@ -4054,15 +4054,12 @@ async function updateAssignmentsTable() {
                 <div class="assignment-actions">
                     <button class="assignment-btn-mobile" onclick="editAssignment('${assignment.id}')" title="Edit Assignment" data-permission="edit_assignments">
                         <i class="fas fa-edit"></i>
-                        Edit
                     </button>
                     <button class="assignment-btn-mobile danger" onclick="unassignModule('${assignment.id}')" title="Unassign Module" data-permission="unassign_assignments">
                         <i class="fas fa-user-minus"></i>
-                        Unassign
                     </button>
                     <button class="assignment-btn-mobile danger" onclick="deleteAssignment('${assignment.id}')" title="Delete Assignment" data-permission="delete_assignments">
                         <i class="fas fa-trash"></i>
-                        Delete
                     </button>
                 </div>
             </div>
@@ -4698,17 +4695,14 @@ async function updateQuizAssignmentsTable() {
                     </div>
                 </div>
                 <div class="assignment-actions">
-                    <button class="assignment-btn-mobile" onclick="editQuizAssignment('${assignment.id}')" title="Edit Assignment" data-permission="edit_assignments">
+                    <button class="assignment-btn-mobile edit" onclick="editQuizAssignment('${assignment.id}')" title="Edit Assignment" data-permission="edit_assignments">
                         <i class="fas fa-edit"></i>
-                        Edit
                     </button>
                     <button class="assignment-btn-mobile danger" onclick="unassignQuiz('${assignment.id}')" title="Unassign Quiz" data-permission="unassign_assignments">
                         <i class="fas fa-user-minus"></i>
-                        Unassign
                     </button>
                     <button class="assignment-btn-mobile danger" onclick="deleteQuizAssignment('${assignment.id}')" title="Delete Assignment" data-permission="delete_assignments">
                         <i class="fas fa-trash"></i>
-                        Delete
                     </button>
                 </div>
             </div>

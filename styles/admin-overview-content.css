@@ -415,6 +415,26 @@ body {
     .header-cards {
         display: none !important;
     }
+
+	/* Center page title and subtitle on mobile */
+	.content-header {
+		text-align: center;
+	}
+
+	.header-top {
+		display: block;
+	}
+
+	.header-text {
+		text-align: center;
+	}
+
+	.page-title,
+	.page-subtitle {
+		text-align: center;
+		margin-left: auto;
+		margin-right: auto;
+	}
     
     /* Mobile-friendly user progress table */
     .progress-table {
@@ -424,13 +444,32 @@ body {
     .progress-table-mobile {
         display: block !important;
     }
+
+	/* Remove inner padding to let content touch edges on mobile */
+	.section-content {
+		padding: 0 !important;
+	}
     
+    /* Make mobile user cards span full screen width */
+    .user-card-mobile {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        border-left-width: 0;
+        border-right-width: 0;
+        border-radius: 0;
+    }
+
     /* Ensure mobile cards use vertical stacked layout */
     .user-card-mobile .user-details {
         display: block !important;
         grid-template-columns: none !important;
         grid-template-rows: none !important;
         width: 100% !important;
+        margin-bottom: 0 !important; /* remove space below details */
+        padding-bottom: 0 !important; /* remove space below details */
+        border-bottom: none !important; /* remove divider under details */
     }
     
     /* Force block layout for mobile user details */
@@ -444,9 +483,13 @@ body {
         background: var(--white);
         border: 2px solid var(--text-dark);
         border-radius: 8px;
-        padding: 1rem;
+        padding: 12px !important; /* reduce from 24px to 12px on mobile */
         margin-bottom: 1rem;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        display: grid;
+        grid-template-columns: 1fr auto; /* details on left, icons on right */
+        gap: 0.75rem;
+        align-items: start;
     }
     
     .user-details {
@@ -462,7 +505,7 @@ body {
         flex-direction: column;
         gap: 0.5rem;
         border: 1px solid var(--border-color);
-        padding: 0.75rem;
+        padding: 7px !important;
         border-radius: 4px;
         background: var(--light-gray);
     }
@@ -483,26 +526,27 @@ body {
     
     .user-actions {
         display: flex;
+        flex-direction: column;
         gap: 0.5rem;
-        justify-content: center;
+        align-items: flex-end; /* align icons to the right */
+        justify-content: flex-start;
     }
     
+    /* Icon-only buttons on mobile */
+    .action-btn-mobile .btn-text { display: none !important; }
     .action-btn-mobile {
-        padding: 0.75rem 1.5rem;
-        font-size: 0.9rem;
-        border-radius: 6px;
-        border: 1px solid var(--cfa-red);
-        background: var(--white);
-        color: var(--cfa-red);
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
+        min-width: 44px;
+        min-height: 44px;
+        width: 44px;
+        height: 44px;
+        padding: 0; /* no inner padding */
+        display: grid;
+        place-items: center;
         justify-content: center;
-        gap: 0.25rem;
-        font-weight: 500;
-        min-width: 100px;
+    }
+    .action-btn-mobile i {
+        font-size: 18px;
+        line-height: 1;
     }
     
     .action-btn-mobile:hover {
@@ -536,19 +580,37 @@ body {
     .assignment-card-mobile {
         background: var(--white);
         border: 2px solid var(--text-dark);
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
+        border-radius: 0;
+        padding: 12px !important; /* compact like user cards */
+        margin: 0 0 1rem 0;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        width: 100% !important;
+        max-width: 100% !important;
+        display: grid;
+        grid-template-columns: 1fr auto; /* header left, actions right */
+        grid-template-rows: auto auto;    /* header top, details bottom */
+        grid-template-areas:
+            "header actions"
+            "details actions"; /* actions span both rows on the right */
+        gap: 0.75rem;
+        align-items: start;
     }
     
     .assignment-card-header {
+        grid-area: header;
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 1px solid var(--border-color);
+        gap: 0.5rem;
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border: none !important; /* remove any line */
+    }
+
+    /* remove any decorative line that might be injected */
+    .assignment-card-header::after,
+    .assignment-card-header::before {
+        content: none !important;
+        display: none !important;
     }
     
     .assignment-checkbox {
@@ -574,18 +636,24 @@ body {
     }
     
     .assignment-details {
+        grid-area: details;
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        margin-bottom: 1rem;
+        grid-template-columns: 1fr 1fr; /* Due Date | Progress */
+        gap: 0.75rem;
+        margin-bottom: 0; /* tighter */
     }
+
+    /* Hide less critical fields to save space on mobile */
+    .assignment-details .assignment-detail-item:nth-child(1), /* Assigned Date */
+    .assignment-details .assignment-detail-item:nth-child(3)  /* Status */
+    { display: none !important; }
     
     .assignment-detail-item {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
         border: 1px solid var(--border-color);
-        padding: 0.75rem;
+        padding: 7px !important; /* match user detail-item */
         border-radius: 4px;
         background: var(--light-gray);
     }
@@ -605,29 +673,41 @@ body {
     }
     
     .assignment-actions {
+        grid-area: actions;
         display: flex;
+        flex-direction: column;
         gap: 0.5rem;
-        justify-content: center;
-        flex-wrap: wrap;
+        align-items: flex-end; /* align to right edge */
+        justify-content: flex-start;
+        padding-top: 0 !important; /* remove padding above actions */
+        margin-top: 0 !important;  /* ensure no extra spacing */
     }
     
     .assignment-btn-mobile {
-        padding: 0.5rem 1rem;
-        font-size: 0.8rem;
-        border-radius: 4px;
-        border: 1px solid var(--cfa-red);
-        background: var(--white);
-        color: var(--cfa-red);
+        width: 44px;
+        height: 44px;
+        padding: 0; /* icon-only */
+        font-size: 0; /* hide text */
+        border-radius: 6px;
+        border: 2px solid var(--cfa-red);
+        background: var(--cfa-red); /* red bg */
+        color: var(--white); /* ensure text (if any) is white */
         cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.25rem;
-        font-weight: 500;
-        min-width: 80px;
+        transition: all 0.2s ease;
+        display: grid;
+        place-items: center;
     }
+
+    /* icon sizing when using <i> elements */
+    .assignment-btn-mobile i {
+        font-size: 18px;
+        line-height: 1;
+        color: #fff; /* white icon */
+    }
+    
+    .assignment-btn-mobile:hover { background: #d32f2f; }
+    .assignment-btn-mobile.danger { background: var(--cfa-red); }
+    .assignment-btn-mobile.danger:hover { background: #d32f2f; }
     
     .assignment-btn-mobile:hover {
         background: var(--cfa-red);
